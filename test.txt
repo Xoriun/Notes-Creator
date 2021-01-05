@@ -1,0 +1,18 @@
+build;todo;craft
+
+	mine 1 coal rock	3 gear, 4 furnace
+1 iron furnace		1 miner
+1 iron furnace		
+	get 300 stone	
+2 copperfurnaces (no miner)	mine 46 copper	10 red science, 1 lab, 1 steam engine
+	mine 1 copper furnace	1 boiler, 5 gear, 3 wire
+tiny power		
+research	get wood (to 200)	1 assembler
+	unbind crafting keys	all wire, all power poles, 9 burner
+burner (5/2/4)		10 gear, 6 gc -> 2 assembler
+2 assembler: furnaces -> wire, gears, burner -> gc		burners
+burner (16/6/24)		2 edrill, 1 assembler
+2 e-drill + 1 assembler for furnaces		5 burner inserter, 35 pipes -> 2 boilers, 5 steam engines, 3 chest;  back to gc
+small power	feed 300 coal to power	8 assembler
+place assemblers: wire, gear, gear, belt, inserter, 2 labs - > power poles, gc		
+red science		>80 inserters -> miners, > 300 belt -> miners
