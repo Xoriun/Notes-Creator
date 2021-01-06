@@ -89,6 +89,11 @@ public class Gui {
 			for (String cell : row)
 				main_panel.add(getCell(cell) );
 		
+//		String url = Gui.class.getResource("").toString().substring(6);
+//		System.out.println(url);
+//		main_panel.add(new JLabel(new ImageIcon("Images\\Destroyed-icon.png") ) );
+		
+		
 		scrollPane = new JScrollPane(main_panel,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -115,8 +120,8 @@ public class Gui {
 			}
 			else
 			{
-				File file = new File("src\\Images\\" + Logic.getWikiName(str) + ".png");
-				panel.add(new JLabel(new ImageIcon(new ImageIcon("src\\Images\\" + (file.exists() ? Logic.getWikiName(str) : "Destroyed-icon") + ".png").getImage().getScaledInstance(30, 30, Image.SCALE_DEFAULT) ) ) );
+				File file = new File("Images\\" + Logic.getWikiName(str) + ".png");
+				panel.add(new JLabel(new ImageIcon(new ImageIcon("Images\\" + (file.exists() ? Logic.getWikiName(str) : "Destroyed-icon") + ".png").getImage().getScaledInstance(30, 30, Image.SCALE_DEFAULT) ) ) );
 			}
 			text = !text;
 		}
