@@ -16,3 +16,4 @@ burner (16/6/24)		2 edrill, 1 assembler
 small power	feed 300 coal to power	8 assembler
 place assemblers: wire, gear, gear, belt, inserter, 2 labs - > power poles, gc		
 red science		>80 inserters -> miners, > 300 belt -> miners
+#Furnace:Gear:b:l#
