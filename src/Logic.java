@@ -133,6 +133,7 @@ public class Logic implements ActionListener
 			case "Power_pole": return "Small_electric_pole";
 			case "Gc": return "electronic_circuit";
 			case "Red_inserter": return "Long-handed_inserter";
+			case "Medium_power_pole": return "Medium_electric_pole";
 			default:
 				return str;
 		}
