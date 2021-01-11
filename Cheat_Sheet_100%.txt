@@ -1,0 +1,26 @@
+﻿build;todo;craft
+---Burnercity---;;
+;mine 1 coal rock;3 #Gear# 4 #Stone_furnace#
+1 #B_miner# #Furnace:Iron:c:c#;;1 #B_miner#
+1 #B_miner# #Furnace:Iron:c:c#;;
+ ;get 300 #Stone#;
+2 #Furnace:Copper:c:c#;mine 46 #Copper_ore#;10 #Red_science#, 1 #Lab#, 1 #Steam_engine#, 1#Power_pole#
+;mine 1 #Furnace:Copper:c:c#;
+tiny power;;
+research;get #Wood# (to 200);1 #Assembler#
+;unbind crafting keys;all #Wire#, all#Power_pole#, 9 #B_miner#
+#B_miner# (5/2/4);;10 #Gear#, 6 #Gc# -> 2 #Assembler#
+2 #Assembler#: #Furnace# -> #Wire#, #Gear#, #B_miner# -> #Gc#;;#B_miner#
+#B_miner# (16/6/24);;2 #E_miner#, 1 #Assembler#
+2 #E_miner# + 1 #Assembler:Furnace:c:c#;;5 #Burner_inserter#, 35 #Pipe# -> 2 #Boiler#, 5 #Steam_engine#, 3 #Iron_chest#,  back to #Gc#
+small power;feed 300 #Coal# to power;8 #Assembler#
+place #Assembler# for #Wire#,  #Gear#, #Gear#, #Belt#, #Inserter#, 2 #Lab# ->#Power_pole#, #Gc#;;
+#Red_science#;if #Inserter#, #Belt# done -> #E_miner#;80 #Inserter#, 300 #Belt#
+---starter science---;;
+place 1st bp;;
+half #Iron# lane;get 300 #Copper#, put rest to #Red_science#;#E_miner#, 10 #Iron_chest#
+;remove #Assembler# from burner city;
+place #Assembler# until #Belt#, 1 #Gc#, 1 spare in gap;feed #Copper# and #Iron# to #Assembler:Gc:c:c#;Assembler
+place #Assembler# for #Inserter# and 2 #Gc#;;#Red_inserter# for #Assembler:Gc:c:c# -> #Assembler#
+#Assembler# for #E_miner#, #Pipe#, 2 spare in gap and #Iron_chest:Gc:c:c#;;#E_miner#, #Splitter#
+complete 1st #Iron#, #Iron_chest:Iron:c:c#;refuel power;

@@ -1,15 +1,33 @@
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
+
+import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
 public class Logic implements ActionListener
 {
 	Gui gui;
-	public static ArrayList<String[]> content;
+	public static String[][] content;
 	
 	public Logic()
 	{
@@ -20,7 +38,7 @@ public class Logic implements ActionListener
 	
 	public static void getContentFromFile(String file)
 	{
-		content = new ArrayList<String[]>();
+		ArrayList<String[]> content_list = new ArrayList<String[]>();
 		BufferedReader reader;
 		try {
 			reader = new BufferedReader(new FileReader(file) );
@@ -32,7 +50,7 @@ public class Logic implements ActionListener
 		String lineS;
 		try {
 			if ( (lineS = reader.readLine() ) != null)
-				headerS = lineS.substring(3);
+				headerS = lineS.substring(lineS.startsWith("ï") ? 3 : 0);
 			else
 			{
 				reader.close();
@@ -45,7 +63,7 @@ public class Logic implements ActionListener
 		}
 		
 		String[] header = headerS.split(";");
-		content.add(header);
+		content_list.add(header);
 		int length = header.length;
 		String[] line;
 		
@@ -71,10 +89,17 @@ public class Logic implements ActionListener
 					line = dummy;
 				}
 				
-				content.add(line);
+				content_list.add(line);
 			}
 			
+			content = content_list.toArray(new String[content_list.size() ][content_list.get(0).length] );
 			reader.close();
+			for (String[] row : content)
+			{
+				for (String cell : row)
+					System.out.print(cell + ";");
+				System.out.println();
+			}
 		}
 		catch (IOException e)
 		{
@@ -90,6 +115,7 @@ public class Logic implements ActionListener
 			case "B_miner": return "Burner_mining_drill";
 			case "Gear": return "Iron_gear_wheel";
 			case "Belt": return "Transport_belt";
+			case "Ug_belt": return "Underground_belt";
 			case "Wire": return "Copper_cable";
 			case "Plastic": return "Plastic_bar";
 			case "Rail": return "Straight_rail";
@@ -106,6 +132,7 @@ public class Logic implements ActionListener
 			case "Assembler": return "Assembling_machine_1";
 			case "Power_pole": return "Small_electric_pole";
 			case "Gc": return "electronic_circuit";
+			case "Red_inserter": return "Long-handed_inserter";
 			default:
 				return str;
 		}
@@ -120,11 +147,139 @@ public class Logic implements ActionListener
 		{
 			case "open":
 				gui.getFile();
+				refreshView();
+				break;
 			case "reload":
-				getContentFromFile(gui.fileDirectory + gui.fileName);
-				gui.draw(content);
+				gui.title_chaged = false;
+				refreshView();
 				break;
 		}
+	}
+	
+	public void refreshView()
+	{
+		getContentFromFile(gui.fileDirectory + gui.fileName);
+		gui.draw(content);
+	}
+	
+	public JPanel[][] fillGridBagPanel(JPanel sub_panel, GridBagConstraints gbc, JPanel[][] panels)
+	{
+		int row = gui.row, col = 0;
+		int maxRowLength = content[0].length;
+		ArrayList<JPanel[]> panels_list = new ArrayList<JPanel[]>();
+		GridBagLayout layout = new GridBagLayout();
+		System.out.println(content[row][0] + ", " + row);
+		
+		sub_panel.setLayout(layout);
+		gbc.fill = GridBagConstraints.BOTH;
+		gbc.gridy = 0;
+		
+		String title = "";
+		if (content[row][0].startsWith("---") && content[row][0].endsWith("---") )
+		{
+			title = content[row][0].substring(3, content[row][0].length() - 3);
+			Border border = BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED), title, TitledBorder.LEFT, TitledBorder.TOP);
+			sub_panel.setBorder(border);
+			row ++;
+		}
+		
+		for (;row < content.length; row ++)
+		{
+			System.out.println(row + ", " + gbc.gridy + ": " + content[row][0] + "; " + content[row][1] + "; " + content[row][2] );
+			if (content[row][0].startsWith("---") && content[row][0].endsWith("---") )
+				break;
+			col = 0;
+			JPanel[] panel_row = new JPanel[maxRowLength];
+			System.out.print("   ");
+			for (String cell_str : content[row] )
+			{
+				System.out.print(cell_str + "; ");
+				gbc.gridx = col;
+				JPanel cell = getCellPanel(cell_str.replace("->", "⇨"), col == 0, row == gui.row || (row == gui.row + 1 && !title.equals("") ) );
+				sub_panel.add(cell, gbc);
+				panel_row[col] = cell; 
+				col ++;
+			}
+			System.out.println();
+			panels_list.add(panel_row);
+			gbc.gridy ++;
+		}
+		
+		gui.row = row;
+		return panels_list.toArray(new JPanel[panels_list.size() ][panels_list.get(0).length] );
+	}
+	
+	public JPanel getCellPanel(String cell, boolean left_border, boolean top_border)
+	{
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS) );
+		String[] cells = cell.split("#");
+		
+		boolean text = true;
+		for (String str : cells)
+		{
+			if (text)
+			{
+				JLabel label = new JLabel(str);
+				label.setFont(gui.font);
+				panel.add(label);
+			}
+			else
+			{
+				if (str.contains(":") )
+				{
+					// Layered Images
+					String[] images = str.split(":");
+					if (images.length != 4) throw new RuntimeException("Error while parsing layered images: " + str + "! There have to be 2 images and 2 poition tags (t/b/c and l/r/c)");
+					try
+					{
+						// preparing Files
+						File file_bG = new File("Images\\" + Logic.getWikiName(images[0] ) + ".png");
+						File file_fG = new File("Images\\" + Logic.getWikiName(images[1] ) + ".png");
+						File error = new File("Images\\Destroyed-icon.png");
+						
+						// preparing BufferedImages
+						final BufferedImage backGround = ImageIO.read(file_bG.exists() ? file_bG : error);
+						final BufferedImage foreGround = ImageIO.read(file_fG.exists() ? file_fG : error);
+						final BufferedImage layerDot = ImageIO.read(new File("Images\\Layer_dot.png")); // Black layer between images for better visibility
+						final BufferedImage scaled = new BufferedImage(Gui.ImageSize, Gui.ImageSize, BufferedImage.TYPE_INT_ARGB); // empty BufferedImage to draw on
+						Graphics g = scaled.getGraphics();
+						
+						// drawing images
+						g.drawImage(backGround, 0, 0, scaled.getWidth(), scaled.getHeight(), null);
+						int dotImageSize = 2 * Gui.ImageSize / 3;
+						int smallImageSize = 3 * Gui.ImageSize / 5;
+						int x_dot = images[2].equals("t") ? 0 : (Gui.ImageSize - dotImageSize) / (images[2].equals("c") ? 2 : 1);
+						int y_dot = images[3].equals("l") ? 0 : (Gui.ImageSize - dotImageSize) / (images[3].equals("c") ? 2 : 1);
+						int x = images[2].equals("t") ? 0 : (Gui.ImageSize - smallImageSize) / (images[2].equals("c") ? 2 : 1);
+						int y = images[3].equals("l") ? 0 : (Gui.ImageSize - smallImageSize) / (images[3].equals("c") ? 2 : 1);
+						g.drawImage(layerDot, x_dot, y_dot, dotImageSize, dotImageSize, null);
+						g.drawImage(foreGround, x, y, smallImageSize, smallImageSize, null);
+						
+						
+						panel.add(new JLabel(new ImageIcon(scaled) ) );
+					} catch (MalformedURLException e)
+					{
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IOException e)
+					{
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				else
+				{
+					// normal Image
+					File file = new File("Images\\" + Logic.getWikiName(str) + ".png");
+					panel.add(new JLabel(new ImageIcon(new ImageIcon("Images\\" + (file.exists() ? Logic.getWikiName(str) : "Destroyed-icon") + ".png").getImage().getScaledInstance(Gui.ImageSize, Gui.ImageSize, Image.SCALE_DEFAULT) ) ) );
+				}
+			}
+			text = !text;
+		}
+		
+		panel.setBorder(BorderFactory.createMatteBorder(top_border ? 1 : 0, left_border ? 1 : 0, 1, 1, Color.BLACK) );
+		return panel;
 	}
 	
 	public static void main(String[] args)
