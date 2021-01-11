@@ -94,12 +94,6 @@ public class Logic implements ActionListener
 			
 			content = content_list.toArray(new String[content_list.size() ][content_list.get(0).length] );
 			reader.close();
-			for (String[] row : content)
-			{
-				for (String cell : row)
-					System.out.print(cell + ";");
-				System.out.println();
-			}
 		}
 		catch (IOException e)
 		{
@@ -169,7 +163,6 @@ public class Logic implements ActionListener
 		int maxRowLength = content[0].length;
 		ArrayList<JPanel[]> panels_list = new ArrayList<JPanel[]>();
 		GridBagLayout layout = new GridBagLayout();
-		System.out.println(content[row][0] + ", " + row);
 		
 		sub_panel.setLayout(layout);
 		gbc.fill = GridBagConstraints.BOTH;
@@ -186,22 +179,18 @@ public class Logic implements ActionListener
 		
 		for (;row < content.length; row ++)
 		{
-			System.out.println(row + ", " + gbc.gridy + ": " + content[row][0] + "; " + content[row][1] + "; " + content[row][2] );
 			if (content[row][0].startsWith("---") && content[row][0].endsWith("---") )
 				break;
 			col = 0;
 			JPanel[] panel_row = new JPanel[maxRowLength];
-			System.out.print("   ");
 			for (String cell_str : content[row] )
 			{
-				System.out.print(cell_str + "; ");
 				gbc.gridx = col;
 				JPanel cell = getCellPanel(cell_str.replace("->", "⇨"), col == 0, row == gui.row || (row == gui.row + 1 && !title.equals("") ) );
 				sub_panel.add(cell, gbc);
 				panel_row[col] = cell; 
 				col ++;
 			}
-			System.out.println();
 			panels_list.add(panel_row);
 			gbc.gridy ++;
 		}

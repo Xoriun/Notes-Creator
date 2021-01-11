@@ -128,8 +128,6 @@ public class Gui {
 				if (maxWidths[col] < sub_panel[0][col].getWidth() )
 					maxWidths[col] = sub_panel[0][col].getWidth();
 		
-		for (int i : maxWidths) System.out.print(i + ", ");
-		
 		for (int subpanel = 0; subpanel < subpanels.size(); subpanel ++)
 		{
 			JPanel sub_panel = subpanels.get(subpanel);
