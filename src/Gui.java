@@ -88,8 +88,8 @@ public class Gui {
 		Dimension old_dimension = scrollPane.getSize();
 		window.remove(scrollPane);
 		
-		main_panel = new JPanel();
-		main_panel.setLayout(new BoxLayout(main_panel, BoxLayout.Y_AXIS) );
+		JPanel content_pane = new JPanel();
+		content_pane.setLayout(new BoxLayout(content_pane, BoxLayout.Y_AXIS) );
 		
 		ArrayList<JPanel> subpanels = new ArrayList<JPanel>();
 		ArrayList<GridBagConstraints> constraints = new ArrayList<GridBagConstraints>();
@@ -109,9 +109,19 @@ public class Gui {
 				constraints.add(gbc);
 				panels = logic.fillGridBagPanel(sub_panel, gbc, panels);
 				content_list.add(panels);				
-				main_panel.add(sub_panel);
+				content_pane.add(sub_panel);
 			}
 		}
+		
+		main_panel = new JPanel();
+		main_panel.setLayout(new BorderLayout() );
+		JLabel space1 = new JLabel();
+		JLabel space2 = new JLabel();
+		space1.setPreferredSize(new Dimension(40, 0) );
+		space2.setPreferredSize(new Dimension(40, 0) );
+		main_panel.add(space1, BorderLayout.WEST);
+		main_panel.add(content_pane, BorderLayout.CENTER);
+		main_panel.add(space2, BorderLayout.EAST);
 		
 		scrollPane = new JScrollPane(main_panel,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
