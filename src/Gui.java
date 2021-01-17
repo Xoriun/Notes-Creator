@@ -1,4 +1,5 @@
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Font;
@@ -7,6 +8,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -16,6 +19,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.border.MatteBorder;
+import javax.swing.border.TitledBorder;
 
 public class Gui {
 	
@@ -34,21 +39,32 @@ public class Gui {
 	public int row = 0;
 	
 	public boolean title_chaged = true;
+	public boolean dark_mode = false;
+	
+	public Color textColor = Color.BLACK;
+	public Color borderColor = Color.BLACK;
+	public Color backgroundColor = Color.WHITE;
+	
+	public Set<JLabel> labels = new HashSet<JLabel>();
+	public ArrayList<JPanel> subpanels;
+	public Set<JPanel> cells = new HashSet<JPanel>();
 	
 	public Gui(Logic logic)
 	{
 		this.logic = logic;
 		
 		JToolBar bar = new JToolBar();
-		//JMenu open = new JMenu("Open"), reload = new JMenu("Reload");
-		JButton open = new JButton("Open"), reload = new JButton("Reload");
+		JButton open = new JButton("Open"), reload = new JButton("Reload"), dark_light_mode = new JButton("Change lighting mode");
 		open.addActionListener(logic);
 		open.setActionCommand("open");
 		reload.addActionListener(logic);
 		reload.setActionCommand("reload");
+		dark_light_mode.addActionListener(logic);
+		dark_light_mode.setActionCommand("change_lighting_mode");
 		
 		bar.add(open);
 		bar.add(reload);
+		bar.add(dark_light_mode);
 		bar.setFloatable(false);
 		
 		main_panel = new JPanel();
@@ -88,10 +104,11 @@ public class Gui {
 		Dimension old_dimension = scrollPane.getSize();
 		window.remove(scrollPane);
 		
-		JPanel content_pane = new JPanel();
-		content_pane.setLayout(new BoxLayout(content_pane, BoxLayout.Y_AXIS) );
+		main_panel = new JPanel();
+		main_panel.setLayout(new BoxLayout(main_panel, BoxLayout.Y_AXIS) );
+		main_panel.setBackground(backgroundColor);
 		
-		ArrayList<JPanel> subpanels = new ArrayList<JPanel>();
+		subpanels = new ArrayList<JPanel>();
 		ArrayList<GridBagConstraints> constraints = new ArrayList<GridBagConstraints>();
 		ArrayList<JPanel[][]> content_list = new ArrayList<JPanel[][]>();
 		int maxWidth = content[0].length;
@@ -102,61 +119,77 @@ public class Gui {
 			
 			while (row < content.length)
 			{
-				JPanel sub_panel = new JPanel(); 
+				JPanel sub_panel = new JPanel();
+				sub_panel.setOpaque(false);
 				GridBagConstraints gbc = new GridBagConstraints();
-				JPanel[][] panels = new JPanel[0][0];
 				subpanels.add(sub_panel);
 				constraints.add(gbc);
-				panels = logic.fillGridBagPanel(sub_panel, gbc, panels);
+				JPanel[][] panels = logic.fillGridBagPanel(sub_panel, gbc);
 				content_list.add(panels);				
-				content_pane.add(sub_panel);
+				main_panel.add(sub_panel);
 			}
 		}
-		
-		main_panel = new JPanel();
-		main_panel.setLayout(new BorderLayout() );
-		JLabel space1 = new JLabel();
-		JLabel space2 = new JLabel();
-		space1.setPreferredSize(new Dimension(40, 0) );
-		space2.setPreferredSize(new Dimension(40, 0) );
-		main_panel.add(space1, BorderLayout.WEST);
-		main_panel.add(content_pane, BorderLayout.CENTER);
-		main_panel.add(space2, BorderLayout.EAST);
 		
 		scrollPane = new JScrollPane(main_panel,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPane.setBackground(backgroundColor);
+		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
 		window.add(scrollPane);
 		window.pack();
 		window.setVisible(true);
 		window.repaint();
 		
+		// determining the maximal width for each column
 		int[] maxWidths = new int[maxWidth];
 		for (JPanel[][] sub_panel : content_list)
 			for (int col = 0; col < maxWidth; col ++)
 				if (maxWidths[col] < sub_panel[0][col].getWidth() )
 					maxWidths[col] = sub_panel[0][col].getWidth();
 		
+		// adding a panel with the corresponding width to each column
 		for (int subpanel = 0; subpanel < subpanels.size(); subpanel ++)
 		{
 			JPanel sub_panel = subpanels.get(subpanel);
 			GridBagConstraints gbc = constraints.get(subpanel);
-			gbc.gridy ++;
 			for (int col = 0; col < maxWidth; col ++)
 			{
 				gbc.gridx = col;
 				JLabel label = new JLabel();
 				label.setPreferredSize(new Dimension(maxWidths[col], 0) );
+				label.setOpaque(false);
 				sub_panel.add(label, gbc);
 			}
 		}
+		
+		window.pack();
+		window.setVisible(true);
+		window.repaint();
 		
 		scrollPane.setPreferredSize(title_chaged ? new Dimension(scrollPane.getWidth() + 100, scrollPane.getHeight() ) : old_dimension);
 		
 		window.pack();
 		window.setVisible(true);
 		window.repaint();
+	}
+	
+	public void changeLightingMode(boolean dark_mode)
+	{
+		backgroundColor = dark_mode ? Color.BLACK      : Color.WHITE;
+		textColor       = dark_mode ? Color.LIGHT_GRAY : Color.BLACK;
+		borderColor     = dark_mode ? Color.DARK_GRAY  : Color.BLACK;
+		
+		window.setBackground(backgroundColor);
+		scrollPane.setBackground(backgroundColor);
+		main_panel.setBackground(backgroundColor);
+		
+		for (JLabel label : labels) label.setForeground(textColor);
+		for (JPanel panel : subpanels)
+			if (panel.getBorder() != null)
+				((TitledBorder) panel.getBorder() ).setTitleColor(textColor);
+		for (JPanel cell : cells)
+			cell.setBorder(new MatteBorder( ((MatteBorder) cell.getBorder() ).getBorderInsets(), borderColor) );
 	}
 	
 	public GridBagLayout getSubPanel()

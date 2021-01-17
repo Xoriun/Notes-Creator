@@ -1,4 +1,3 @@
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -20,7 +19,6 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
@@ -28,6 +26,7 @@ public class Logic implements ActionListener
 {
 	Gui gui;
 	public static String[][] content;
+	public static int maxRowLength;
 	
 	public Logic()
 	{
@@ -81,18 +80,17 @@ public class Logic implements ActionListener
 					String[] dummy = new String[length];
 					for (int i = 0; i < length; i ++)
 						if (i < line.length)
-							dummy[i]= line[i];
+							dummy[i] = line[i];
 						else
-						{
 							dummy[i] = "";
-						}
 					line = dummy;
 				}
 				
 				content_list.add(line);
 			}
 			
-			content = content_list.toArray(new String[content_list.size() ][content_list.get(0).length] );
+			maxRowLength = content_list.get(0).length;
+			content = content_list.toArray(new String[content_list.size() ][maxRowLength] );
 			reader.close();
 		}
 		catch (IOException e)
@@ -107,6 +105,7 @@ public class Logic implements ActionListener
 		{
 			case "Belt": return "Transport_belt";
 			case "Ug_belt": return "Underground_belt";
+			case "Ug_pipe": return "Pipe_to_ground";
 			 
 			case "Red_inserter": return "Long-handed_inserter";
 			
@@ -138,7 +137,7 @@ public class Logic implements ActionListener
 			case "Frame": case "Robot_frame": return "Flying_robot_frame";
 			
 			case "Oil": return "Crude_oil";
-			case "Petroleum": return "Petrolem_gas";
+			case "Petroleum": return "Petroleum_gas";
 			case "Advanced_oil": return "Advanced_oil_processing";
 			case "Lub": return "Lubricant";
 			
@@ -147,6 +146,10 @@ public class Logic implements ActionListener
 			case "Blue_science": return "Chemical_science_pack";
 			case "Purple_science": return "Productivity_science_pack";
 			case "Yellow_science": return "Utility_science_pack";
+			
+			case "R_logistics": return "Logistics_(research)";
+			case "R_fast_inserter": return "Fast_inserter_(research)";
+			case "R_steel_axe": return "Steel_axe_(research)";
 			default:
 				return str;
 		}
@@ -167,6 +170,9 @@ public class Logic implements ActionListener
 				gui.title_chaged = false;
 				refreshView();
 				break;
+			case "change_lighting_mode":
+				gui.changeLightingMode(gui.dark_mode = !gui.dark_mode);
+				break;
 		}
 	}
 	
@@ -176,10 +182,10 @@ public class Logic implements ActionListener
 		gui.draw(content);
 	}
 	
-	public JPanel[][] fillGridBagPanel(JPanel sub_panel, GridBagConstraints gbc, JPanel[][] panels)
+	public JPanel[][] fillGridBagPanel(JPanel sub_panel, GridBagConstraints gbc)
 	{
 		int row = gui.row, col = 0;
-		int maxRowLength = content[0].length;
+		
 		ArrayList<JPanel[]> panels_list = new ArrayList<JPanel[]>();
 		GridBagLayout layout = new GridBagLayout();
 		
@@ -191,13 +197,16 @@ public class Logic implements ActionListener
 		if (content[row][0].startsWith("---") && content[row][0].endsWith("---") )
 		{
 			title = content[row][0].substring(3, content[row][0].length() - 3);
-			Border border = BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED), title, TitledBorder.LEFT, TitledBorder.TOP);
+			TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED), title, TitledBorder.LEFT, TitledBorder.TOP);
+			border.setTitleColor(gui.textColor);
 			sub_panel.setBorder(border);
 			row ++;
 		}
 		
 		for (;row < content.length; row ++)
 		{
+			if (content[row][0].equals("") && content[row][1].equals("") && content[row][2].equals("") )
+				continue;
 			if (content[row][0].startsWith("---") && content[row][0].endsWith("---") )
 				break;
 			col = 0;
@@ -205,7 +214,8 @@ public class Logic implements ActionListener
 			for (String cell_str : content[row] )
 			{
 				gbc.gridx = col;
-				JPanel cell = getCellPanel(cell_str.replace("->", "⇨"), col == 0, row == gui.row || (row == gui.row + 1 && !title.equals("") ) );
+				JPanel cell = getCellPanel(cell_str.replace("\\n", "\n").replace("->", "⇨"), col == 0, row == gui.row || (row == gui.row + 1 && !title.equals("") ) );
+				cell.setOpaque(false);
 				sub_panel.add(cell, gbc);
 				panel_row[col] = cell; 
 				col ++;
@@ -220,75 +230,90 @@ public class Logic implements ActionListener
 	
 	public JPanel getCellPanel(String cell, boolean left_border, boolean top_border)
 	{
-		JPanel panel = new JPanel();
-		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS) );
-		String[] cells = cell.split("#");
+		JPanel v_panel = new JPanel();
+		v_panel.setLayout(new BoxLayout(v_panel, BoxLayout.Y_AXIS) );
+		boolean rowspan = cell.contains("\n");
 		
-		boolean text = true;
-		for (String str : cells)
+		for (String row : cell.split("\n") )
 		{
-			if (text)
+			JPanel h_panel = new JPanel();
+			h_panel.setLayout(new BoxLayout(h_panel, BoxLayout.X_AXIS) );
+			boolean text = true;
+			for (String str : row.split("#") )
 			{
-				JLabel label = new JLabel(str);
-				label.setFont(gui.font);
-				panel.add(label);
-			}
-			else
-			{
-				if (str.contains(":") )
+				if (text)
 				{
-					// Layered Images
-					String[] images = str.split(":");
-					if (images.length != 4) throw new RuntimeException("Error while parsing layered images: " + str + "! There have to be 2 images and 2 poition tags (t/b/c and l/r/c)");
-					try
-					{
-						// preparing Files
-						File file_bG = new File("Images\\" + Logic.getWikiName(images[0] ) + ".png");
-						File file_fG = new File("Images\\" + Logic.getWikiName(images[1] ) + ".png");
-						File error = new File("Images\\Destroyed-icon.png");
-						
-						// preparing BufferedImages
-						final BufferedImage backGround = ImageIO.read(file_bG.exists() ? file_bG : error);
-						final BufferedImage foreGround = ImageIO.read(file_fG.exists() ? file_fG : error);
-						final BufferedImage layerDot = ImageIO.read(new File("Images\\Layer_dot.png")); // Black layer between images for better visibility
-						final BufferedImage scaled = new BufferedImage(Gui.ImageSize, Gui.ImageSize, BufferedImage.TYPE_INT_ARGB); // empty BufferedImage to draw on
-						Graphics g = scaled.getGraphics();
-						
-						// drawing images
-						g.drawImage(backGround, 0, 0, scaled.getWidth(), scaled.getHeight(), null);
-						int dotImageSize = 2 * Gui.ImageSize / 3;
-						int smallImageSize = 3 * Gui.ImageSize / 5;
-						int x_dot = images[2].equals("t") ? 0 : (Gui.ImageSize - dotImageSize) / (images[2].equals("c") ? 2 : 1);
-						int y_dot = images[3].equals("l") ? 0 : (Gui.ImageSize - dotImageSize) / (images[3].equals("c") ? 2 : 1);
-						int x = images[2].equals("t") ? 0 : (Gui.ImageSize - smallImageSize) / (images[2].equals("c") ? 2 : 1);
-						int y = images[3].equals("l") ? 0 : (Gui.ImageSize - smallImageSize) / (images[3].equals("c") ? 2 : 1);
-						g.drawImage(layerDot, x_dot, y_dot, dotImageSize, dotImageSize, null);
-						g.drawImage(foreGround, x, y, smallImageSize, smallImageSize, null);
-						
-						
-						panel.add(new JLabel(new ImageIcon(scaled) ) );
-					} catch (MalformedURLException e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (IOException e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					JLabel label = new JLabel(str);
+					label.setFont(gui.font);
+					label.setForeground(gui.textColor);
+					gui.labels.add(label);
+					h_panel.add(label);
 				}
 				else
 				{
-					// normal Image
-					File file = new File("Images\\" + Logic.getWikiName(str) + ".png");
-					panel.add(new JLabel(new ImageIcon(new ImageIcon("Images\\" + (file.exists() ? Logic.getWikiName(str) : "Destroyed-icon") + ".png").getImage().getScaledInstance(Gui.ImageSize, Gui.ImageSize, Image.SCALE_DEFAULT) ) ) );
+					if (str.contains(":") )
+					{
+						// Layered Images
+						String[] images = str.split(":");
+						if (images.length != 4) throw new RuntimeException("Error while parsing layered images: " + str + "! There have to be 2 images and 2 poition tags (t/b/c and l/r/c)");
+						try
+						{
+							// preparing Files
+							File file_bG = new File("Images\\" + Logic.getWikiName(images[0] ) + ".png");
+							File file_fG = new File("Images\\" + Logic.getWikiName(images[1] ) + ".png");
+							File error = new File("Images\\Destroyed-icon.png");
+							
+							// preparing BufferedImages
+							final BufferedImage backGround = ImageIO.read(file_bG.exists() ? file_bG : error);
+							final BufferedImage foreGround = ImageIO.read(file_fG.exists() ? file_fG : error);
+							final BufferedImage layerDot = ImageIO.read(new File("Images\\Layer_dot.png")); // Black layer between images for better visibility
+							final BufferedImage scaled = new BufferedImage(Gui.ImageSize, Gui.ImageSize, BufferedImage.TYPE_INT_ARGB); // empty BufferedImage to draw on
+							Graphics g = scaled.getGraphics();
+							
+							// drawing images
+							g.drawImage(backGround, 0, 0, scaled.getWidth(), scaled.getHeight(), null);
+							int dotImageSize = 2 * Gui.ImageSize / 3;
+							int smallImageSize = 3 * Gui.ImageSize / 5;
+							int x_dot = images[2].equals("t") ? 0 : (Gui.ImageSize - dotImageSize) / (images[2].equals("c") ? 2 : 1);
+							int y_dot = images[3].equals("l") ? 0 : (Gui.ImageSize - dotImageSize) / (images[3].equals("c") ? 2 : 1);
+							int x = images[2].equals("t") ? 0 : (Gui.ImageSize - smallImageSize) / (images[2].equals("c") ? 2 : 1);
+							int y = images[3].equals("l") ? 0 : (Gui.ImageSize - smallImageSize) / (images[3].equals("c") ? 2 : 1);
+							g.drawImage(layerDot, x_dot, y_dot, dotImageSize, dotImageSize, null);
+							g.drawImage(foreGround, x, y, smallImageSize, smallImageSize, null);
+							
+							
+							h_panel.add(new JLabel(new ImageIcon(scaled) ) );
+						} catch (MalformedURLException e)
+						{
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (IOException e)
+						{
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					else
+					{
+						// normal Image
+						File file = new File("Images\\" + Logic.getWikiName(str) + ".png");
+						h_panel.add(new JLabel(new ImageIcon(new ImageIcon("Images\\" + (file.exists() ? Logic.getWikiName(str) : "Destroyed-icon") + ".png").getImage().getScaledInstance(Gui.ImageSize, Gui.ImageSize, Image.SCALE_DEFAULT) ) ) );
+					}
 				}
+				text = !text;
 			}
-			text = !text;
+			h_panel.setOpaque(false);
+			
+			if (rowspan)
+				v_panel.add(h_panel);
+			else
+				v_panel = h_panel;
 		}
 		
-		panel.setBorder(BorderFactory.createMatteBorder(top_border ? 1 : 0, left_border ? 1 : 0, 1, 1, Color.BLACK) );
-		return panel;
+		v_panel.setBorder(BorderFactory.createMatteBorder(top_border ? 1 : 0, left_border ? 1 : 0, 1, 1, gui.borderColor) );
+		gui.cells.add(v_panel);
+		v_panel.setOpaque(false);
+		return v_panel;
 	}
 	
 	public static void main(String[] args)

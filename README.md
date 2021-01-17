@@ -17,3 +17,5 @@ If an image was not found an error image will be displayed instead.
 For layering images ontop of each other (simialar to Alt-Mode in Factorio), use #Background_image:Foreground_image:vertical_alignment:horizontal_alignment#. vertical_alignment can be t/c/b (top center/buttom), horizontal_alignment can be l/c/r (left/center/right)
 
 To start a subsection, put the name of the subsection in a new line in the first cell and put --- before and after it.
+
+To start a new line within a cell, type \n and DO NOT add a linebreak in the textfile.
