@@ -7,6 +7,7 @@ import java.awt.Dialog.ModalityType;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.TextField;
 import java.awt.event.MouseEvent;
@@ -49,7 +50,8 @@ public class Logic
 	{
 		gui = new Gui(this, getColorSettings() );
 		getContentFromFile(gui.fileDirectory + gui.fileName);
-		gui.draw(content);
+		gui.arrangeContent(content);
+		gui.draw();
 	}
 	
 	public ColorSetting[] getColorSettings()
@@ -162,18 +164,13 @@ public class Logic
 		}
 	}
 	
-	public void refreshView()
-	{
-		getContentFromFile(gui.fileDirectory + gui.fileName);
-		gui.draw(content);
-	}
-	
 	public JPanel[][] fillNotesSubPanel(JPanel sub_panel, GridBagConstraints gbc)
 	{
 		int row = gui.row, col = 0;
+		sub_panel.removeAll();
 		sub_panel.setAlignmentY(Component.LEFT_ALIGNMENT);
 		
-		ArrayList<JPanel[]> panels_list = new ArrayList<JPanel[]>();
+		ArrayList<JPanel[]> panelsList = new ArrayList<JPanel[]>();
 
 		gbc.fill = GridBagConstraints.BOTH;
 		gbc.gridy = 0;
@@ -194,27 +191,111 @@ public class Logic
 				continue;
 			if (content[row][0].startsWith("---") && content[row][0].endsWith("---") )
 				break;
-			col = 0;
-			JPanel[] panel_row = new JPanel[maxRowLength];
+			
+			JPanel[] panel_row = new JPanel[maxRowLength + 1];
+			gbc.gridx = col = 0;
+			JPanel addRemoverowControls = getAddRemoveRowControl(row, false);
+			sub_panel.add(addRemoverowControls, gbc);
+			panel_row[col] = addRemoverowControls;
+			
+			col ++;
+			
 			for (String cell_str : content[row] )
 			{
 				gbc.gridx = col;
 				JPanel cell = new JPanel();
-				boolean leftBorder  = col == 0;
-				boolean topBorder = row == gui.row || (row == gui.row + 1 && !title.equals("") );
+				
+				boolean leftBorder = (col == 1);
+				boolean topBorder  = (row == gui.row || (row == gui.row + 1 && !title.equals("") ) );
+				
 				fillCellPanel(cell, cell_str.replace("\\n", "\n").replace("->", "⇨"), leftBorder, topBorder );
-				cell.addMouseListener(getCellEdit(cell, leftBorder, topBorder, row, col) );
+				cell.addMouseListener(getCellEdit(cell, leftBorder, topBorder, row, col - 1) );
 				cell.setOpaque(false);
 				sub_panel.add(cell, gbc);
-				panel_row[col] = cell; 
+				panel_row[col] = cell;
 				col ++;
 			}
-			panels_list.add(panel_row);
+			panelsList.add(panel_row);
 			gbc.gridy ++;
 		}
+		gbc.gridx = col = 0;
+		JPanel addRemoverowControls = getAddRemoveRowControl(row, true);
+		sub_panel.add(addRemoverowControls, gbc);
+		panelsList.add(new JPanel[] {addRemoverowControls} );
 		
 		gui.row = row;
-		return panels_list.toArray(new JPanel[panels_list.size() ][panels_list.get(0).length] );
+		return panelsList.toArray(new JPanel[panelsList.size() ][panelsList.get(0).length] );
+	}
+	
+	public JPanel getAddRemoveRowControl(int currentRow, boolean onlyAdd)
+	{
+		JPanel control = new JPanel(new GridLayout(onlyAdd ? 1 : 2, 2) );
+		Color color = Gui.inEditMode ? gui.current_custom_color_setting.text : gui.current_custom_color_setting.background;
+		
+		JLabel add = new JLabel(" + ");
+		add.setForeground(color);
+		add.addMouseListener(new MouseInputAdapter() {
+																@Override
+																public void mouseClicked(MouseEvent e)
+																{
+																	if (Gui.inEditMode)
+																	{
+																		unsavedChanges = true;
+																		addLine(currentRow);
+																		gui.arrangeContent(content);
+																		gui.draw();
+																	}
+																} } );
+		
+		gui.addRemoveRowControlsList.add(add);
+		control.add(new JLabel());
+		control.add(add);
+		
+		if (! onlyAdd)
+		{
+			JLabel remove = new JLabel(" - ");
+			remove.setForeground(color);
+			remove.addMouseListener(new MouseInputAdapter() {
+																	@Override
+																	public void mouseClicked(MouseEvent e)
+																	{
+																		if (Gui.inEditMode)
+																		{
+																			unsavedChanges = true;
+																			removeLine(currentRow);
+																			gui.arrangeContent(content);
+																			gui.draw();
+																		}
+																	} } );
+			
+			gui.addRemoveRowControlsList.add(remove);
+			control.add(remove);
+			control.add(new JLabel());
+		}
+		
+		control.setOpaque(false);
+		return control;
+	}
+	
+	public void removeLine(int rowToRemove)
+	{
+		String[][] newContent = new String[content.length - 1][content[0].length];
+		for (int i = 0; i < newContent.length; i ++)
+			newContent[i] = content[i < rowToRemove ? i : i + 1];
+		content = newContent;
+	}
+	
+	public void addLine(int rowToAdd)
+	{
+		String[][] newContent = new String[content.length + 1][content[0].length + 1];
+		String[] newLine = new String[content[0].length];
+		for (int i = 0; i < content[0].length; i ++) newLine[i] = " ";
+		for (int i = 0; i < newContent.length; i ++)
+			if (i == rowToAdd)
+				newContent[i] = newLine;
+			else
+				newContent[i] = content[i < rowToAdd ? i : i - 1];
+		content = newContent;
 	}
 	
 	public void fillCellPanel(JPanel v_panel, String cell, boolean leftBorder, boolean topBorder)

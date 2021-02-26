@@ -6,8 +6,6 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Label;
-import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -29,7 +27,6 @@ import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.MatteBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.MouseInputAdapter;
 
 public class Gui {
 	
@@ -56,6 +53,8 @@ public class Gui {
 	public ArrayList<JPanel> subpanels;
 	public ArrayList<GridBagConstraints> constraints;
 	public Set<JPanel> cells = new HashSet<JPanel>();
+	public ArrayList<JPanel[][]> contentList;
+	public ArrayList<JLabel> addRemoveRowControlsList = new ArrayList<JLabel>();
 	
 	public Gui(Logic logic, ColorSetting[] settings)
 	{
@@ -194,53 +193,22 @@ public class Gui {
 	public void enableEditMode(JMenuItem file_edit)
 	{
 		inEditMode = true;
+		for (JLabel label : addRemoveRowControlsList) label.setForeground(current_custom_color_setting.text);
 		file_edit.setText("View Mode");
-		
-		/** 
-		GridBagConstraints gbc;
-		for (int i = 0; i < subpanels.size(); i ++)
-		{
-			gbc = constraints.get(i);
-			gbc.gridy ++;
-			gbc.gridx = 0;
-			addAddRowButton(subpanels.get(i), gbc);
-		}
-		
-		window.pack();
-		window.repaint();
-		*/
 	}
-	
-	/**
-	public void addAddRowButton(JPanel subpanel, GridBagConstraints gbc)
-	{
-		JLabel button = new JLabel(" + Add Row");
-		button.setForeground(current_custom_color_setting.text);
-		subpanel.add(button, gbc);
-		button.addMouseListener( new MouseInputAdapter() {
-																	@Override
-														      public void mouseClicked(MouseEvent e)
-																	{
-																		gbc.gridy ++;
-																		gbc.gridx = 0;
-																		addAddRowButton(subpanel, gbc);
-																		window.pack();
-																		window.repaint();
-																	}
-																} );
-	}
-	 */
 	
 	public void disableEditMode(JMenuItem file_edit)
 	{
 		inEditMode = false;
+		for (JLabel label : addRemoveRowControlsList) label.setForeground(current_custom_color_setting.background);
 		file_edit.setText("Edit Mode");
 	}
 	
 	public void refreshView()
 	{
 		Logic.getContentFromFile(fileDirectory + fileName);
-		draw(Logic.content);
+		arrangeContent(Logic.content);
+		draw();
 	}
 	
 	public void getFile()
@@ -257,19 +225,11 @@ public class Gui {
 		window.setTitle(new_title);
 	}
 	
-	public void draw(String[][] content)
+	public void arrangeContent(String[][] content)
 	{
-		Dimension old_dimension = scrollPane.getSize();
-		window.remove(scrollPane);
-		
-		main_panel = new JPanel();
-		main_panel.setLayout(new BoxLayout(main_panel, BoxLayout.Y_AXIS) );
-		main_panel.setBackground(current_custom_color_setting.background);
-		
 		subpanels = new ArrayList<JPanel>();
 		constraints = new ArrayList<GridBagConstraints>();
-		ArrayList<JPanel[][]> content_list = new ArrayList<JPanel[][]>();
-		int maxWidth = content[0].length;
+		contentList = new ArrayList<JPanel[][]>();
 		
 		if (content != null)
 		{
@@ -283,10 +243,23 @@ public class Gui {
 				subpanels.add(sub_panel);
 				constraints.add(gbc);
 				JPanel[][] panels = logic.fillNotesSubPanel(sub_panel, gbc);
-				content_list.add(panels);				
-				main_panel.add(sub_panel);
+				contentList.add(panels);			
 			}
 		}
+	}
+	
+	public void draw()
+	{
+		Dimension old_dimension = scrollPane.getSize();
+		window.remove(scrollPane);
+		
+		main_panel = new JPanel();
+		main_panel.setLayout(new BoxLayout(main_panel, BoxLayout.Y_AXIS) );
+		main_panel.setBackground(current_custom_color_setting.background);
+		int maxWidth = Logic.content[0].length;
+		
+		for (JPanel subPanel : subpanels)
+			main_panel.add(subPanel);
 		
 		scrollPane = new JScrollPane(main_panel,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -301,10 +274,10 @@ public class Gui {
 		
 		// determining the maximal width for each column
 		int[] maxWidths = new int[maxWidth];
-		for (JPanel[][] sub_panel : content_list)
+		for (JPanel[][] sub_panel : contentList)
 			for (int col = 0; col < maxWidth; col ++)
-				if (maxWidths[col] < sub_panel[0][col].getWidth() )
-					maxWidths[col] = sub_panel[0][col].getWidth();
+				if (maxWidths[col] < sub_panel[0][col + 1].getWidth() )
+					maxWidths[col] = sub_panel[0][col + 1].getWidth();
 		
 		// adding a panel with the corresponding width to each column
 		for (int subpanel = 0; subpanel < subpanels.size(); subpanel ++)
@@ -313,7 +286,7 @@ public class Gui {
 			GridBagConstraints gbc = constraints.get(subpanel);
 			for (int col = 0; col < maxWidth; col ++)
 			{
-				gbc.gridx = col;
+				gbc.gridx = col + 1;
 				JLabel label = new JLabel();
 				label.setPreferredSize(new Dimension(maxWidths[col], 0) );
 				label.setOpaque(false);
@@ -382,7 +355,8 @@ public class Gui {
 		scrollPane.setBackground(current_custom_color_setting.background);
 		main_panel.setBackground(current_custom_color_setting.background);
 		
-		for (JLabel label : labels) label.setForeground(current_custom_color_setting.text);
+		for (JLabel label : labels                  ) label.setForeground(current_custom_color_setting.text);
+		for (JLabel label : addRemoveRowControlsList) label.setForeground(inEditMode ? current_custom_color_setting.text : current_custom_color_setting.background);
 		for (JPanel panel : subpanels)
 			if (panel.getBorder() != null)
 				((TitledBorder) panel.getBorder() ).setTitleColor(current_custom_color_setting.text);
