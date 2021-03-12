@@ -6,7 +6,6 @@ import java.awt.Frame;
 import java.awt.Dialog.ModalityType;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.TextField;
@@ -41,20 +40,22 @@ import javax.swing.event.MouseInputAdapter;
 
 public class Logic
 {
-	Gui gui;
 	public static String[][] content;
+	public static String[] sections;
+	public static Integer[] sectionIndices;
 	public static int maxRowLength;
-	public static boolean unsavedChanges = false; 
+	public static boolean unsavedChanges = false;
 	
-	public Logic()
+	public static void main(String[] args)
 	{
-		gui = new Gui(this, getColorSettings() );
-		getContentFromFile(gui.fileDirectory + gui.fileName);
-		gui.arrangeContent(content);
-		gui.draw();
+		new Gui();
+		Gui.colorSettings = getColorSettings();
+		getContentFromFile(Gui.fileDirectory + Gui.fileName);
+		Gui.arrangeContent(content);
+		Gui.draw();
 	}
 	
-	public ColorSetting[] getColorSettings()
+	public static ColorSetting[] getColorSettings()
 	{
 		ArrayList<ColorSetting> colors_list = new ArrayList<ColorSetting>();
 		File settings = new File("settings.txt");
@@ -114,11 +115,11 @@ public class Logic
 			throw new RuntimeException("File not found!");
 		}
 		
-		String headerS;
-		String lineS;
+		String header_string;
+		String line_string;
 		try {
-			if ( (lineS = reader.readLine() ) != null)
-				headerS = lineS.substring(lineS.startsWith("ï") ? 3 : 0);
+			if ( (line_string = reader.readLine() ) != null)
+				header_string = line_string.substring(line_string.startsWith("ï") ? 3 : 0);
 			else
 			{
 				reader.close();
@@ -128,15 +129,18 @@ public class Logic
 			throw new RuntimeException("Error while reading header!");
 		}
 		
-		String[] header = headerS.split(";");
+		String[] header = header_string.split(";");
 		content_list.add(header);
 		int length = header.length;
+		String empty_line = "";
+		for (int i = 1; i < length; i ++) empty_line += ";";
 		String[] line;
 		
 		try {
-			while ( (lineS = reader.readLine() ) != null)
+			while ( (line_string = reader.readLine() ) != null)
 			{
-				line = lineS.split(";");
+				if (line_string.equals(empty_line) ) continue;
+				line = line_string.split(";");
 				if (line.length > length)
 				{
 					reader.close();
@@ -164,39 +168,51 @@ public class Logic
 		}
 	}
 	
-	public JPanel[][] fillNotesSubPanel(JPanel sub_panel, GridBagConstraints gbc)
+	public static Subsection getSubsection(JPanel section_panel, GridBagConstraints gbc)
 	{
-		int row = gui.row, col = 0;
-		sub_panel.removeAll();
-		sub_panel.setAlignmentY(Component.LEFT_ALIGNMENT);
+		int row = Gui.row, col = 0;
+		section_panel.removeAll();
+		section_panel.setAlignmentY(Component.LEFT_ALIGNMENT);
 		
-		ArrayList<JPanel[]> panelsList = new ArrayList<JPanel[]>();
+		Subsection subsection = new Subsection(row);
+		
+		ArrayList<JPanel[]> panels_list = new ArrayList<JPanel[]>();
 
 		gbc.fill = GridBagConstraints.BOTH;
 		gbc.gridy = 0;
 		
-		String title = "";
+		// title
+		subsection.title = "";
 		if (content[row][0].startsWith("---") && content[row][0].endsWith("---") )
 		{
-			title = content[row][0].substring(3, content[row][0].length() - 3);
-			TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED), title, TitledBorder.LEFT, TitledBorder.TOP);
-			border.setTitleColor(gui.current_custom_color_setting.text);
-			sub_panel.setBorder(border);
+			subsection.title = content[row][0].substring(3, content[row][0].length() - 3);
+			TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED), subsection.title, TitledBorder.LEFT, TitledBorder.TOP);
+			border.setTitleColor(Gui.currentColorSetting.text);
+			section_panel.setBorder(border);
 			row ++;
 		}
 		
+		if (row == content.length || (content[row][0].startsWith("---") && content[row][0].endsWith("---") ) ) // empty subsection
+		{
+			JPanel[] dummy = new JPanel[maxRowLength + 1];
+			for (int i = 1; i <= maxRowLength; i ++)
+				dummy[i] = new JPanel();
+			panels_list.add(dummy);
+		}
+		
+		// rows
 		for (;row < content.length; row ++)
 		{
-			if (content[row][0].equals("") && content[row][1].equals("") && content[row][2].equals("") )
-				continue;
+			//if (content[row][0].equals("") && content[row][1].equals("") && content[row][2].equals("") )
+			//	continue;
 			if (content[row][0].startsWith("---") && content[row][0].endsWith("---") )
 				break;
 			
 			JPanel[] panel_row = new JPanel[maxRowLength + 1];
 			gbc.gridx = col = 0;
-			JPanel addRemoverowControls = getAddRemoveRowControl(row, false);
-			sub_panel.add(addRemoverowControls, gbc);
-			panel_row[col] = addRemoverowControls;
+			JPanel add_remove_content_row_controls = getAddRemoveContentRowControl(row, false);
+			section_panel.add(add_remove_content_row_controls, gbc);
+			panel_row[col] = add_remove_content_row_controls;
 			
 			col ++;
 			
@@ -205,32 +221,33 @@ public class Logic
 				gbc.gridx = col;
 				JPanel cell = new JPanel();
 				
-				boolean leftBorder = (col == 1);
-				boolean topBorder  = (row == gui.row || (row == gui.row + 1 && !title.equals("") ) );
+				boolean left_border = (col == 1);
+				boolean top_border  = (row == Gui.row || (row == Gui.row + 1 && !subsection.title.equals("") ) );
 				
-				fillCellPanel(cell, cell_str.replace("\\n", "\n").replace("->", "⇨"), leftBorder, topBorder );
-				cell.addMouseListener(getCellEdit(cell, leftBorder, topBorder, row, col - 1) );
+				fillCellPanel(cell, cell_str.replace("\\n", "\n").replace("->", "⇨"), left_border, top_border );
+				cell.addMouseListener(getCellEdit(cell, left_border, top_border, row, col - 1) );
 				cell.setOpaque(false);
-				sub_panel.add(cell, gbc);
+				section_panel.add(cell, gbc);
 				panel_row[col] = cell;
 				col ++;
 			}
-			panelsList.add(panel_row);
+			panels_list.add(panel_row);
 			gbc.gridy ++;
 		}
 		gbc.gridx = col = 0;
-		JPanel addRemoverowControls = getAddRemoveRowControl(row, true);
-		sub_panel.add(addRemoverowControls, gbc);
-		panelsList.add(new JPanel[] {addRemoverowControls} );
+		JPanel add_remove_content_row_controls = getAddRemoveContentRowControl(row, true);
+		section_panel.add(add_remove_content_row_controls, gbc);
+		panels_list.add(new JPanel[] {add_remove_content_row_controls} );
 		
-		gui.row = row;
-		return panelsList.toArray(new JPanel[panelsList.size() ][panelsList.get(0).length] );
+		Gui.row = row;
+		subsection.content = panels_list.toArray(new JPanel[panels_list.size() ][panels_list.get(0).length] );
+		return subsection;
 	}
 	
-	public JPanel getAddRemoveRowControl(int currentRow, boolean onlyAdd)
+	public static JPanel getAddRemoveContentRowControl(int current_row, boolean only_add)
 	{
-		JPanel control = new JPanel(new GridLayout(onlyAdd ? 1 : 2, 2) );
-		Color color = Gui.inEditMode ? gui.current_custom_color_setting.text : gui.current_custom_color_setting.background;
+		JPanel control = new JPanel(new GridLayout(only_add ? 1 : 2, 2) );
+		Color color = Gui.inEditMode ? Gui.currentColorSetting.text : Gui.currentColorSetting.background;
 		
 		JLabel add = new JLabel(" + ");
 		add.setForeground(color);
@@ -241,17 +258,17 @@ public class Logic
 																	if (Gui.inEditMode)
 																	{
 																		unsavedChanges = true;
-																		addLine(currentRow);
-																		gui.arrangeContent(content);
-																		gui.draw();
+																		addContentLine(current_row);
+																		Gui.arrangeContent(content);
+																		Gui.draw();
 																	}
 																} } );
 		
-		gui.addRemoveRowControlsList.add(add);
+		Gui.addRemoveRowControlsList.add(add);
 		control.add(new JLabel());
 		control.add(add);
 		
-		if (! onlyAdd)
+		if (! only_add)
 		{
 			JLabel remove = new JLabel(" - ");
 			remove.setForeground(color);
@@ -262,13 +279,13 @@ public class Logic
 																		if (Gui.inEditMode)
 																		{
 																			unsavedChanges = true;
-																			removeLine(currentRow);
-																			gui.arrangeContent(content);
-																			gui.draw();
+																			removeContentLine(current_row);
+																			Gui.arrangeContent(content);
+																			Gui.draw();
 																		}
 																	} } );
 			
-			gui.addRemoveRowControlsList.add(remove);
+			Gui.addRemoveRowControlsList.add(remove);
 			control.add(remove);
 			control.add(new JLabel());
 		}
@@ -277,47 +294,79 @@ public class Logic
 		return control;
 	}
 	
-	public void removeLine(int rowToRemove)
+	public static void removeContentLine(int row_to_remove)
 	{
-		String[][] newContent = new String[content.length - 1][content[0].length];
-		for (int i = 0; i < newContent.length; i ++)
-			newContent[i] = content[i < rowToRemove ? i : i + 1];
-		content = newContent;
+		String[][] new_content = new String[content.length - 1][content[0].length];
+		for (int i = 0; i < new_content.length; i ++)
+			new_content[i] = content[i < row_to_remove ? i : i + 1];
+		content = new_content;
 	}
 	
-	public void addLine(int rowToAdd)
+	public static void removeSectionLine(int row_to_remove)
 	{
-		String[][] newContent = new String[content.length + 1][content[0].length + 1];
+		String[]  new_sections        = new String [sections.      length - 1];
+		Integer[] new_section_indices = new Integer[sectionIndices.length - 1];
+		for (int i = 0; i < new_sections.length; i ++)
+		{
+			new_sections       [i] = sections      [i < row_to_remove ? i : i + 1];
+			new_section_indices[i] = sectionIndices[i < row_to_remove ? i : i + 1];
+		}
+		sections       = new_sections;
+		sectionIndices = new_section_indices;
+	}
+	
+	public static void addContentLine(int row_to_add)
+	{
+		String[][] new_content = new String[content.length + 1][content[0].length + 1];
 		String[] newLine = new String[content[0].length];
 		for (int i = 0; i < content[0].length; i ++) newLine[i] = " ";
-		for (int i = 0; i < newContent.length; i ++)
-			if (i == rowToAdd)
-				newContent[i] = newLine;
+		for (int i = 0; i < new_content.length; i ++)
+			if (i == row_to_add)
+				new_content[i] = newLine;
 			else
-				newContent[i] = content[i < rowToAdd ? i : i - 1];
-		content = newContent;
+				new_content[i] = content[i < row_to_add ? i : i - 1];
+		content = new_content;
 	}
 	
-	public void fillCellPanel(JPanel v_panel, String cell, boolean leftBorder, boolean topBorder)
+	public static void addSectionLine(int row_to_add)
 	{
-		v_panel.setLayout(new BoxLayout(v_panel, BoxLayout.Y_AXIS) );
+		String[]  new_sections        = new String [sections.      length - 1];
+		Integer[] new_section_indices = new Integer[sectionIndices.length - 1];
+		for (int i = 0; i < new_sections.length; i ++)
+			if (i == row_to_add)
+			{
+				new_sections       [i] = "";
+				new_section_indices[i] = sectionIndices[i];
+			}
+			else
+			{
+				new_sections[i] = sections[i < row_to_add ? i : i - 1];
+				new_section_indices [i] = i < row_to_add ? sectionIndices[i] : sectionIndices[i - 1] + 1;
+			}
+		sections       = new_sections;
+		sectionIndices = new_section_indices;
+	}
+	
+	public static void fillCellPanel(JPanel cell_panel, String cell_string, boolean left_border, boolean top_border)
+	{
+		cell_panel.setLayout(new BoxLayout(cell_panel, BoxLayout.Y_AXIS) );
 		
-		for (String row : cell.split("\n") )
+		for (String row : cell_string.split("\n") )
 		{
-			JPanel h_panel = new JPanel();
-			h_panel.setLayout(new BoxLayout(h_panel, BoxLayout.X_AXIS) );
-			h_panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+			JPanel horizontal_panel = new JPanel();
+			horizontal_panel.setLayout(new BoxLayout(horizontal_panel, BoxLayout.X_AXIS) );
+			horizontal_panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 			boolean text = true;
 			for (String str : row.split("#") )
 			{
 				if (text)
 				{
 					JLabel label = new JLabel(str);
-					label.setFont(gui.font);
-					label.setForeground(gui.current_custom_color_setting.text);
+					label.setFont(Gui.font);
+					label.setForeground(Gui.currentColorSetting.text);
 					//label.addMouseListener(getTextEdit(label) );
-					gui.labels.add(label);
-					h_panel.add(label);
+					Gui.labels.add(label);
+					horizontal_panel.add(label);
 				}
 				else
 				{
@@ -334,25 +383,25 @@ public class Logic
 							File error = new File("Images\\Destroyed-icon.png");
 							
 							// preparing BufferedImages
-							final BufferedImage backGround = ImageIO.read(file_bG.exists() ? file_bG : error);
-							final BufferedImage foreGround = ImageIO.read(file_fG.exists() ? file_fG : error);
-							final BufferedImage layerDot = ImageIO.read(new File("Images\\Layer_dot.png")); // Black layer between images for better visibility
+							final BufferedImage back_ground = ImageIO.read(file_bG.exists() ? file_bG : error);
+							final BufferedImage fore_ground = ImageIO.read(file_fG.exists() ? file_fG : error);
+							final BufferedImage layer_dot = ImageIO.read(new File("Images\\Layer_dot.png")); // Black layer between images for better visibility
 							final BufferedImage scaled = new BufferedImage(Gui.ImageSize, Gui.ImageSize, BufferedImage.TYPE_INT_ARGB); // empty BufferedImage to draw on
 							Graphics g = scaled.getGraphics();
 							
 							// drawing images
-							g.drawImage(backGround, 0, 0, scaled.getWidth(), scaled.getHeight(), null);
-							int dotImageSize = 2 * Gui.ImageSize / 3;
-							int smallImageSize = 3 * Gui.ImageSize / 5;
-							int x_dot = images[2].equals("t") ? 0 : (Gui.ImageSize - dotImageSize) / (images[2].equals("c") ? 2 : 1);
-							int y_dot = images[3].equals("l") ? 0 : (Gui.ImageSize - dotImageSize) / (images[3].equals("c") ? 2 : 1);
-							int x = images[2].equals("t") ? 0 : (Gui.ImageSize - smallImageSize) / (images[2].equals("c") ? 2 : 1);
-							int y = images[3].equals("l") ? 0 : (Gui.ImageSize - smallImageSize) / (images[3].equals("c") ? 2 : 1);
-							g.drawImage(layerDot, x_dot, y_dot, dotImageSize, dotImageSize, null);
-							g.drawImage(foreGround, x, y, smallImageSize, smallImageSize, null);
+							g.drawImage(back_ground, 0, 0, scaled.getWidth(), scaled.getHeight(), null);
+							int dot_image_size = 2 * Gui.ImageSize / 3;
+							int small_image_size = 3 * Gui.ImageSize / 5;
+							int x_dot = images[2].equals("t") ? 0 : (Gui.ImageSize - dot_image_size) / (images[2].equals("c") ? 2 : 1);
+							int y_dot = images[3].equals("l") ? 0 : (Gui.ImageSize - dot_image_size) / (images[3].equals("c") ? 2 : 1);
+							int x = images[2].equals("t") ? 0 : (Gui.ImageSize - small_image_size) / (images[2].equals("c") ? 2 : 1);
+							int y = images[3].equals("l") ? 0 : (Gui.ImageSize - small_image_size) / (images[3].equals("c") ? 2 : 1);
+							g.drawImage(layer_dot, x_dot, y_dot, dot_image_size, dot_image_size, null);
+							g.drawImage(fore_ground, x, y, small_image_size, small_image_size, null);
 							
 							
-							h_panel.add(new JLabel(new ImageIcon(scaled) ) );
+							horizontal_panel.add(new JLabel(new ImageIcon(scaled) ) );
 						} catch (MalformedURLException e)
 						{
 							// TODO Auto-generated catch block
@@ -369,31 +418,31 @@ public class Logic
 						File file = new File("Images\\" + Helper.getWikiName(str) + ".png");
 						JLabel label = new JLabel(new ImageIcon(new ImageIcon("Images\\" + (file.exists() ? Helper.getWikiName(str) : "Destroyed-icon") + ".png").getImage().getScaledInstance(Gui.ImageSize, Gui.ImageSize, Image.SCALE_DEFAULT) ) );
 						//label.addMouseListener(getIconEdit(file, null) );
-						h_panel.add(label);
+						horizontal_panel.add(label);
 						}
 				}
 				text = !text;
 			}
-			h_panel.setOpaque(false);
-			v_panel.add(h_panel);
+			horizontal_panel.setOpaque(false);
+			cell_panel.add(horizontal_panel);
 		}
 		
-		v_panel.setBorder(BorderFactory.createMatteBorder(topBorder ? 1 : 0, leftBorder ? 1 : 0, 1, 1, gui.current_custom_color_setting.border) );
-		gui.cells.add(v_panel);
-		v_panel.setOpaque(false);
+		cell_panel.setBorder(BorderFactory.createMatteBorder(top_border ? 1 : 0, left_border ? 1 : 0, 1, 1, Gui.currentColorSetting.border) );
+		Gui.cells.add(cell_panel);
+		cell_panel.setOpaque(false);
 	}
 	
-	public void fillColorSettingsPane(JPanel optionsPanel, ColorSetting colorSetting)
+	public static void fillColorSettingsPane(JPanel options_panel, ColorSetting color_setting)
 	{
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.fill = GridBagConstraints.BOTH;
 		gbc.gridx = gbc.gridy = 0;
-		fillColorSettingsRow(optionsPanel, gbc, colorSetting.text, "Text");
-		fillColorSettingsRow(optionsPanel, gbc, colorSetting.border, "Border");
-		fillColorSettingsRow(optionsPanel, gbc, colorSetting.background, "Background   ");
+		fillColorSettingsRow(options_panel, gbc, color_setting.text, "Text");
+		fillColorSettingsRow(options_panel, gbc, color_setting.border, "Border");
+		fillColorSettingsRow(options_panel, gbc, color_setting.background, "Background   ");
 	}
 	
-	public void fillColorSettingsRow(JPanel panel, GridBagConstraints gbc, Color color, String name)
+	public static void fillColorSettingsRow(JPanel panel, GridBagConstraints gbc, Color color, String name)
 	{
 		gbc.gridx = 0;
 		panel.add(new JLabel(name), gbc);
@@ -423,7 +472,7 @@ public class Logic
 		gbc.gridy ++;
 	}
 	
-	public void updateCustomColorSettings(JDialog options)
+	public static void updateCustomColorSettings(JDialog options)
 	{
 		int[][] colors = new int[3][3];
 		getAllComponents(options).stream().filter(comp -> comp instanceof TextField).forEach(text -> 
@@ -435,21 +484,21 @@ public class Logic
 		
 		for (int[] row : colors) for (int cell : row) if (cell < 0 || cell > 255) return;
 		
-		gui.color_settings[2].text 			 = new Color(colors[0][0], colors[0][1], colors[0][2]);
-		gui.color_settings[2].border		 = new Color(colors[1][0], colors[1][1], colors[1][2]);
-		gui.color_settings[2].background = new Color(colors[2][0], colors[2][1], colors[2][2]);
-		gui.current_custom_color_setting = gui.color_settings[2];
+		Gui.colorSettings[2].text 			 = new Color(colors[0][0], colors[0][1], colors[0][2]);
+		Gui.colorSettings[2].border		 = new Color(colors[1][0], colors[1][1], colors[1][2]);
+		Gui.colorSettings[2].background = new Color(colors[2][0], colors[2][1], colors[2][2]);
+		Gui.currentColorSetting = Gui.colorSettings[2];
 		
-		updateSettingsFile(gui.color_settings);
+		updateSettingsFile(Gui.colorSettings);
 		options.dispose();
 	}
 	
-	public void updateSettingsFile(ColorSetting[] colorSettings)
+	public static void updateSettingsFile(ColorSetting[] color_settings)
 	{
 		try
 		{
 			FileWriter writer = new FileWriter(new File("settings.txt"), false);
-			for (ColorSetting color : colorSettings)
+			for (ColorSetting color : color_settings)
 			{
 				writer.write(color.name + "\n" +
 										color.text.getRed() +       ":" + color.text.getGreen() +       ":" + color.text.getBlue() + "\n" +
@@ -464,7 +513,7 @@ public class Logic
 		}
 	}
 	
-	public List<Component> getAllComponents(final Container c)
+	public static List<Component> getAllComponents(final Container c)
 	{
     List<Component> compList = new ArrayList<Component>();
     for (Component comp : c.getComponents()) {
@@ -489,7 +538,7 @@ public class Logic
 	}
 	*/
 	
-	public MouseInputAdapter getCellEdit(JPanel cell, boolean left_border, boolean top_border, int row, int col)
+	public static MouseInputAdapter getCellEdit(JPanel cell, boolean left_border, boolean top_border, int row, int col)
 	{
 		return new MouseInputAdapter() {
 			@Override
@@ -503,7 +552,7 @@ public class Logic
 						cell.removeAll();
 						fillCellPanel(cell, string.replace("\\n", "\n").replace("->", "⇨"), left_border, top_border);
 						cell.validate();
-						gui.repaint();
+						Gui.repaint();
 						unsavedChanges = true;
 					}
 				}
@@ -511,9 +560,9 @@ public class Logic
 		};
 	}
 	
-	public void saveFile()
+	public static void saveFile()
 	{
-		try (PrintWriter out = new PrintWriter(gui.fileDirectory + gui.fileName) )
+		try (PrintWriter out = new PrintWriter(Gui.fileDirectory + Gui.fileName) )
 		{
 			for (String[] row : content)
 			{
@@ -610,16 +659,16 @@ public class Logic
 	}
 	*/
 	
-	public File getIconFile(File oldFile)
+	public static File getIconFile(File old_file)
 	{
 		FileDialog dialog = new FileDialog(new Frame(), "Select File to Open");
     dialog.setMode(FileDialog.LOAD);
     dialog.setVisible(true);
     if (dialog.getFile() != null) return new File(dialog.getFile() );
-    else return oldFile;
+    else return old_file;
 	}
 	
-	public int getColorInt(TextField text)
+	public static int getColorInt(TextField text)
 	{
 		int res = 0;
 		try {
@@ -630,10 +679,5 @@ public class Logic
 			text.setBackground(Color.red);
 		
 		return res;
-	}
-	
-	public static void main(String[] args)
-	{
-		new Logic();
 	}
 }

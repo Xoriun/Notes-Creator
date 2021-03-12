@@ -1,3 +1,4 @@
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
@@ -6,12 +7,14 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -21,110 +24,124 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.MatteBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.MouseInputAdapter;
 
 public class Gui {
 	
-	Logic logic;
+	public static String fileDirectory = "";
+	public static String fileName = "";
+	public static Font font = new Font("Serif", Font.PLAIN, 20);
 	
-	public String fileDirectory = "";
-	public String fileName = "";
-	public Font font = new Font("Serif", Font.PLAIN, 20);
-	
-	JFrame window;
-	JScrollPane scrollPane;
-	JPanel main_panel;
+	private static JFrame window;
+	private static JScrollPane scrollPane;
+	private static JPanel mainPanel;
+	private static JDialog sectionManagerDialog;
 	
 	public final static int ImageSize = 30;
 	public static boolean inEditMode = false;
 	
-	public int row = 0;
+	public static int row = 0;
 	
-	public boolean title_chaged = true;
-	public ColorSetting[] color_settings;
-	public ColorSetting current_custom_color_setting;
+	public static boolean titleChaged = true;
+	public static ColorSetting[] colorSettings;
+	public static ColorSetting currentColorSetting;
 	
-	public Set<JLabel> labels = new HashSet<JLabel>();
-	public ArrayList<JPanel> subpanels;
-	public ArrayList<GridBagConstraints> constraints;
-	public Set<JPanel> cells = new HashSet<JPanel>();
-	public ArrayList<JPanel[][]> contentList;
-	public ArrayList<JLabel> addRemoveRowControlsList = new ArrayList<JLabel>();
+	public static Set<JLabel> labels = new HashSet<JLabel>();
+	public static ArrayList<JPanel> sectionPanelsList;
+	public static ArrayList<GridBagConstraints> sectionConstraints;
+	public static Set<JPanel> cells = new HashSet<JPanel>();
+	public static ArrayList<JPanel[][]> cellPanelsList;
+	public static ArrayList<JLabel> addRemoveRowControlsList = new ArrayList<JLabel>();
 	
-	public Gui(Logic logic, ColorSetting[] settings)
+	public Gui()
 	{
-		color_settings = settings;
-		current_custom_color_setting = color_settings[1]; // dark_mode
-		this.logic = logic;
+		colorSettings = Logic.getColorSettings();
+		currentColorSetting = colorSettings[1]; // dark_mode
 		
+		// Menus
 		JMenuBar bar = new JMenuBar();
 		JMenu file_menu = new JMenu("File");
 		JMenu setting_menu = new JMenu("Settings");
-		ButtonGroup lighting_group = new ButtonGroup();
+		bar.add(file_menu);
+		bar.add(setting_menu);
 		
-		JMenuItem file_open = new JMenuItem("Open");
+		// File Menu
+		JMenuItem file_open   = new JMenuItem("Open");
 		JMenuItem file_reload = new JMenuItem("Reload");
-		JMenuItem file_edit = new JMenuItem("Edit Mode");
-		JMenuItem file_save = new JMenuItem("Save");
+		JMenuItem file_edit   = new JMenuItem("Edit Mode");
+		JMenuItem file_save   = new JMenuItem("Save");
+		
+		// File actions
+		file_open.addActionListener(   e -> { getFile(); refreshView();} );
+		file_reload.addActionListener( e -> { titleChaged = false; refreshView(); } );
+		file_save.addActionListener(   e -> { Logic.saveFile(); } );
+		file_edit.addActionListener(   e -> { if (inEditMode) disableEditMode(file_edit); else enableEditMode(file_edit); } );
+		
+		// Fill File Menu
+		file_menu.add(file_open);
+		file_menu.add(file_reload);
+		file_menu.add(file_edit);
+		file_menu.add(file_save);
+		
+		// Settings Menu
 		JRadioButtonMenuItem settings_dark_mode  = new JRadioButtonMenuItem("Dark mode");
 		JRadioButtonMenuItem settings_light_mode = new JRadioButtonMenuItem("Light mode");
 		JRadioButtonMenuItem settings_custom = new JRadioButtonMenuItem("Custom");
 		JMenuItem settings_custom_change = new JMenuItem("Modify Custom");
 		
-		file_open.addActionListener(   e -> { getFile(); refreshView();} );
-		file_reload.addActionListener( e -> { title_chaged = false; refreshView(); } );
-		file_edit.addActionListener(   e -> { if (inEditMode) disableEditMode(file_edit); else enableEditMode(file_edit); } );
-		file_save.addActionListener(   e -> { logic.saveFile(); } );
-		
-		settings_light_mode.addActionListener(		e -> { current_custom_color_setting = color_settings[0]; updateLightingMode(); } );
-		settings_dark_mode.addActionListener(			e -> { current_custom_color_setting = color_settings[1]; updateLightingMode(); } );
-		settings_custom.addActionListener(				e -> { current_custom_color_setting = color_settings[2]; updateLightingMode(); } );
+		// Settings actions
+		settings_light_mode.addActionListener(		e -> { currentColorSetting = colorSettings[0]; updateLightingMode(); } );
+		settings_dark_mode.addActionListener(			e -> { currentColorSetting = colorSettings[1]; updateLightingMode(); } );
+		settings_custom.addActionListener(				e -> { currentColorSetting = colorSettings[2]; updateLightingMode(); } );
 		settings_custom_change.addActionListener( e -> { changeCustomLightingSettings(); } );
 		
+		ButtonGroup lighting_group = new ButtonGroup();
 		settings_dark_mode.setSelected(true);
 		lighting_group.add(settings_light_mode);
 		lighting_group.add(settings_dark_mode);
 		lighting_group.add(settings_custom);
 		
-		
-		file_menu.add(file_open);
-		file_menu.add(file_reload);
-		file_menu.add(file_edit);
-		file_menu.add(file_save);
+		// Fill Settings Menu
 		setting_menu.add(settings_dark_mode);
 		setting_menu.add(settings_light_mode);
 		setting_menu.add(settings_custom);
 		setting_menu.addSeparator();
 		setting_menu.add(settings_custom_change);
 		
-		bar.add(file_menu);
-		bar.add(setting_menu);
+		mainPanel = new JPanel();
+		mainPanel.setLayout(new GridLayout() );
 		
-		main_panel = new JPanel();
-		main_panel.setLayout(new GridLayout() );
-		
-		scrollPane = new JScrollPane(main_panel,
+		scrollPane = new JScrollPane(mainPanel,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		//scrollPane.setBackground(currentColorSetting.background);
+		//scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		
 		window = new JFrame();
 		window.setJMenuBar(bar);
 		window.add(scrollPane);
 		window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		window.addWindowListener(saveBeforeClose() );
+		window.addWindowListener(unsavedChangesDialog() );
 		window.setTitle("");
 		window.pack();
 		window.setVisible(true);
 		
 		getFile();
+		
+		sectionManagerDialog = new JDialog(window);
+		sectionManagerDialog.setTitle("Section Manager");
+		sectionManagerDialog.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		sectionManagerDialog.setVisible(false);
 	}
 	
-	public WindowAdapter saveBeforeClose()
+	public static WindowAdapter unsavedChangesDialog()
 	{
 		return new WindowAdapter() {
 			
@@ -133,23 +150,30 @@ public class Gui {
 			{
 				if (Logic.unsavedChanges)
 				{
-					JFrame saveFrame = new JFrame();
-					saveFrame.setLayout(new BoxLayout(saveFrame.getContentPane(), BoxLayout.Y_AXIS) );
+					JDialog save_dialog = new JDialog(window);
+					save_dialog.setModal(true);
+					save_dialog.setTitle("Warning");
+					//save_dialog.setBackground(currentColorSetting.background);
+					
+					save_dialog.setLayout(new BoxLayout(save_dialog.getContentPane(), BoxLayout.Y_AXIS) );
 					JLabel label = new JLabel("There are unsaved changes!");
 					label.setAlignmentX(1);
-					saveFrame.add(label);
+					//label.setBackground(currentColorSetting.background);
+					//label.setForeground(currentColorSetting.text);
+					save_dialog.add(label);
 					
-					JPanel savePanel = new JPanel(new FlowLayout() );
-					savePanel.add(getSaveButton(saveFrame) );
-					savePanel.add(getDiscardButton(saveFrame) );
-					savePanel.add(getCancelButton(saveFrame) );
+					JPanel save_panel = new JPanel(new FlowLayout() );
+					save_panel.add(getSaveButton(save_dialog) );
+					save_panel.add(getDiscardButton(save_dialog) );
+					save_panel.add(getCancelButton(save_dialog) );
+					//save_panel.setBackground(currentColorSetting.background);
 					
-					saveFrame.add(savePanel);
-					saveFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-					saveFrame.setTitle("Warning");
-					saveFrame.pack();
-					saveFrame.setLocationRelativeTo(window);
-					saveFrame.setVisible(true);
+					save_dialog.add(save_panel);
+					save_dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+					save_dialog.setTitle("Warning");
+					save_dialog.pack();
+					save_dialog.setLocationRelativeTo(window);
+					save_dialog.setVisible(true);
 				}
 				else
 					exit();
@@ -157,51 +181,161 @@ public class Gui {
 		};
 	}
 	
-	public void exit()
+	public static void updateSectionManagerDialog()
+	{
+		sectionManagerDialog.getContentPane().removeAll();
+		
+		JPanel section_manager_panel = new JPanel(new GridBagLayout() );
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.fill = GridBagConstraints.BOTH;
+		gbc.gridy = 0;
+		int section = 0;
+		
+		while (section < Logic.sections.length)
+		{
+			gbc.gridx = 0;
+			section_manager_panel.add(getAddRemoveSectionControl(section, Logic.sectionIndices[section], false), gbc);
+			
+			gbc.gridx = 1;
+			JLabel label = new JLabel(Logic.sections[section] );
+			label.addMouseListener(getSectionTitleEdit(label,Logic.sectionIndices[section] ) );
+			label.setBorder(BorderFactory.createMatteBorder(section == 0 ? 1 : 0, 1, 1, 1, colorSettings[0].border) );
+			section_manager_panel.add(label, gbc);
+			System.out.println(gbc.gridy + ", " + Logic.sectionIndices[section] + ", " + Logic.sections[section] );
+			
+			section ++;
+			gbc.gridy ++;
+		}
+		
+		gbc.gridx = 0;
+		section_manager_panel.add(getAddRemoveSectionControl(section, Logic.content.length, true), gbc);
+		
+		sectionManagerDialog.add(section_manager_panel);
+
+		sectionManagerDialog.pack();
+		sectionManagerDialog.setVisible(true);
+	}
+	
+	public static MouseInputAdapter getSectionTitleEdit(JLabel label, int current_row)
+	{
+		return new MouseInputAdapter() {
+			@Override
+      public void mouseClicked(MouseEvent e)
+			{
+				String newText = JOptionPane.showInputDialog(null, "Set the section title!", label.getText() );
+				if (newText != null)
+				{
+					label.setText(newText);
+					Logic.content[current_row][0] = "---" + newText + "---";
+					arrangeContent(Logic.content);
+					draw();
+					updateSectionManagerDialog();
+				}
+			}
+		};
+	}
+	
+	public static JPanel getAddRemoveSectionControl(int current_section, int current_row, boolean only_add)
+	{
+		JPanel control = new JPanel(new GridLayout(only_add ? 1 : 2, 2) );
+		//Color color = inEditMode ? currentColorSetting.text : currentColorSetting.background;
+		Color color = colorSettings[0].text;
+		
+		JLabel add = new JLabel(" + ");
+		add.setForeground(color);
+		add.addMouseListener(new MouseInputAdapter() {
+																@Override
+																public void mouseClicked(MouseEvent e)
+																{
+																	if (inEditMode)
+																	{
+																		Logic.unsavedChanges = true;
+																		Logic.addContentLine(current_row);
+																		Logic.content[current_row][0] = "---New section---";
+																		arrangeContent(Logic.content);
+																		draw();
+																		updateSectionManagerDialog();
+																	}
+																} } );
+		
+		addRemoveRowControlsList.add(add);
+		control.add(new JLabel());
+		control.add(add);
+		
+		if (! only_add)
+		{
+			JLabel remove = new JLabel(" - ");
+			remove.setForeground(color);
+			remove.addMouseListener(new MouseInputAdapter() {
+																	@Override
+																	public void mouseClicked(MouseEvent e)
+																	{
+																		if (inEditMode)
+																		{
+																			Logic.unsavedChanges = true;
+																			Logic.removeContentLine(current_row);
+																			arrangeContent(Logic.content);
+																			draw();
+																			updateSectionManagerDialog();
+																		}
+																	} } );
+			
+			addRemoveRowControlsList.add(remove);
+			control.add(remove);
+			control.add(new JLabel());
+		}
+		
+		control.setOpaque(false);
+		return control;
+	}
+	
+	public static void exit()
 	{
 		System.exit(0);
 	}
 	
-	public JButton getSaveButton(JFrame frame)
+	public static JButton getSaveButton(JDialog frame)
 	{
-		JButton save = new JButton("Save and close");
-		save.addActionListener(e -> { logic.saveFile(); exit(); } );
-		return save;
+		JButton save_Button = new JButton("Save and close");
+		save_Button.addActionListener(e -> { Logic.saveFile(); frame.dispose(); exit(); } );
+		return save_Button;
 	}
 	
-	public JButton getDiscardButton(JFrame frame)
+	public static JButton getDiscardButton(JDialog frame)
 	{
-		JButton save = new JButton("Discard changes");
-		save.addActionListener(e -> { frame.dispose(); exit(); } );
-		return save;
+		JButton discard_button = new JButton("Discard changes");
+		discard_button.addActionListener(e -> { frame.dispose(); exit(); } );
+		return discard_button;
 	}
 	
-	public JButton getCancelButton(JFrame frame)
+	public static JButton getCancelButton(JDialog frame)
 	{
-		JButton save = new JButton("Cancel");
-		save.addActionListener(e -> { frame.dispose(); } );
-		return save;
+		JButton cancel_button = new JButton("Cancel");
+		cancel_button.addActionListener(e -> { frame.dispose(); } );
+		return cancel_button;
 	}
 	
-	public void repaint()
+	public static void repaint()
 	{
-		main_panel.validate();
+		mainPanel.validate();
 		window.pack();
 		window.repaint();
 	}
 	
-	public void enableEditMode(JMenuItem file_edit)
+	public static void enableEditMode(JMenuItem file_edit)
 	{
 		inEditMode = true;
-		for (JLabel label : addRemoveRowControlsList) label.setForeground(current_custom_color_setting.text);
+		for (JLabel label : addRemoveRowControlsList) label.setForeground(currentColorSetting.text);
 		file_edit.setText("View Mode");
+		updateSectionManagerDialog();
 	}
 	
-	public void disableEditMode(JMenuItem file_edit)
+	public static void disableEditMode(JMenuItem file_edit)
 	{
 		inEditMode = false;
-		for (JLabel label : addRemoveRowControlsList) label.setForeground(current_custom_color_setting.background);
+		for (JLabel label : addRemoveRowControlsList) label.setForeground(currentColorSetting.background);
 		file_edit.setText("Edit Mode");
+		sectionManagerDialog.setVisible(false);
 	}
 	
 	public void refreshView()
@@ -211,7 +345,7 @@ public class Gui {
 		draw();
 	}
 	
-	public void getFile()
+	public static void getFile()
 	{
 		FileDialog dialog = new FileDialog(new Frame(), "Select File to Open");
 		dialog.setMode(FileDialog.LOAD);
@@ -221,15 +355,18 @@ public class Gui {
 		fileName = dialog.getFile();
 		
 		String new_title = fileName.replace('_', ' ');
-		title_chaged = !new_title.equals(window.getTitle() );
+		titleChaged = !new_title.equals(window.getTitle() );
 		window.setTitle(new_title);
 	}
 	
-	public void arrangeContent(String[][] content)
+	public static void arrangeContent(String[][] content)
 	{
-		subpanels = new ArrayList<JPanel>();
-		constraints = new ArrayList<GridBagConstraints>();
-		contentList = new ArrayList<JPanel[][]>();
+		ArrayList<String> sections_list = new ArrayList<String>();
+		ArrayList<Integer> sectionIndices_list = new ArrayList<Integer>();
+		
+		sectionPanelsList = new ArrayList<JPanel>();
+		sectionConstraints = new ArrayList<GridBagConstraints>();
+		cellPanelsList = new ArrayList<JPanel[][]>();
 		
 		if (content != null)
 		{
@@ -240,32 +377,49 @@ public class Gui {
 				JPanel sub_panel = new JPanel(new GridBagLayout() );
 				sub_panel.setOpaque(false);
 				GridBagConstraints gbc = new GridBagConstraints();
-				subpanels.add(sub_panel);
-				constraints.add(gbc);
-				JPanel[][] panels = logic.fillNotesSubPanel(sub_panel, gbc);
-				contentList.add(panels);			
+				sectionPanelsList.add(sub_panel);
+				sectionConstraints.add(gbc);
+				Subsection subsection = Logic.getSubsection(sub_panel, gbc);
+				cellPanelsList.add(subsection.content);
+				if (!subsection.title.equals("") )
+				{
+					sections_list.add(subsection.title);
+					sectionIndices_list.add(subsection.startIndex);
+				}
 			}
+			
+			Logic.sections = sections_list.toArray(new String[sections_list.size() ] );
+			Logic.sectionIndices = sectionIndices_list.toArray(new Integer[sectionIndices_list.size() ] );
+			for (int i = 0; i < Logic.sections.length; i ++)
+				System.out.println("Section '" + Logic.sections[i] + "' starts at index " + Logic.sectionIndices[i] );
+			System.out.println();
+			
+			if (inEditMode) updateSectionManagerDialog();
 		}
 	}
 	
-	public void draw()
+	public static void draw()
 	{
 		Dimension old_dimension = scrollPane.getSize();
 		window.remove(scrollPane);
+		//scrollPane.remove(mainPanel);
 		
-		main_panel = new JPanel();
-		main_panel.setLayout(new BoxLayout(main_panel, BoxLayout.Y_AXIS) );
-		main_panel.setBackground(current_custom_color_setting.background);
-		int maxWidth = Logic.content[0].length;
+		mainPanel = new JPanel();
+		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS) );
+		mainPanel.setBackground(currentColorSetting.background);
+		int max_width = Logic.content[0].length;
 		
-		for (JPanel subPanel : subpanels)
-			main_panel.add(subPanel);
+		for (JPanel sub_panel : sectionPanelsList)
+			mainPanel.add(sub_panel);
 		
-		scrollPane = new JScrollPane(main_panel,
+		//scrollPane.add(mainPanel);
+		//**
+		scrollPane = new JScrollPane(mainPanel,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		scrollPane.setBackground(current_custom_color_setting.background);
-		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+			scrollPane.setBackground(currentColorSetting.background);
+			scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		//*/
 		
 		window.add(scrollPane);
 		window.pack();
@@ -273,22 +427,22 @@ public class Gui {
 		window.repaint();
 		
 		// determining the maximal width for each column
-		int[] maxWidths = new int[maxWidth];
-		for (JPanel[][] sub_panel : contentList)
-			for (int col = 0; col < maxWidth; col ++)
-				if (maxWidths[col] < sub_panel[0][col + 1].getWidth() )
-					maxWidths[col] = sub_panel[0][col + 1].getWidth();
+		int[] max_widths = new int[max_width];
+		for (JPanel[][] sub_panel : cellPanelsList)
+			for (int col = 0; col < max_width; col ++)
+				if (max_widths[col] < sub_panel[0][col + 1].getWidth() )
+					max_widths[col] = sub_panel[0][col + 1].getWidth();
 		
 		// adding a panel with the corresponding width to each column
-		for (int subpanel = 0; subpanel < subpanels.size(); subpanel ++)
+		for (int sub_panel_index = 0; sub_panel_index < sectionPanelsList.size(); sub_panel_index ++)
 		{
-			JPanel sub_panel = subpanels.get(subpanel);
-			GridBagConstraints gbc = constraints.get(subpanel);
-			for (int col = 0; col < maxWidth; col ++)
+			JPanel sub_panel = sectionPanelsList.get(sub_panel_index);
+			GridBagConstraints gbc = sectionConstraints.get(sub_panel_index);
+			for (int col = 0; col < max_width; col ++)
 			{
 				gbc.gridx = col + 1;
 				JLabel label = new JLabel();
-				label.setPreferredSize(new Dimension(maxWidths[col], 0) );
+				label.setPreferredSize(new Dimension(max_widths[col], 0) );
 				label.setOpaque(false);
 				sub_panel.add(label, gbc);
 			}
@@ -298,29 +452,30 @@ public class Gui {
 		window.setVisible(true);
 		window.repaint();
 		
-		scrollPane.setPreferredSize(title_chaged ? new Dimension(scrollPane.getWidth() + 100, scrollPane.getHeight() ) : old_dimension);
+		scrollPane.setPreferredSize(titleChaged ? new Dimension(scrollPane.getWidth() + 100, scrollPane.getHeight() ) : old_dimension);
+		//scrollPane.setSize(titleChaged ? new Dimension(scrollPane.getWidth() + 100, scrollPane.getHeight() ) : old_dimension);
 		
 		window.pack();
 		window.setVisible(true);
 		window.repaint();
 	}
 	
-	public void changeCustomLightingSettings()
+	public static void changeCustomLightingSettings()
 	{
 		JDialog options = new JDialog(window);
 		options.setModal(true);
 		options.setTitle("Modify custom lighting settings");
 		
-		JPanel optionsPanel = new JPanel();
-		optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS) );
+		JPanel options_panel = new JPanel();
+		options_panel.setLayout(new BoxLayout(options_panel, BoxLayout.Y_AXIS) );
 		
 		
-		optionsPanel.add(new JLabel(current_custom_color_setting.name) );
+		options_panel.add(new JLabel(currentColorSetting.name) );
 		
-		JPanel colorSettings = new JPanel();
-		colorSettings.setLayout(new GridBagLayout() );
-		logic.fillColorSettingsPane(colorSettings, color_settings[2] );
-		optionsPanel.add(colorSettings);
+		JPanel color_settings_panel = new JPanel();
+		color_settings_panel.setLayout(new GridBagLayout() );
+		Logic.fillColorSettingsPane(color_settings_panel, colorSettings[2] );
+		options_panel.add(color_settings_panel);
 		
 		JPanel controls = new JPanel();
 		controls.setLayout(new BoxLayout(controls, BoxLayout.X_AXIS) );
@@ -329,38 +484,38 @@ public class Gui {
 		JButton confirm = new JButton("Confirm");
 		JButton cancel = new JButton("Cancel");
 		
-		apply.addActionListener(e -> {logic.updateCustomColorSettings(options); updateLightingMode(); } );
-		confirm.addActionListener(e -> {logic.updateCustomColorSettings(options); } );
+		apply.addActionListener(e -> {Logic.updateCustomColorSettings(options); updateLightingMode(); } );
+		confirm.addActionListener(e -> {Logic.updateCustomColorSettings(options); } );
 		cancel.addActionListener(e -> {options.dispose(); } );
 		
 		controls.add(apply);
 		controls.add(confirm);
 		controls.add(cancel);
 		
-		optionsPanel.add(controls);
+		options_panel.add(controls);
 		
-		options.add(optionsPanel);
+		options.add(options_panel);
 		options.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		options.pack();
 		
-		optionsPanel.setPreferredSize(new Dimension(50 + optionsPanel.getSize().width, optionsPanel.getSize().height) );
+		options_panel.setPreferredSize(new Dimension(50 + options_panel.getSize().width, options_panel.getSize().height) );
 		options.pack();
 		options.setVisible(true);
 		options.repaint();
 	}
 	
-	public void updateLightingMode()
+	public static void updateLightingMode()
 	{
-		window.setBackground(current_custom_color_setting.background);
-		scrollPane.setBackground(current_custom_color_setting.background);
-		main_panel.setBackground(current_custom_color_setting.background);
+		window.setBackground(currentColorSetting.background);
+		scrollPane.setBackground(currentColorSetting.background);
+		mainPanel.setBackground(currentColorSetting.background);
 		
-		for (JLabel label : labels                  ) label.setForeground(current_custom_color_setting.text);
-		for (JLabel label : addRemoveRowControlsList) label.setForeground(inEditMode ? current_custom_color_setting.text : current_custom_color_setting.background);
-		for (JPanel panel : subpanels)
+		for (JLabel label : labels                  ) label.setForeground(currentColorSetting.text);
+		for (JLabel label : addRemoveRowControlsList) label.setForeground(inEditMode ? currentColorSetting.text : currentColorSetting.background);
+		for (JPanel panel : sectionPanelsList)
 			if (panel.getBorder() != null)
-				((TitledBorder) panel.getBorder() ).setTitleColor(current_custom_color_setting.text);
+				((TitledBorder) panel.getBorder() ).setTitleColor(currentColorSetting.text);
 		for (JPanel cell : cells)
-			cell.setBorder(new MatteBorder( ((MatteBorder) cell.getBorder() ).getBorderInsets(), current_custom_color_setting.border) );
+			cell.setBorder(new MatteBorder( ((MatteBorder) cell.getBorder() ).getBorderInsets(), currentColorSetting.border) );
 	}
 }
