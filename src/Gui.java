@@ -30,8 +30,8 @@ public class Gui {
 	public static Font font = new Font("Serif", Font.PLAIN, 20);
 	
 	public static JFrame window;
-	private static JScrollPane scrollPane;
-	private static JPanel mainPanel;
+	public static JScrollPane scrollPane;
+	public static JPanel mainPanel;
 	private static JDialog sectionManagerDialog;
 	
 	public final static int ImageSize = 30;
@@ -67,18 +67,21 @@ public class Gui {
 		JMenuItem file_reload = new JMenuItem("Reload");
 		JMenuItem file_edit   = new JMenuItem("Edit Mode");
 		JMenuItem file_save   = new JMenuItem("Save");
+		//JMenuItem file_pdf    = new JMenuItem("Export as PDF");
 		
 		// File actions
-		file_open.addActionListener(   e -> { FileOperaitons.getFile(); Logic.readAndDisplayNotes();} );
+		file_open  .addActionListener( e -> { FileOperaitons.getFile(); Logic.readAndDisplayNotes();} );
 		file_reload.addActionListener( e -> { titleChaged = false; Logic.readAndDisplayNotes(); } );
-		file_save.addActionListener(   e -> { FileOperaitons.saveFile(); } );
-		file_edit.addActionListener(   e -> { if (inEditMode) disableEditMode(file_edit); else enableEditMode(file_edit); } );
+		file_save  .addActionListener( e -> { FileOperaitons.saveFile(); } );
+		file_edit  .addActionListener( e -> { if (inEditMode) disableEditMode(file_edit); else enableEditMode(file_edit); } );
+		//file_pdf   .addActionListener( e -> { FileOperaitons.exportAsPdf(); } );
 		
 		// Fill File Menu
 		file_menu.add(file_open);
 		file_menu.add(file_reload);
 		file_menu.add(file_edit);
 		file_menu.add(file_save);
+		//file_menu.add(file_pdf);
 		
 		// Settings Menu
 		JRadioButtonMenuItem settings_dark_mode  = new JRadioButtonMenuItem("Dark mode");
@@ -208,9 +211,12 @@ public class Gui {
 		// determining the maximal width for each column
 		int[] max_widths = new int[max_width + 1];
 		for (JPanel[][] sub_panel : cellPanelsList)
-			for (int col = 0; col < max_width + 1; col ++)
-				if (max_widths[col] < sub_panel[0][col + 1].getWidth() )
-					max_widths[col] = sub_panel[0][col + 1].getWidth();
+			if (sub_panel.length == 0)
+				continue;
+			else
+				for (int col = 0; col < max_width + 1; col ++)
+					if (max_widths[col] < sub_panel[0][col + 1].getWidth() )
+						max_widths[col] = sub_panel[0][col + 1].getWidth();
 		
 		// adding a panel with the corresponding width to each column
 		for (int sub_panel_index = 0; sub_panel_index < sectionPanelsList.size(); sub_panel_index ++)

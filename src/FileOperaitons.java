@@ -206,4 +206,9 @@ public class FileOperaitons
 			Logic.unsavedChanges = false;
 		}
 	}
+	
+	public static void exportAsPdf()
+	{
+		//TODO
+	}
 }

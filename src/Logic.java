@@ -72,58 +72,67 @@ public class Logic
 		
 		if (row == content.length || (content[row][0].startsWith("---") && content[row][0].endsWith("---") ) ) // empty subsection
 		{
+			/**
 			JPanel[] dummy = new JPanel[maxRowLength + 1];
 			for (int i = 1; i <= maxRowLength; i ++)
 				dummy[i] = new JPanel();
 			panels_list.add(dummy);
+			*/
+			subsection.content = new JPanel[0][0];
 		}
-		
-		// rows
-		for (;row < content.length; row ++)
+		else
 		{
-			if (content[row][0].startsWith("---") && content[row][0].endsWith("---") )
-				break;
-			
-			JPanel[] panel_row = new JPanel[maxRowLength + 2];
-			gbc.gridx = col = 0;
-			
-			JPanel add_remove_content_row_controls = getAddRemoveContentRowControl(row, false);
-			section_panel.add(add_remove_content_row_controls, gbc);
-			panel_row[0] = add_remove_content_row_controls;
-			
-			col ++;
-			
-			for (String cell_str : content[row] )
+			// rows
+			for (;row < content.length; row ++)
 			{
-				gbc.gridx = col;
-				JPanel cell = new JPanel();
+				if (content[row][0].startsWith("---") && content[row][0].endsWith("---") )
+					break;
 				
-				boolean left_border = (col == 1);
-				boolean top_border  = (row == Gui.row || (row == Gui.row + 1 && !subsection.title.equals("") ) );
+				JPanel[] panel_row = new JPanel[maxRowLength + 2];
+				gbc.gridx = col = 0;
 				
-				fillCellPanel(cell, cell_str.replace("\\n", "\n").replace("->", "⇨"), left_border, top_border );
-				cell.addMouseListener(MouseAdapters.getCellEdit(cell, left_border, top_border, row, col - 1) );
-				cell.setOpaque(false);
-				section_panel.add(cell, gbc);
-				panel_row[col] = cell;
+				JPanel add_remove_content_row_controls = getAddRemoveContentRowControl(row, false);
+				section_panel.add(add_remove_content_row_controls, gbc);
+				panel_row[0] = add_remove_content_row_controls;
+				
 				col ++;
+				
+				for (String cell_str : content[row] )
+				{
+					gbc.gridx = col;
+					JPanel cell = new JPanel();
+					
+					boolean left_border = (col == 1);
+					boolean top_border  = (row == Gui.row || (row == Gui.row + 1 && !subsection.title.equals("") ) );
+					
+					fillCellPanel(cell, cell_str.replace("\\n", "\n").replace("->", "⇨"), left_border, top_border );
+					cell.addMouseListener(MouseAdapters.getCellEdit(cell, left_border, top_border, row, col - 1) );
+					cell.setOpaque(false);
+					section_panel.add(cell, gbc);
+					panel_row[col] = cell;
+					col ++;
+				}
+	
+				gbc.gridx = col;
+				JPanel todo_control = getTodoControl(row);
+				section_panel.add(todo_control, gbc);
+				panel_row[maxRowLength + 1] = todo_control;
+				
+				panels_list.add(panel_row);
+				gbc.gridy ++;
 			}
-
-			gbc.gridx = col;
-			JPanel todo_control = getTodoControl(row);
-			section_panel.add(todo_control, gbc);
-			panel_row[maxRowLength + 1] = todo_control;
 			
-			panels_list.add(panel_row);
-			gbc.gridy ++;
+			// controls for new row
+			JPanel add_remove_content_row_controls = getAddRemoveContentRowControl(row, true);
+			section_panel.add(add_remove_content_row_controls, gbc);
+			panels_list.add(new JPanel[] {add_remove_content_row_controls} );
+			
+			
+			subsection.content = panels_list.toArray(new JPanel[panels_list.size() ][panels_list.get(0).length] );
 		}
 		gbc.gridx = col = 0;
-		JPanel add_remove_content_row_controls = getAddRemoveContentRowControl(row, true);
-		section_panel.add(add_remove_content_row_controls, gbc);
-		panels_list.add(new JPanel[] {add_remove_content_row_controls} );
 		
 		Gui.row = row;
-		subsection.content = panels_list.toArray(new JPanel[panels_list.size() ][panels_list.get(0).length] );
 		return subsection;
 	}
 	
