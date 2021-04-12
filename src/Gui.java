@@ -247,7 +247,7 @@ public class Gui {
 
 	public static void repaint()
 	{
-		mainPanel.validate();
+		//scrollPane.validate();
 		window.pack();
 		window.repaint();
 	}

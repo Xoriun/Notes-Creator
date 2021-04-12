@@ -71,15 +71,7 @@ public class Logic
 		}
 		
 		if (row == content.length || (content[row][0].startsWith("---") && content[row][0].endsWith("---") ) ) // empty subsection
-		{
-			/**
-			JPanel[] dummy = new JPanel[maxRowLength + 1];
-			for (int i = 1; i <= maxRowLength; i ++)
-				dummy[i] = new JPanel();
-			panels_list.add(dummy);
-			*/
 			subsection.content = new JPanel[0][0];
-		}
 		else
 		{
 			// rows
@@ -123,6 +115,7 @@ public class Logic
 			}
 			
 			// controls for new row
+			gbc.gridx = 0;
 			JPanel add_remove_content_row_controls = getAddRemoveContentRowControl(row, true);
 			section_panel.add(add_remove_content_row_controls, gbc);
 			panels_list.add(new JPanel[] {add_remove_content_row_controls} );
@@ -275,22 +268,35 @@ public class Logic
 	public static void removeContentLine(int row_to_remove)
 	{
 		String[][] new_content = new String[content.length - 1][content[0].length];
+		String[] new_todo_list = new String[content.length - 1];
 		for (int i = 0; i < new_content.length; i ++)
-			new_content[i] = content[i < row_to_remove ? i : i + 1];
+		{
+			new_content  [i] = content [i < row_to_remove ? i : i + 1];
+			new_todo_list[i] = todoList[i < row_to_remove ? i : i + 1];
+		}
 		content = new_content;
+		todoList = new_todo_list;
 	}
 	
 	public static void addContentLine(int row_to_add)
 	{
 		String[][] new_content = new String[content.length + 1][content[0].length + 1];
 		String[] newLine = new String[content[0].length];
+		String[] new_todo_list = new String[content.length + 1];
 		for (int i = 0; i < content[0].length; i ++) newLine[i] = " ";
 		for (int i = 0; i < new_content.length; i ++)
 			if (i == row_to_add)
+			{
 				new_content[i] = newLine;
+				new_todo_list[i] = ""; 
+			}
 			else
-				new_content[i] = content[i < row_to_add ? i : i - 1];
+			{
+				new_content  [i] = content [i < row_to_add ? i : i - 1];
+				new_todo_list[i] = todoList[i < row_to_add ? i : i - 1];
+			}
 		content = new_content;
+		todoList = new_todo_list;
 	}
 
 	public static void removeSectionLine(int row_to_remove)

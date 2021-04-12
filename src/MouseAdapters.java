@@ -94,6 +94,7 @@ public class MouseAdapters
 					Gui.arrangeContent();
 					Gui.draw();
 					Gui.updateSectionManagerDialog();
+					Logic.unsavedChanges = true;
 				}
 			}
 		};
@@ -112,8 +113,8 @@ public class MouseAdapters
 						Logic.content[row][col] = string; 
 						cell.removeAll();
 						Logic.fillCellPanel(cell, string.replace("\\n", "\n").replace("->", "⇨"), left_border, top_border);
-						cell.validate();
-						Gui.repaint();
+						//Gui.repaint();
+						Gui.draw();
 						Logic.unsavedChanges = true;
 					}
 				}
