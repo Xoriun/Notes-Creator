@@ -2,7 +2,7 @@
 
 Create notes for a speedrun.
 
-The program reads in a textfile (e.g. example.txt).
+The program reads in a simple textfile (e.g. example.txt).
 However, I recommend using the .csv fileformat, since it can easily be created and edited in excel. This has the advantage of seeing the table structure while creating the file.
   Saving from excel:  Use the save-as function and select the .csv fileformat.
   Loading into excel: Open Excel -> Open .csv file -> Select first option (separated) -> Select only semicolon -> Finish
@@ -27,3 +27,4 @@ and so on.
 This action will only be performed when in View-Mode.
 Currently the following commands are supported:
 	- write_to_clpiboard: writes the action_parameter as String to the System clipboard
+Feel free to suggest new actions!!
