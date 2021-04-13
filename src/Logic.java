@@ -97,8 +97,18 @@ public class Logic
 					boolean left_border = (col == 1);
 					boolean top_border  = (row == Gui.row || (row == Gui.row + 1 && !subsection.title.equals("") ) );
 					
-					fillCellPanel(cell, cell_str.replace("\\n", "\n").replace("->", "⇨"), left_border, top_border );
+					String cell_str_actions = "", cell_str_content = cell_str;
+					if (cell_str.contains(">>") )
+					{
+						String[] temp = cell_str.split(">>", 2);
+						cell_str_content = temp[0];
+						cell_str_actions = temp[1];
+					}
+					
+					fillCellPanel(cell, cell_str_content.replace("\\n", "\n").replace("->", "⇨"), left_border, top_border );
 					cell.addMouseListener(MouseAdapters.getCellEdit(cell, left_border, top_border, row, col - 1) );
+					if (!cell_str_actions.equals("") )
+						cell.addMouseListener(MouseAdapters.getCellAction(cell_str_actions) );
 					cell.setOpaque(false);
 					section_panel.add(cell, gbc);
 					panel_row[col] = cell;

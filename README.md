@@ -20,3 +20,10 @@ For layering images ontop of each other (similar to Alt-Mode in Factorio), use #
 To start a subsection, write ---subsection_name--- in the first cell of a new line. (in excel you have start with '--- to prevent it from interpreting as an equation)
 
 To start a new line within a cell, type \n and DO NOT add a linebreak in the textfile.
+
+To perform an action when clicking on a cell, use the following syntax:
+	cell_content>>action_command:action_parameter#action_command:action_parameter
+and so on.
+This action will only be performed when in View-Mode.
+Currently the following commands are supported:
+	- write_to_clpiboard: writes the action_parameter as String to the System clipboard

@@ -1,3 +1,5 @@
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -112,7 +114,7 @@ public class MouseAdapters
 					if (string != null) {
 						Logic.content[row][col] = string; 
 						cell.removeAll();
-						Logic.fillCellPanel(cell, string.replace("\\n", "\n").replace("->", "⇨"), left_border, top_border);
+						Logic.fillCellPanel(cell, string.split(">>", 2)[0].replace("\\n", "\n").replace("->", "⇨"), left_border, top_border);
 						//Gui.repaint();
 						Gui.draw();
 						Logic.unsavedChanges = true;
@@ -152,6 +154,42 @@ public class MouseAdapters
 					Gui.unsavedChangesDialog();
 				else
 					Gui.exit();
+			}
+		};
+	}
+	
+	public static MouseInputAdapter getCellAction(String action_str)
+	{
+		String[] actions = action_str.split("#");
+		for (String action : actions)
+		{
+			String action_command = "", action_param = "";
+			try {
+				String[] temp = action.split(":");
+				action_command = temp[0];
+				action_param = temp[1];
+			}
+			catch (Exception e)
+			{
+				throw new RuntimeException("Each action has to follow the syntax 'action_command':'action_parameter'!");
+			}
+			switch (action_command)
+			{
+				case "write_to_clipboard": return getCellWriteToClpiboard(action_param);
+			}
+		}
+		
+		return null;
+	}
+	
+	public static MouseInputAdapter getCellWriteToClpiboard(String textToWrite)
+	{
+		return new MouseInputAdapter() {
+			@Override
+      public void mouseClicked(MouseEvent e)
+			{
+				if (!Gui.inEditMode)
+		      Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(textToWrite), null);
 			}
 		};
 	}
