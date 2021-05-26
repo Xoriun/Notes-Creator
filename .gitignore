@@ -2,6 +2,9 @@
 /builds/
 /settings.txt
 /Images/
+!Destroyed-icon.png
+!/Destroyed-icon.png
+!Images/Destroyed-icon.png
 !/Images/Destroyed-icon.png
 !/Images/Layer_dot.png
 !/Images/Not-enough-repair-packs-icon.png
