@@ -42,6 +42,7 @@ public class Gui {
 	public static boolean keepGuiSize = false;
 	public static boolean contentRearraged = false;
 	private static int height = 0;
+	private static int scrollValue = 0;
 	public static int columns = 0;
 	public static ColorSetting[] colorSettings;
 	public static ColorSetting currentColorSetting;
@@ -144,6 +145,7 @@ public class Gui {
 	public static void arrangeContent()
 	{
 		height = scrollPane.getHeight();
+		scrollValue = scrollPane.getVerticalScrollBar().getValue();
 		contentRearraged = true;
 		
 		ArrayList<String> sections_list = new ArrayList<String>();
@@ -199,9 +201,11 @@ public class Gui {
 
 	public static void spaceColums()
 	{
-		int old_scroll_value = scrollPane.getVerticalScrollBar().getValue();
 		if (!contentRearraged)
+		{
 			height = scrollPane.getHeight();
+			scrollValue = scrollPane.getVerticalScrollBar().getValue();
+		}
 		
 		// resetting all spacing
 		if (!spacingPanelsList.isEmpty() )
@@ -249,7 +253,7 @@ public class Gui {
 		//scrollPane.setMaximumSize(new Dimension(scrollPane.getWidth() + 100, keepGuiSize ? height : scrollPane.getHeight() ) );
 		
 		window.pack();
-		scrollPane.getVerticalScrollBar().setValue(old_scroll_value);
+		scrollPane.getVerticalScrollBar().setValue(scrollValue);
 		
 		keepGuiSize = true;
 		contentRearraged = false;
