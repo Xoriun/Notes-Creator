@@ -43,7 +43,7 @@ public class Logic
 	{
 		FileOperaitons.getContentFromFile();
 		Gui.arrangeContent();
-		Gui.draw();
+		Gui.spaceColums();
 	}
 	
 	public static Subsection getSubsection(JPanel section_panel, GridBagConstraints gbc)
@@ -54,6 +54,7 @@ public class Logic
 		
 		Subsection subsection = new Subsection(row);
 		
+		// list of panels in the new section
 		ArrayList<JPanel[]> panels_list = new ArrayList<JPanel[]>();
 
 		gbc.fill = GridBagConstraints.BOTH;
@@ -64,17 +65,32 @@ public class Logic
 		if (content[row][0].startsWith("---") && content[row][0].endsWith("---") )
 		{
 			subsection.title = content[row][0].substring(3, content[row][0].length() - 3);
-			TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED), subsection.title, TitledBorder.LEFT, TitledBorder.TOP);
-			border.setTitleColor(Gui.currentColorSetting.text);
-			section_panel.setBorder(border);
+			if (!subsection.title.equals("") )
+			{
+				TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED), subsection.title, TitledBorder.LEFT, TitledBorder.TOP);
+				border.setTitleColor(Gui.currentColorSetting.text);
+				section_panel.setBorder(border);
+			}
 			row ++;
 		}
 		
-		if (row == content.length || (content[row][0].startsWith("---") && content[row][0].endsWith("---") ) ) // empty subsection
-			subsection.content = new JPanel[0][0];
+		if ( (content[row][0].startsWith("---") && content[row][0].endsWith("---") ) || row == content.length) // empty subsection || 2nd: empty section at the end)
+		{
+			gbc.gridx = 0;
+			JPanel add_remove_content_row_controls = getAddRemoveContentRowControl(row, true);
+			section_panel.add(add_remove_content_row_controls, gbc);
+			
+			JPanel[] panels = new JPanel[maxRowLength + 2];
+			panels[0] = add_remove_content_row_controls;
+			for (int i = 1; i < maxRowLength + 2; i ++)
+				panels[i] = new JPanel(); 
+			
+			panels_list.add(panels);
+			subsection.content = panels_list.toArray(new JPanel[panels_list.size() ][panels_list.get(0).length] );
+		}
 		else
 		{
-			// rows
+			// row
 			for (;row < content.length; row ++)
 			{
 				if (content[row][0].startsWith("---") && content[row][0].endsWith("---") )
@@ -89,6 +105,7 @@ public class Logic
 				
 				col ++;
 				
+				// cell
 				for (String cell_str : content[row] )
 				{
 					gbc.gridx = col;
@@ -114,6 +131,7 @@ public class Logic
 					panel_row[col] = cell;
 					col ++;
 				}
+				// cell end
 	
 				gbc.gridx = col;
 				JPanel todo_control = getTodoControl(row);
@@ -123,6 +141,7 @@ public class Logic
 				panels_list.add(panel_row);
 				gbc.gridy ++;
 			}
+			// row end
 			
 			// controls for new row
 			gbc.gridx = 0;

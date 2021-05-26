@@ -1,6 +1,7 @@
 import java.awt.Color;
 import java.awt.FileDialog;
 import java.awt.Frame;
+//import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -11,6 +12,11 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
+//import javax.imageio.ImageIO;
+//import javax.swing.JFrame;
+//import javax.swing.JPanel;
+//import javax.swing.SwingUtilities;
 
 public class FileOperaitons
 {
@@ -27,7 +33,7 @@ public class FileOperaitons
 		fileName = dialog.getFile();
 		
 		String new_title = fileName.replace('_', ' ');
-		Gui.titleChaged = !new_title.equals(Gui.window.getTitle() );
+		Gui.keepGuiSize = new_title.equals(Gui.window.getTitle() );
 		Gui.window.setTitle(new_title);
 	}
 
@@ -119,6 +125,7 @@ public class FileOperaitons
 		String[] header = header_string.split(Pattern.quote("||"), -1);
 		String[] header_content = header[0].split(";");
 		Logic.maxRowLength = header_content.length;
+		Gui.columns = header_content.length + 2;
 		content_list.add(header_content);
 		todo_list.add(header_string.contains("||") ? header[1] : "");
 		
@@ -207,8 +214,30 @@ public class FileOperaitons
 		}
 	}
 	
+	/**
 	public static void exportAsPdf()
 	{
-		//TODO
+		int width  = Gui.sectionPanelsList.get(0).getWidth();
+		int height = 0, current_height = 0;
+		for (JPanel panel : Gui.sectionPanelsList)
+			height += panel.getHeight();
+		
+		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
+		JFrame buffer_window = new JFrame();
+		
+		//Gui.scrollPane.printAll(image.getGraphics());
+		for (JPanel panel : Gui.sectionPanelsList)
+		{
+			SwingUtilities.paintComponent(image.getGraphics(), panel, buffer_window.getContentPane(), 0, current_height, panel.getWidth(), panel.getHeight() );
+			current_height += panel.getHeight();
+		}
+		System.out.println("test");
+		
+		try {
+			ImageIO.write(image, "png", new File("test.png") );
+		} catch (IOException e) {
+			//Handle exception
+		}
 	}
+	//*/
 }

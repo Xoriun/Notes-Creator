@@ -22,7 +22,7 @@ public class MouseAdapters
 					Logic.unsavedChanges = true;
 					Logic.addContentLine(current_row);
 					Gui.arrangeContent();
-					Gui.draw();
+					Gui.spaceColums();
 				}
 			}
 		};
@@ -39,7 +39,7 @@ public class MouseAdapters
 					Logic.unsavedChanges = true;
 					Logic.removeContentLine(current_row);
 					Gui.arrangeContent();
-					Gui.draw();
+					Gui.spaceColums();
 				}
 			}
 		};
@@ -57,7 +57,7 @@ public class MouseAdapters
 					Logic.addContentLine(current_row);
 					Logic.content[current_row][0] = "---New section---";
 					Gui.arrangeContent();
-					Gui.draw();
+					Gui.spaceColums();
 					Gui.updateSectionManagerDialog();
 				}
 			}
@@ -75,7 +75,7 @@ public class MouseAdapters
 					Logic.unsavedChanges = true;
 					Logic.removeContentLine(current_row);
 					Gui.arrangeContent();
-					Gui.draw();
+					Gui.spaceColums();
 					Gui.updateSectionManagerDialog();
 				}
 			}
@@ -94,7 +94,7 @@ public class MouseAdapters
 					label.setText(newText);
 					Logic.content[current_row][0] = "---" + newText + "---";
 					Gui.arrangeContent();
-					Gui.draw();
+					Gui.spaceColums();
 					Gui.updateSectionManagerDialog();
 					Logic.unsavedChanges = true;
 				}
@@ -116,7 +116,29 @@ public class MouseAdapters
 						cell.removeAll();
 						Logic.fillCellPanel(cell, string.split(">>", 2)[0].replace("\\n", "\n").replace("->", "⇨"), left_border, top_border);
 						//Gui.repaint();
-						Gui.draw();
+						Gui.spaceColums();
+						Logic.unsavedChanges = true;
+					}
+				}
+			}
+		};
+	}
+
+	public static MouseInputAdapter getLabelEdit(JPanel cell, JLabel label, boolean left_border, boolean top_border, int row, int col)
+	{
+		return new MouseInputAdapter() {
+			@Override
+      public void mouseClicked(MouseEvent e)
+			{
+				if (Gui.inEditMode)
+				{	
+					String string = JOptionPane.showInputDialog(null, "Set the text!", label.getText() );
+					if (string != null) {
+						Logic.content[row][col] = string; 
+						cell.removeAll();
+						Logic.fillCellPanel(cell, string.split(">>", 2)[0].replace("\\n", "\n").replace("->", "⇨"), left_border, top_border);
+						//Gui.repaint();
+						Gui.spaceColums();
 						Logic.unsavedChanges = true;
 					}
 				}
@@ -138,7 +160,7 @@ public class MouseAdapters
 					Logic.unsavedChanges = true;
 				}
 				Gui.arrangeContent();
-				Gui.draw();
+				Gui.spaceColums();
 			}
 		};
 	}

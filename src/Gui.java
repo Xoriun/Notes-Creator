@@ -39,7 +39,10 @@ public class Gui {
 	
 	public static int row = 0;
 	
-	public static boolean titleChaged = true;
+	public static boolean keepGuiSize = false;
+	public static boolean contentRearraged = false;
+	private static int height = 0;
+	public static int columns = 0;
 	public static ColorSetting[] colorSettings;
 	public static ColorSetting currentColorSetting;
 	
@@ -50,6 +53,7 @@ public class Gui {
 	public static Set<JLabel> labelsBackgroundcolorTextcolor = new HashSet<JLabel>();
 	public static Set<JLabel> labelsHideUnhide = new HashSet<JLabel>(); 
 	public static ArrayList<JPanel[][]> cellPanelsList;
+	public static ArrayList<JPanel[]> spacingPanelsList = new ArrayList<JPanel[]>();
 	
 	public static void prepareGui()
 	{
@@ -71,7 +75,7 @@ public class Gui {
 		
 		// File actions
 		file_open  .addActionListener( e -> { FileOperaitons.getFile(); Logic.readAndDisplayNotes();} );
-		file_reload.addActionListener( e -> { titleChaged = false; Logic.readAndDisplayNotes(); } );
+		file_reload.addActionListener( e -> { keepGuiSize = false; Logic.readAndDisplayNotes(); } );
 		file_save  .addActionListener( e -> { FileOperaitons.saveFile(); } );
 		file_edit  .addActionListener( e -> { if (inEditMode) disableEditMode(file_edit); else enableEditMode(file_edit); } );
 		//file_pdf   .addActionListener( e -> { FileOperaitons.exportAsPdf(); } );
@@ -129,11 +133,7 @@ public class Gui {
 		if (FileOperaitons.fileDirectory.equals("") || FileOperaitons.fileName.equals("") )
 			FileOperaitons.getFile();
 		else
-		{
-			String new_title = FileOperaitons.fileName.replace('_', ' ');
-			titleChaged = !new_title.equals(window.getTitle() );
-			window.setTitle(new_title);
-		}
+			window.setTitle(FileOperaitons.fileName.replace('_', ' ') );
 		
 		sectionManagerDialog = new JDialog(window);
 		sectionManagerDialog.setTitle("Section Manager");
@@ -143,6 +143,9 @@ public class Gui {
 	
 	public static void arrangeContent()
 	{
+		height = scrollPane.getHeight();
+		contentRearraged = true;
+		
 		ArrayList<String> sections_list = new ArrayList<String>();
 		ArrayList<Integer> sectionIndices_list = new ArrayList<Integer>();
 		
@@ -163,86 +166,93 @@ public class Gui {
 				sectionConstraints.add(gbc);
 				Subsection subsection = Logic.getSubsection(sub_panel, gbc);
 				cellPanelsList.add(subsection.content);
-				if (!subsection.title.equals("") )
-				{
-					sections_list.add(subsection.title);
-					sectionIndices_list.add(subsection.startIndex);
-				}
+				sections_list.add(subsection.title);
+				sectionIndices_list.add(subsection.startIndex);
 			}
 			
 			Logic.sections = sections_list.toArray(new String[sections_list.size() ] );
 			Logic.sectionIndices = sectionIndices_list.toArray(new Integer[sectionIndices_list.size() ] );
-			/**for (int i = 0; i < Logic.sections.length; i ++)
-				System.out.println("Section '" + Logic.sections[i] + "' starts at index " + Logic.sectionIndices[i] );
-			System.out.println(); */
 			
 			if (inEditMode) updateSectionManagerDialog();
+			
+			window.remove(scrollPane);
+			
+			mainPanel = new JPanel();
+			mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS) );
+			mainPanel.setBackground(currentColorSetting.background);
+			
+			for (JPanel sub_panel : sectionPanelsList)
+				mainPanel.add(sub_panel);
+			
+			scrollPane = new JScrollPane(mainPanel,
+					ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+					ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+				scrollPane.setBackground(currentColorSetting.background);
+				scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+			
+			window.add(scrollPane);
+			window.pack();
+			window.setVisible(true);
+			window.repaint();
 		}
 	}
 
-	public static void draw()
+	public static void spaceColums()
 	{
-		Dimension old_dimension = scrollPane.getSize();
-		window.remove(scrollPane);
-		//scrollPane.remove(mainPanel);
+		int old_scroll_value = scrollPane.getVerticalScrollBar().getValue();
+		if (!contentRearraged)
+			height = scrollPane.getHeight();
 		
-		mainPanel = new JPanel();
-		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS) );
-		mainPanel.setBackground(currentColorSetting.background);
-		int max_width = Logic.content[0].length;
+		// resetting all spacing
+		if (!spacingPanelsList.isEmpty() )
+		{
+			for (int section = 0; section < sectionPanelsList.size(); section ++)
+				for (int col = 0; col < columns; col ++)
+					sectionPanelsList.get(section).remove(spacingPanelsList.get(section)[col] );
+			spacingPanelsList.clear();
+		}
+		scrollPane.setPreferredSize(null);
 		
-		for (JPanel sub_panel : sectionPanelsList)
-			mainPanel.add(sub_panel);
-		
-		//scrollPane.add(mainPanel);
-		//**
-		scrollPane = new JScrollPane(mainPanel,
-				ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-			scrollPane.setBackground(currentColorSetting.background);
-			scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-		//*/
-		
-		window.add(scrollPane);
+		// redrawing so update size
 		window.pack();
 		window.setVisible(true);
 		window.repaint();
 		
 		// determining the maximal width for each column
-		int[] max_widths = new int[max_width + 1];
+		int[] max_widths = new int[columns];
 		for (JPanel[][] sub_panel : cellPanelsList)
-			if (sub_panel.length == 0)
-				continue;
-			else
-				for (int col = 0; col < max_width + 1; col ++)
-					if (max_widths[col] < sub_panel[0][col + 1].getWidth() )
-						max_widths[col] = sub_panel[0][col + 1].getWidth();
+			for (int col = 0; col < columns; col ++)
+				if (max_widths[col] < sub_panel[0][col].getWidth() )
+					max_widths[col] = sub_panel[0][col].getWidth();
 		
-		// adding a panel with the corresponding width to each column
-		for (int sub_panel_index = 0; sub_panel_index < sectionPanelsList.size(); sub_panel_index ++)
+		// adding a row of JPanel with the determined width for each section
+		for (int section_ind = 0; section_ind < sectionPanelsList.size(); section_ind ++)
 		{
-			JPanel sub_panel = sectionPanelsList.get(sub_panel_index);
-			GridBagConstraints gbc = sectionConstraints.get(sub_panel_index);
-			for (int col = 0; col < max_width + 1; col ++)
+			JPanel[] panels = new JPanel[columns];
+			JPanel section = sectionPanelsList.get(section_ind);
+			GridBagConstraints gbc = sectionConstraints.get(section_ind);
+			gbc.gridy = -2;
+			for (int col = 0; col < columns; col ++)
 			{
-				gbc.gridx = col + 1;
-				JLabel label = new JLabel();
-				label.setPreferredSize(new Dimension(max_widths[col], 0) );
-				label.setOpaque(false);
-				sub_panel.add(label, gbc);
+				JPanel panel = new JPanel();
+				panel.setPreferredSize(new Dimension(max_widths[col], 0) );
+				panel.setMaximumSize(new Dimension(max_widths[col], 0) );
+				panel.setSize(new Dimension(max_widths[col], 0) );
+				panels[col] = panel;
+				gbc.gridx = col;
+				section.add(panel, gbc);
 			}
+			spacingPanelsList.add(panels);
 		}
 		
-		window.pack();
-		window.setVisible(true);
-		window.repaint();
-		
-		scrollPane.setPreferredSize(titleChaged ? new Dimension(scrollPane.getWidth() + 100, scrollPane.getHeight() ) : old_dimension);
-		//scrollPane.setSize(titleChaged ? new Dimension(scrollPane.getWidth() + 100, scrollPane.getHeight() ) : old_dimension);
+		scrollPane.setPreferredSize(new Dimension(scrollPane.getWidth() + 100, keepGuiSize ? height : scrollPane.getHeight() ) );
+		//scrollPane.setMaximumSize(new Dimension(scrollPane.getWidth() + 100, keepGuiSize ? height : scrollPane.getHeight() ) );
 		
 		window.pack();
-		window.setVisible(true);
-		window.repaint();
+		scrollPane.getVerticalScrollBar().setValue(old_scroll_value);
+		
+		keepGuiSize = true;
+		contentRearraged = false;
 	}
 
 	public static void repaint()
@@ -272,7 +282,7 @@ public class Gui {
 			label.addMouseListener(MouseAdapters.getSectionTitleEdit(label,Logic.sectionIndices[section_index] ) );
 			label.setBorder(BorderFactory.createMatteBorder(section_index == 0 ? 1 : 0, 1, 1, 1, colorSettings[0].border) );
 			section_manager_panel.add(label, gbc);
-			System.out.println(gbc.gridy + ", " + Logic.sectionIndices[section_index] + ", " + Logic.sections[section_index] );
+			//System.out.println(gbc.gridy + ", " + Logic.sectionIndices[section_index] + ", " + Logic.sections[section_index] );
 			
 			section_index ++;
 			gbc.gridy ++;
@@ -368,13 +378,16 @@ public class Gui {
 		mainPanel.setBackground(currentColorSetting.background);
 		
 		// text for cells
-		for (JLabel label : labelsTextcolor                  ) label.setForeground(currentColorSetting.text);
+		for (JLabel label : labelsTextcolor) label.setForeground(currentColorSetting.text);
+		
 		// text for add-remove-controls
 		for (JLabel label : labelsBackgroundcolorTextcolor) label.setForeground(inEditMode ? currentColorSetting.text : currentColorSetting.background);
+		
 		// border color for sections
 		for (JPanel panel : sectionPanelsList)
 			if (panel.getBorder() != null)
 				((TitledBorder) panel.getBorder() ).setTitleColor(currentColorSetting.text);
+		
 		// border for cells
 		for (JPanel cell : cells)
 			cell.setBorder(new MatteBorder( ((MatteBorder) cell.getBorder() ).getBorderInsets(), currentColorSetting.border) );
@@ -387,7 +400,7 @@ public class Gui {
 		for (JLabel label : labelsHideUnhide) label.setVisible(true);
 		file_edit.setText("View Mode");
 		updateSectionManagerDialog();
-		draw();
+		spaceColums();
 	}
 
 	public static void disableEditMode(JMenuItem file_edit)
@@ -397,7 +410,7 @@ public class Gui {
 		for (JLabel label : labelsHideUnhide) label.setVisible(false);
 		file_edit.setText("Edit Mode");
 		sectionManagerDialog.setVisible(false);
-		draw();
+		spaceColums();
 	}
 
 	public static void unsavedChangesDialog()
