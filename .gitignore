@@ -4,4 +4,7 @@ settings.txt
 src/test.java
 test.png
 example.pdf
-Images
+Images/*
+!Images/Destroyed-icon.png
+!Images/Layer_dot.png
+!Images/Not-enough-repair-packs-icon.png
