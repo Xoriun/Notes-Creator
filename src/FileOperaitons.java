@@ -29,6 +29,9 @@ public class FileOperaitons
 		dialog.setMode(FileDialog.LOAD);
 		dialog.setVisible(true);
 		
+		if (dialog.getDirectory() == null)
+			return;
+		
 		fileDirectory = dialog.getDirectory();
 		fileName = dialog.getFile();
 		
@@ -102,11 +105,14 @@ public class FileOperaitons
 	{
 		ArrayList<String[]> content_list = new ArrayList<String[]>();
 		ArrayList<String> todo_list = new ArrayList<String>();
-		BufferedReader reader;
-		try {
-			reader = new BufferedReader(new FileReader(fileDirectory + fileName) );
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException("File not found!");
+		BufferedReader reader = null;
+		while (reader == null)
+		{
+			try {
+				reader = new BufferedReader(new FileReader(fileDirectory + fileName) );
+			} catch (FileNotFoundException e) {
+				getFile();
+			}
 		}
 		
 		String header_string;
@@ -125,7 +131,6 @@ public class FileOperaitons
 		String[] header = header_string.split(Pattern.quote("||"), -1);
 		String[] header_content = header[0].split(";");
 		Logic.maxRowLength = header_content.length;
-		Gui.columns = header_content.length + 2;
 		content_list.add(header_content);
 		todo_list.add(header_string.contains("||") ? header[1] : "");
 		
@@ -195,22 +200,55 @@ public class FileOperaitons
 		}
 	}
 	
+	public static void newFile()
+	{
+		System.out.println("hello");
+		fileDirectory = fileName = null;
+		Logic.content = new String[][] {{"---section 1---"," "},{"new","file"}};
+		Logic.maxRowLength = 2;
+		Gui.arrangeContent();
+		Gui.contentRearraged = false; // to reset the height of the window
+		Gui.spaceColums();
+	}
+	
+	public static void saveAsFile()
+	{
+		FileDialog dialog = new FileDialog(new Frame(), "Save as", FileDialog.SAVE);
+		dialog.setFile(".csv");
+		dialog.setVisible(true);
+		
+		if (dialog.getDirectory() == null)
+			return;
+		fileDirectory = dialog.getDirectory();
+		fileName = dialog.getFile();
+		
+		String new_title = fileName.replace('_', ' ');
+		Gui.window.setTitle(new_title);
+		
+		saveFile();
+	}
+	
 	public static void saveFile()
 	{
-		try (PrintWriter out = new PrintWriter(fileDirectory + fileName) )
+		if (fileDirectory == null || fileName == null)
+			saveAsFile();
+		else
 		{
-			for (int i = 0; i < Logic.content.length; i ++)
+			try (PrintWriter out = new PrintWriter(fileDirectory + fileName) )
 			{
-				String rowStr = "";
-				for (String cell : Logic.content[i])
-					rowStr += cell + ";";
-				out.println(rowStr.substring(0, rowStr.length() - 1) + (Logic.todoList[i].equals("") ? "" : ("||" + Logic.todoList[i] ) ) );
+				for (int i = 0; i < Logic.content.length; i ++)
+				{
+					String rowStr = "";
+					for (String cell : Logic.content[i])
+						rowStr += cell + ";";
+					out.println(rowStr.substring(0, rowStr.length() - 1) + (Logic.todoList[i].equals("") ? "" : ("||" + Logic.todoList[i] ) ) );
+				}
+			} catch (FileNotFoundException e)
+			{
+				// TODO
+			} finally {
+				Logic.unsavedChanges = false;
 			}
-		} catch (FileNotFoundException e)
-		{
-			e.printStackTrace();
-		} finally {
-			Logic.unsavedChanges = false;
 		}
 	}
 	

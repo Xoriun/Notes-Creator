@@ -1,5 +1,7 @@
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -38,6 +40,39 @@ public class MouseAdapters
 				{
 					Logic.unsavedChanges = true;
 					Logic.removeContentLine(current_row);
+					Gui.arrangeContent();
+					Gui.spaceColums();
+				}
+			}
+		};
+	}
+	public static ActionListener addContentCol(int col_to_add)
+	{
+		return new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				if (Gui.inEditMode)
+				{
+					Logic.unsavedChanges = true;
+					Logic.addContentColumn(col_to_add);
+					Gui.arrangeContent();
+					Gui.spaceColums();
+				}
+			}
+		};
+	}
+	
+	public static ActionListener removeContentCol(int col_to_remove)
+	{
+		return new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				if (Gui.inEditMode)
+				{
+					Logic.unsavedChanges = true;
+					Logic.removeContentColumn(col_to_remove);
 					Gui.arrangeContent();
 					Gui.spaceColums();
 				}

@@ -20,6 +20,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
@@ -34,6 +35,12 @@ public class Logic
 	
 	public static void main(String[] args)
 	{
+		try
+		{
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e)
+		{
+		}
 		FileOperaitons.readSettingsFile();
 		Gui.prepareGui();
 		readAndDisplayNotes();
@@ -74,7 +81,7 @@ public class Logic
 			row ++;
 		}
 		
-		if ( (content[row][0].startsWith("---") && content[row][0].endsWith("---") ) || row == content.length) // empty subsection || 2nd: empty section at the end)
+		if ( row == content.length || (content[row][0].startsWith("---") && content[row][0].endsWith("---") ) ) // empty section at the end || empty subsection)
 		{
 			gbc.gridx = 0;
 			JPanel add_remove_content_row_controls = getAddRemoveContentRowControl(row, true);
@@ -309,7 +316,7 @@ public class Logic
 	
 	public static void addContentLine(int row_to_add)
 	{
-		String[][] new_content = new String[content.length + 1][content[0].length + 1];
+		String[][] new_content = new String[content.length + 1][content[0].length];
 		String[] newLine = new String[content[0].length];
 		String[] new_todo_list = new String[content.length + 1];
 		for (int i = 0; i < content[0].length; i ++) newLine[i] = " ";
@@ -326,6 +333,35 @@ public class Logic
 			}
 		content = new_content;
 		todoList = new_todo_list;
+	}
+	
+	public static void removeContentColumn(int col_to_remove)
+	{
+		String[][] new_content = new String[content.length][content[0].length - 1];
+		for (int row = 0; row < new_content.length; row ++)
+			for (int col = 0; col < new_content[0].length; col ++)
+				new_content[row][col] = content[row][col < col_to_remove ? col : col + 1];
+		content = new_content;
+		maxRowLength --;
+	}
+	
+	public static void addContentColumn(int col_to_add)
+	{
+		String[][] new_content = new String[content.length][content[0].length + 1];
+		for (int row = 0; row < new_content.length; row ++)
+			for (int col = 0; col < new_content[0].length; col ++)
+				if (col == col_to_add)
+					new_content[row][col] = "";
+				else
+					new_content[row][col] = content[row][col < col_to_add ? col : col - 1];
+		for (int row = 0; row < new_content.length; row ++)
+			if ( !new_content[row][0].startsWith("---") || !new_content[row][0].endsWith("---") )
+			{
+				new_content[row][col_to_add] = "new colomn";
+				break;
+			}
+		content = new_content;
+		maxRowLength ++;
 	}
 
 	public static void removeSectionLine(int row_to_remove)

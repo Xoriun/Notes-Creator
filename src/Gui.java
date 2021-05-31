@@ -5,6 +5,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -13,6 +14,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -22,6 +24,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.MatteBorder;
 import javax.swing.border.TitledBorder;
@@ -36,6 +39,8 @@ public class Gui {
 	
 	public final static int ImageSize = 30;
 	public static boolean inEditMode = false;
+	public static JMenu edit_add;
+	public static JMenu edit_remove;
 	
 	public static int row = 0;
 	
@@ -43,17 +48,16 @@ public class Gui {
 	public static boolean contentRearraged = false;
 	private static int height = 0;
 	private static int scrollValue = 0;
-	public static int columns = 0;
 	public static ColorSetting[] colorSettings;
 	public static ColorSetting currentColorSetting;
 	
-	public static ArrayList<JPanel> sectionPanelsList;
-	public static ArrayList<GridBagConstraints> sectionConstraints;
+	public static ArrayList<JPanel> sectionPanelsList = new ArrayList<JPanel>();
+	public static ArrayList<GridBagConstraints> sectionConstraints = new ArrayList<GridBagConstraints>();
 	public static Set<JPanel> cells = new HashSet<JPanel>();
 	public static Set<JLabel> labelsTextcolor = new HashSet<JLabel>();
 	public static Set<JLabel> labelsBackgroundcolorTextcolor = new HashSet<JLabel>();
 	public static Set<JLabel> labelsHideUnhide = new HashSet<JLabel>(); 
-	public static ArrayList<JPanel[][]> cellPanelsList;
+	public static ArrayList<JPanel[][]> cellPanelsList = new ArrayList<JPanel[][]>();
 	public static ArrayList<JPanel[]> spacingPanelsList = new ArrayList<JPanel[]>();
 	
 	public static void prepareGui()
@@ -63,55 +67,83 @@ public class Gui {
 		// Menus
 		JMenuBar bar = new JMenuBar();
 		JMenu file_menu = new JMenu("File");
+		JMenu edit_menu = new JMenu("Edit");
 		JMenu setting_menu = new JMenu("Settings");
 		bar.add(file_menu);
+		bar.add(edit_menu);
 		bar.add(setting_menu);
 		
-		// File Menu
-		JMenuItem file_open   = new JMenuItem("Open");
-		JMenuItem file_reload = new JMenuItem("Reload");
-		JMenuItem file_edit   = new JMenuItem("Edit Mode");
-		JMenuItem file_save   = new JMenuItem("Save");
-		//JMenuItem file_pdf    = new JMenuItem("Export as PDF");
+		// Menu Items
+			// File
+			JMenuItem file_open    = new JMenuItem("Open");
+			JMenuItem file_reload  = new JMenuItem("Reload");
+			JMenuItem file_new     = new JMenuItem("New notes");
+			JMenuItem file_save    = new JMenuItem("Save");
+			JMenuItem file_save_as = new JMenuItem("Save as");
+			//JMenuItem file_pdf     = new JMenuItem("Export as PDF");
+			
+			// Edit
+			JCheckBoxMenuItem edit_enabled = new JCheckBoxMenuItem("Enabled edit mode");
+			edit_add = new JMenu("add Column");
+			edit_remove = new JMenu("remove Column");
+			
+			// Settings Menu
+			JRadioButtonMenuItem settings_dark_mode  = new JRadioButtonMenuItem("Dark mode");
+			JRadioButtonMenuItem settings_light_mode = new JRadioButtonMenuItem("Light mode");
+			JRadioButtonMenuItem settings_custom     = new JRadioButtonMenuItem("Custom");
+			JMenuItem settings_custom_change = new JMenuItem("Modify Custom");
 		
-		// File actions
-		file_open  .addActionListener( e -> { FileOperaitons.getFile(); Logic.readAndDisplayNotes();} );
-		file_reload.addActionListener( e -> { keepGuiSize = false; Logic.readAndDisplayNotes(); } );
-		file_save  .addActionListener( e -> { FileOperaitons.saveFile(); } );
-		file_edit  .addActionListener( e -> { if (inEditMode) disableEditMode(file_edit); else enableEditMode(file_edit); } );
-		//file_pdf   .addActionListener( e -> { FileOperaitons.exportAsPdf(); } );
-		
-		// Fill File Menu
-		file_menu.add(file_open);
-		file_menu.add(file_reload);
-		file_menu.add(file_edit);
-		file_menu.add(file_save);
-		//file_menu.add(file_pdf);
-		
-		// Settings Menu
-		JRadioButtonMenuItem settings_dark_mode  = new JRadioButtonMenuItem("Dark mode");
-		JRadioButtonMenuItem settings_light_mode = new JRadioButtonMenuItem("Light mode");
-		JRadioButtonMenuItem settings_custom = new JRadioButtonMenuItem("Custom");
-		JMenuItem settings_custom_change = new JMenuItem("Modify Custom");
-		
-		// Settings actions
-		settings_light_mode.addActionListener(		e -> { currentColorSetting = colorSettings[0]; applyLightingMode(); } );
-		settings_dark_mode.addActionListener(			e -> { currentColorSetting = colorSettings[1]; applyLightingMode(); } );
-		settings_custom.addActionListener(				e -> { currentColorSetting = colorSettings[2]; applyLightingMode(); } );
-		settings_custom_change.addActionListener( e -> { changeCustomLightingSettings(); } );
-		
-		ButtonGroup lighting_group = new ButtonGroup();
-		settings_dark_mode.setSelected(true);
-		lighting_group.add(settings_light_mode);
-		lighting_group.add(settings_dark_mode);
-		lighting_group.add(settings_custom);
-		
-		// Fill Settings Menu
-		setting_menu.add(settings_dark_mode);
-		setting_menu.add(settings_light_mode);
-		setting_menu.add(settings_custom);
-		setting_menu.addSeparator();
-		setting_menu.add(settings_custom_change);
+		// Action Listeners
+			// File
+			file_open   .addActionListener( e -> { FileOperaitons.getFile(); Logic.readAndDisplayNotes();} );
+			file_reload .addActionListener( e -> { keepGuiSize = false; Logic.readAndDisplayNotes(); } );
+			file_new    .addActionListener( e -> { FileOperaitons.newFile(); } );
+			file_save   .addActionListener( e -> { FileOperaitons.saveFile(); } );
+			file_save_as.addActionListener( e -> { FileOperaitons.saveAsFile(); } );
+			//file_pdf    .addActionListener( e -> { FileOperaitons.exportAsPdf(); } );
+			
+			// Edit
+			edit_enabled.addActionListener( e -> { updateEditMode(edit_enabled); } );
+			
+			// Settings
+			settings_light_mode.addActionListener(		e -> { currentColorSetting = colorSettings[0]; applyLightingMode(); } );
+			settings_dark_mode.addActionListener(			e -> { currentColorSetting = colorSettings[1]; applyLightingMode(); } );
+			settings_custom.addActionListener(				e -> { currentColorSetting = colorSettings[2]; applyLightingMode(); } );
+			settings_custom_change.addActionListener( e -> { changeCustomLightingSettings(); } );
+			
+		// Shortcuts
+			// File
+			file_open   .setAccelerator(KeyStroke.getKeyStroke("control O") );
+			file_reload .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0) );
+			file_save   .setAccelerator(KeyStroke.getKeyStroke("control S") );
+			file_save_as.setAccelerator(KeyStroke.getKeyStroke("control alt S") );
+			
+		// Filling Menus
+			// Fill File Menu
+			file_menu.add(file_open);
+			file_menu.add(file_reload);
+			file_menu.add(file_new);
+			file_menu.add(file_save);
+			file_menu.add(file_save_as);
+			//file_menu.add(file_pdf);
+			
+			// Edit
+			edit_menu.add(edit_enabled);
+			edit_menu.add(edit_add);
+			edit_menu.add(edit_remove);
+			
+			// Settings
+			ButtonGroup lighting_group = new ButtonGroup();
+			settings_dark_mode.setSelected(true);
+			lighting_group.add(settings_light_mode);
+			lighting_group.add(settings_dark_mode);
+			lighting_group.add(settings_custom);
+			
+			setting_menu.add(settings_dark_mode);
+			setting_menu.add(settings_light_mode);
+			setting_menu.add(settings_custom);
+			setting_menu.addSeparator();
+			setting_menu.add(settings_custom_change);
 		
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new GridLayout() );
@@ -144,6 +176,8 @@ public class Gui {
 	
 	public static void arrangeContent()
 	{
+		getAddRemoveColumnsMenuItems();
+		
 		height = scrollPane.getHeight();
 		scrollValue = scrollPane.getVerticalScrollBar().getValue();
 		contentRearraged = true;
@@ -151,9 +185,10 @@ public class Gui {
 		ArrayList<String> sections_list = new ArrayList<String>();
 		ArrayList<Integer> sectionIndices_list = new ArrayList<Integer>();
 		
-		sectionPanelsList = new ArrayList<JPanel>();
-		sectionConstraints = new ArrayList<GridBagConstraints>();
-		cellPanelsList = new ArrayList<JPanel[][]>();
+		sectionPanelsList.clear();
+		spacingPanelsList.clear();
+		sectionConstraints.clear();
+		cellPanelsList.clear();
 		
 		if (Logic.content != null)
 		{
@@ -211,7 +246,7 @@ public class Gui {
 		if (!spacingPanelsList.isEmpty() )
 		{
 			for (int section = 0; section < sectionPanelsList.size(); section ++)
-				for (int col = 0; col < columns; col ++)
+				for (int col = 0; col < Logic.maxRowLength + 2; col ++)
 					sectionPanelsList.get(section).remove(spacingPanelsList.get(section)[col] );
 			spacingPanelsList.clear();
 		}
@@ -223,20 +258,20 @@ public class Gui {
 		window.repaint();
 		
 		// determining the maximal width for each column
-		int[] max_widths = new int[columns];
+		int[] max_widths = new int[Logic.maxRowLength + 2];
 		for (JPanel[][] sub_panel : cellPanelsList)
-			for (int col = 0; col < columns; col ++)
+			for (int col = 0; col < Logic.maxRowLength + 2; col ++)
 				if (max_widths[col] < sub_panel[0][col].getWidth() )
 					max_widths[col] = sub_panel[0][col].getWidth();
 		
 		// adding a row of JPanel with the determined width for each section
 		for (int section_ind = 0; section_ind < sectionPanelsList.size(); section_ind ++)
 		{
-			JPanel[] panels = new JPanel[columns];
+			JPanel[] panels = new JPanel[Logic.maxRowLength + 2];
 			JPanel section = sectionPanelsList.get(section_ind);
 			GridBagConstraints gbc = sectionConstraints.get(section_ind);
 			gbc.gridy = -2;
-			for (int col = 0; col < columns; col ++)
+			for (int col = 0; col < Logic.maxRowLength + 2; col ++)
 			{
 				JPanel panel = new JPanel();
 				panel.setPreferredSize(new Dimension(max_widths[col], 0) );
@@ -257,6 +292,36 @@ public class Gui {
 		
 		keepGuiSize = true;
 		contentRearraged = false;
+	}
+	
+	public static void getAddRemoveColumnsMenuItems()
+	{
+		edit_add.removeAll();
+		edit_remove.removeAll();
+		
+		for (int col = 0; col < Logic.content[0].length; col ++)
+		{
+			JMenuItem remove = new JMenuItem("Remove " + getNumeral(col + 1) + " column");
+			remove.addActionListener(MouseAdapters.removeContentCol(col) );
+			edit_remove.add(remove);
+			
+			JMenuItem add = new JMenuItem(col == 0 ? "Add before 1st column" : "Add between " + getNumeral(col) + " and " + getNumeral(col + 1) + " column");
+			add.addActionListener(MouseAdapters.addContentCol(col) );
+			edit_add.add(add);
+		}
+		JMenuItem add = new JMenuItem("Add after " + getNumeral(Logic.content[0].length) + " column");
+		add.addActionListener(MouseAdapters.addContentCol(Logic.content[0].length) );
+		edit_add.add(add);
+	}
+	
+	public static String getNumeral(int num)
+	{
+		switch (num) {
+			case 1: return "1st";
+			case 2: return "2nd";
+			case 3: return "3rd";
+			default: return num + "th";
+		}
 	}
 
 	public static void repaint()
@@ -396,24 +461,21 @@ public class Gui {
 		for (JPanel cell : cells)
 			cell.setBorder(new MatteBorder( ((MatteBorder) cell.getBorder() ).getBorderInsets(), currentColorSetting.border) );
 	}
-
-	public static void enableEditMode(JMenuItem file_edit)
+	
+	public static void updateEditMode(JCheckBoxMenuItem check_box)
 	{
-		inEditMode = true;
-		for (JLabel label : labelsBackgroundcolorTextcolor) label.setForeground(currentColorSetting.text);
-		for (JLabel label : labelsHideUnhide) label.setVisible(true);
-		file_edit.setText("View Mode");
-		updateSectionManagerDialog();
-		spaceColums();
-	}
-
-	public static void disableEditMode(JMenuItem file_edit)
-	{
-		inEditMode = false;
-		for (JLabel label : labelsBackgroundcolorTextcolor) label.setForeground(currentColorSetting.background);
-		for (JLabel label : labelsHideUnhide) label.setVisible(false);
-		file_edit.setText("Edit Mode");
-		sectionManagerDialog.setVisible(false);
+		inEditMode = check_box.isSelected();
+		if (inEditMode)
+		{
+			for (JLabel label : labelsBackgroundcolorTextcolor) label.setForeground(currentColorSetting.text);
+			updateSectionManagerDialog();
+		}
+		else
+		{
+			for (JLabel label : labelsBackgroundcolorTextcolor) label.setForeground(currentColorSetting.background);
+			sectionManagerDialog.setVisible(false);
+		}
+		for (JLabel label : labelsHideUnhide) label.setVisible(inEditMode);
 		spaceColums();
 	}
 
