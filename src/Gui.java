@@ -83,7 +83,7 @@ public class Gui {
 			//JMenuItem file_pdf     = new JMenuItem("Export as PDF");
 			
 			// Edit
-			JCheckBoxMenuItem edit_enabled = new JCheckBoxMenuItem("Enabled edit mode");
+			JCheckBoxMenuItem edit_enabled = new JCheckBoxMenuItem("Edit mode");
 			edit_add = new JMenu("add Column");
 			edit_remove = new JMenu("remove Column");
 			
