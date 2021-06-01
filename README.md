@@ -26,3 +26,12 @@ This action will only be performed when not in Edit Mode.\
 Currently the following commands are supported:\
 &emsp;&emsp;- write_to_clpiboard: writes the action_parameter as String to the System clipboard.\
 Feel free to suggest new actions!!
+
+## Todo
+For each row, you can add Todo-Tasks by clicking on the '+' button on the right.\
+They are meant for when you are doing an attempt and realize you have to change something, so you can note it down quickly and adapt the notes later.\
+Todo-Task are highlighted while in Edit-Mode.
+
+## Example
+To see a minimal working example, download the exmaple.txt and images_for_example.zip (extract into images folder).\
+All major features are used in the example.

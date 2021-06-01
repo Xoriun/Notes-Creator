@@ -31,6 +31,7 @@ import javax.swing.border.TitledBorder;
 
 public class Gui {
 	public static Font font = new Font("Serif", Font.PLAIN, 20);
+	public static Font titleFont = new Font("Serif", Font.PLAIN, 15);
 	
 	public static JFrame window;
 	public static JScrollPane scrollPane;

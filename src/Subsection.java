@@ -17,4 +17,11 @@ public class Subsection
 	{
 		this.startIndex = startIndex;
 	}
+	
+	public void setTitle(String title)
+	{
+		this.title = title;
+		if (!this.title.equals("") )
+			this.title = " " + this.title + " ";
+	}
 }

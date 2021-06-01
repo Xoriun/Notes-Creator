@@ -202,7 +202,6 @@ public class FileOperaitons
 	
 	public static void newFile()
 	{
-		System.out.println("hello");
 		fileDirectory = fileName = null;
 		Logic.content = new String[][] {{"---section 1---"," "},{"new","file"}};
 		Logic.maxRowLength = 2;
@@ -214,7 +213,7 @@ public class FileOperaitons
 	public static void saveAsFile()
 	{
 		FileDialog dialog = new FileDialog(new Frame(), "Save as", FileDialog.SAVE);
-		dialog.setFile(".csv");
+		dialog.setFile(".txt");
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)

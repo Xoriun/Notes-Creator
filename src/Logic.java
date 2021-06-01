@@ -71,13 +71,11 @@ public class Logic
 		subsection.title = "";
 		if (content[row][0].startsWith("---") && content[row][0].endsWith("---") )
 		{
-			subsection.title = content[row][0].substring(3, content[row][0].length() - 3);
-			if (!subsection.title.equals("") )
-			{
-				TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED), subsection.title, TitledBorder.LEFT, TitledBorder.TOP);
-				border.setTitleColor(Gui.currentColorSetting.text);
-				section_panel.setBorder(border);
-			}
+			subsection.setTitle(content[row][0].substring(3, content[row][0].length() - 3) );
+			TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED), subsection.title, TitledBorder.LEFT, TitledBorder.TOP);
+			border.setTitleFont(Gui.titleFont);
+			border.setTitleColor(Gui.currentColorSetting.text);
+			section_panel.setBorder(border);
 			row ++;
 		}
 		
