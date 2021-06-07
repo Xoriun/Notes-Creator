@@ -1,7 +1,5 @@
 import java.awt.Color;
 import java.awt.FileDialog;
-import java.awt.Frame;
-//import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -20,23 +18,25 @@ import java.util.stream.Stream;
 
 public class FileOperaitons
 {
-	public static String fileDirectory = "";
-	public static String fileName = "";
+	public static String fileDirectoryNotes = "";
+	public static String fileNameNotes = "";
+	public static String fileAbbreviations = "";
 	
-	public static void getFile()
+	public static void selectNotesFile()
 	{
-		FileDialog dialog = new FileDialog(new Frame(), "Select File to Open");
+		FileDialog dialog = new FileDialog(Gui.window, "Select File to Open");
 		dialog.setMode(FileDialog.LOAD);
+		Gui.setLocation(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
 			return;
 		
-		fileDirectory = dialog.getDirectory();
-		fileName = dialog.getFile();
+		fileDirectoryNotes = dialog.getDirectory();
+		fileNameNotes = dialog.getFile();
 		
-		String new_title = fileName.replace('_', ' ');
-		Gui.keepGuiSize = new_title.equals(Gui.window.getTitle() );
+		String new_title = fileNameNotes.replace('_', ' ');
+		Gui.keepGuiSize = false;
 		Gui.window.setTitle(new_title);
 	}
 
@@ -53,7 +53,7 @@ public class FileOperaitons
 																									new ColorSetting("Custom", Color.WHITE, Color.WHITE, Color.WHITE)
 																									};
 				Gui.colorSettings = res;
-				updateSettingsFile();
+				writeSettingsFile();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -75,8 +75,8 @@ public class FileOperaitons
 				if (i == 0 && !line.equals("Light") ) // last file
 				{
 					int split = line.lastIndexOf('\\');
-					fileDirectory = line.substring(0, split + 1);
-					fileName = line.substring(split + 1);
+					fileDirectoryNotes = line.substring(0, split + 1);
+					fileNameNotes = line.substring(split + 1);
 					i = 0;
 					line = reader.readLine();
 					if (line == null) break;
@@ -101,33 +101,37 @@ public class FileOperaitons
 		Gui.colorSettings = colors_list.toArray(new ColorSetting[colors_list.size() ] );
 	}
 	
-	public static void getContentFromFile()
+	public static void readNotesFile()
 	{
+		Logic.creatMissingImagesMessage = true;
+		
 		ArrayList<String[]> content_list = new ArrayList<String[]>();
 		ArrayList<String> todo_list = new ArrayList<String>();
 		BufferedReader reader = null;
 		while (reader == null)
 		{
 			try {
-				reader = new BufferedReader(new FileReader(fileDirectory + fileName) );
+				reader = new BufferedReader(new FileReader(fileDirectoryNotes + fileNameNotes) );
 			} catch (FileNotFoundException e) {
-				getFile();
+				selectNotesFile();
 			}
 		}
 		
 		String header_string;
 		String line_string;
 		try {
-			if ( (line_string = reader.readLine() ) != null)
-				header_string = line_string.substring(line_string.startsWith("ï") ? 3 : 0);
-			else
+			line_string = reader.readLine();
+			if (line_string.startsWith("***abbreviations_file;") )
 			{
-				reader.close();
-				throw new RuntimeException("Invalid header!");
+				fileAbbreviations = line_string.split(";")[1];
+				Logic.abbreviationsList = readAbbriviationsFile();
+				line_string = reader.readLine();
 			}
-		} catch (IOException e) {
+			header_string = line_string.substring(line_string.startsWith("ï¿½") ? 3 : 0);
+		} catch (Exception e) {
 			throw new RuntimeException("Error while reading header!");
 		}
+		
 		String[] header = header_string.split(Pattern.quote("||"), -1);
 		String[] header_content = header[0].split(";");
 		Logic.maxRowLength = header_content.length;
@@ -180,12 +184,12 @@ public class FileOperaitons
 		}
 	}
 	
-	public static void updateSettingsFile()
+	public static void writeSettingsFile()
 	{
 		try
 		{
 			FileWriter writer = new FileWriter(new File("settings.txt"), false);
-			writer.write(fileDirectory + fileName + '\n');
+			writer.write(fileDirectoryNotes + fileNameNotes + '\n');
 			for (ColorSetting color : Gui.colorSettings)
 			{
 				writer.write(color.name + "\n" +
@@ -200,9 +204,9 @@ public class FileOperaitons
 		}
 	}
 	
-	public static void newFile()
+	public static void createNewFile()
 	{
-		fileDirectory = fileName = null;
+		fileDirectoryNotes = fileNameNotes = null;
 		Logic.content = new String[][] {{"---section 1---"," "},{"new","file"}};
 		Logic.maxRowLength = 2;
 		Gui.arrangeContent();
@@ -210,18 +214,125 @@ public class FileOperaitons
 		Gui.spaceColums();
 	}
 	
+	public static String newAbbreviationsFile(ArrayList<String[]> abbreviations_list)
+	{
+		saveAbbereviationsFile();
+		
+		FileDialog dialog = new FileDialog(Gui.window, "Select locations for new abbreviation file");
+		dialog.setFile("\\abbreviation_new.txt");
+		dialog.setMode(FileDialog.SAVE);
+		Gui.setLocation(dialog);
+		dialog.setVisible(true);
+		
+		if (dialog.getDirectory() == null)
+			return "";
+		
+		abbreviations_list.clear();
+		return dialog.getDirectory() + dialog.getFile();
+	}
+	
+	public static String selectAbbreviationsFile()
+	{
+		saveAbbereviationsFile();
+		
+		FileDialog dialog = new FileDialog(Gui.window, "Select abbreviation file to load");
+		dialog.setMode(FileDialog.LOAD);
+		Gui.setLocation(dialog);
+		dialog.setVisible(true);
+		
+		if (dialog.getDirectory() == null)
+			return null;
+		
+		return dialog.getDirectory() + dialog.getFile();
+	}
+	
+	public static ArrayList<String[]> readAbbriviationsFile()
+	{
+		return readAbbriviationsFile(fileAbbreviations);
+	}
+	
+	public static ArrayList<String[]> readAbbriviationsFile(String location)
+	{
+		BufferedReader reader;
+		try {
+			reader = new BufferedReader(new FileReader(location) );
+		} catch (FileNotFoundException ef) {
+			return new ArrayList<String[]>();
+		} catch (RuntimeException er)
+		{
+			return new ArrayList<String[]>();
+		}
+		
+		String line_string;
+		String[] line_arr;
+		ArrayList<String[]> abbreviations_list = new ArrayList<String[]>();
+		try {
+			while( (line_string = reader.readLine() ) != null)
+			{
+				if ( !line_string.contains(":") )
+					continue;
+				
+				line_arr = line_string.split(":");
+				
+				switch (line_arr.length)
+				{
+					case 0:
+						abbreviations_list.add(new String[] {"", ""} );
+						break;
+					case 1:
+						if (line_string.startsWith(":") )
+							abbreviations_list.add(new String[] {"", line_arr[0] } );
+						else
+							abbreviations_list.add(new String[] {line_arr[0], ""} );
+						break;
+					case 2:
+						abbreviations_list.add(line_arr);
+						break;
+					default:
+						continue;
+				}
+			}
+		} catch (Exception e) {
+			try { reader.close(); } catch (IOException e1) { }
+			return new ArrayList<String[]>(
+					);
+		}
+		
+		try { reader.close(); } catch (IOException e) {	}
+
+		return abbreviations_list;
+	}
+	
+	public static void saveAbbereviationsFile()
+	{
+		if (fileAbbreviations == null)
+			return;
+		else
+		{
+			try (PrintWriter out = new PrintWriter(fileAbbreviations) )
+			{
+				for (String[] abbreviation : Logic.abbreviationsList)
+					out.println(abbreviation[0] + ":" + abbreviation[1] );
+			} catch (FileNotFoundException e)
+			{
+				fileAbbreviations = null;
+			}
+		}
+	}
+	
 	public static void saveAsFile()
 	{
-		FileDialog dialog = new FileDialog(new Frame(), "Save as", FileDialog.SAVE);
+		FileDialog dialog = new FileDialog(Gui.window, "Save as", FileDialog.SAVE);
 		dialog.setFile(".txt");
+		Gui.setLocation(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
 			return;
-		fileDirectory = dialog.getDirectory();
-		fileName = dialog.getFile();
+		fileDirectoryNotes = dialog.getDirectory();
+		fileNameNotes = dialog.getFile();
 		
-		String new_title = fileName.replace('_', ' ');
+		String new_title = fileNameNotes.replace('_', ' ');
 		Gui.window.setTitle(new_title);
 		
 		saveFile();
@@ -229,12 +340,16 @@ public class FileOperaitons
 	
 	public static void saveFile()
 	{
-		if (fileDirectory == null || fileName == null)
+		saveAbbereviationsFile();
+		
+		if (fileDirectoryNotes == null || fileNameNotes == null)
 			saveAsFile();
 		else
 		{
-			try (PrintWriter out = new PrintWriter(fileDirectory + fileName) )
+			try (PrintWriter out = new PrintWriter(fileDirectoryNotes + fileNameNotes) )
 			{
+				if (fileAbbreviations != null)
+					out.println("***abbreviations_file;" + fileAbbreviations);
 				for (int i = 0; i < Logic.content.length; i ++)
 				{
 					String rowStr = "";
@@ -251,8 +366,210 @@ public class FileOperaitons
 		}
 	}
 	
-	/**
-	public static void exportAsPdf()
+	public static void importFile()
+	{
+		// selecting which file to import
+		FileDialog dialog = new FileDialog(Gui.window, "Select File to Import");
+		dialog.setMode(FileDialog.LOAD);
+		Gui.setLocation(dialog);
+		dialog.setVisible(true);
+		
+		if (dialog.getDirectory() == null)
+			return;
+		
+		String import_dir = dialog.getDirectory();
+		String import_name = dialog.getFile();
+		
+		// creating reader for importing
+		BufferedReader reader;
+		try
+		{
+			reader = new BufferedReader(new FileReader(import_dir + import_name) );
+		} catch (FileNotFoundException e)
+		{
+			throw new RuntimeException("Error while importing file: Import file at '" + import_dir + import_name + "' was not found!");
+		}
+		
+		// selecting where to save the notes file
+		import_name = import_name.replace("_export", "");
+		String[] file_name_split = import_name.split(Pattern.quote(".") );
+			
+		String file = null;
+		dialog = new FileDialog(Gui.window, "Save notes file", FileDialog.SAVE);
+		dialog.setDirectory(import_dir);
+		dialog.setFile(file_name_split[0] + "_import." + file_name_split[1]);
+		Gui.setLocation(dialog);
+		dialog.setVisible(true);
+		
+		if (dialog.getFile() == null)
+		{
+			try { reader.close(); } catch (IOException e1) { }
+			return;
+		}
+		
+		file = dialog.getFile();
+
+		fileDirectoryNotes = dialog.getDirectory();
+		fileNameNotes = dialog.getFile();
+		
+		// creating reading notes file
+		String line;
+		ArrayList<String> content = new ArrayList<String>();
+		try
+		{
+			while ( (line = reader.readLine()) != null)
+			{
+				if (line.equals("***ABBREVIATIONS***") )
+					break;
+				
+				content.add(line);
+			}
+		} catch (IOException e)
+		{
+			try { reader.close(); } catch (IOException e1) { }
+			throw new RuntimeException("Error while importing file: creating notes writer!");
+		}
+		
+		// if there are abbreviations: creating writer for abbreviations file, writing abbreviations file
+		if (line != null && line.equals("***ABBREVIATIONS***") )
+		{
+			String import_name_abbr = file_name_split[0] + "_abbreviations." + file_name_split[1];
+			dialog = new FileDialog(Gui.window, "Save abbreviations file", FileDialog.SAVE);
+			dialog.setDirectory(import_dir);
+			dialog.setFile(import_name_abbr);
+			Gui.setLocation(dialog);
+			dialog.setVisible(true);
+			file = dialog.getFile();
+			if (file == null)
+			{
+				try { reader.close(); } catch (IOException e1) { }
+				return;
+			}
+			
+			String import_dir_abbr = dialog.getDirectory();
+			import_name_abbr = dialog.getFile();
+			if (content.get(0).startsWith("***abbreviations_file;") )
+				content.set(0, "***abbreviations_file;" + import_dir_abbr + import_name_abbr);
+			
+			PrintWriter writer_abbreviations;
+			try
+			{
+				writer_abbreviations = new PrintWriter(new File(import_dir_abbr + import_name_abbr) );
+			} catch (FileNotFoundException e)
+			{
+				try { reader.close(); } catch (IOException e1) { }
+				throw new RuntimeException("Error while importing file: creating abbreviations writer!");
+			}
+			
+			try
+			{
+				while ( (line = reader.readLine()) != null)
+					writer_abbreviations.println(line);
+				writer_abbreviations.close();
+				reader.close();
+			} catch (IOException e)
+			{
+				throw new RuntimeException("Error while importing file: writing!");
+			}
+			
+			Logic.abbreviationsList = readAbbriviationsFile(import_dir_abbr + import_name_abbr);
+		}
+		
+
+		PrintWriter writer_notes;
+		try
+		{
+			writer_notes = new PrintWriter(new File(fileDirectoryNotes + fileNameNotes) );
+			for (String content_line : content)
+				writer_notes.println(content_line);
+			writer_notes.close();
+		} catch (IOException e)
+		{
+			try { reader.close(); } catch (IOException e1) { }
+			throw new RuntimeException("Error while importing file: creating notes writer!");
+		}
+		readNotesFile();
+	}
+	
+	public static void exportFile()
+	{
+		if (Logic.unsavedChanges)
+			saveFile();
+		
+		// creating notes reader
+		BufferedReader reader_notes;
+		try
+		{
+			reader_notes = new BufferedReader(new FileReader(fileDirectoryNotes + fileNameNotes) );
+		} catch (FileNotFoundException e)
+		{
+			throw new RuntimeException("Error while exporting file: Notes file at '" + fileDirectoryNotes + fileNameNotes + "' was not found!");
+		}
+		
+		// creating abbreviations reader
+		BufferedReader reader_abbreviations = null;
+		if (fileAbbreviations != null && !fileAbbreviations.isEmpty() )
+			try
+			{
+				reader_abbreviations = new BufferedReader(new FileReader(fileAbbreviations) );
+			} catch (FileNotFoundException e)
+			{
+				try { reader_notes.close(); } catch (IOException e1) { }
+				throw new RuntimeException("Error while exporting file: Notes file at '" + fileAbbreviations + "' was not found!");
+			}
+		
+		// creating writer
+		PrintWriter writer;
+		String[] file_name_split = fileNameNotes.split(Pattern.quote(".") );
+		
+		FileDialog dialog = new FileDialog(Gui.window, "Save notes file", FileDialog.SAVE);
+		dialog.setDirectory(fileDirectoryNotes);
+		dialog.setFile(file_name_split[0] + "_export." + file_name_split[1]);
+		Gui.setLocation(dialog);
+		dialog.setVisible(true);
+		
+		if (dialog.getFile() == null)
+		{
+			try { reader_abbreviations.close(); reader_notes.close(); } catch (IOException e1) { }
+			return;
+		}
+		
+		try
+		{
+			writer = new PrintWriter(new File(dialog.getFile() ) );
+		} catch (IOException e)
+		{
+			try { reader_notes.close(); reader_abbreviations.close(); } catch (Exception e1) { }
+			throw new RuntimeException("Error while exporting file: creating writer!");
+		}
+		
+		// writing
+		String line;
+		try
+		{
+			while ( (line = reader_notes.readLine()) != null)
+				writer.println(line);
+			reader_notes.close();
+			
+			if (fileAbbreviations != null && !fileAbbreviations.isEmpty() )
+			{
+				String first_abbr = reader_abbreviations.readLine();
+				if (first_abbr != null && !first_abbr.isEmpty() )
+				{
+					writer.println("***ABBREVIATIONS***\n" + first_abbr);
+					while ( (line = reader_abbreviations.readLine()) != null)
+						writer.println(line);
+				}
+				reader_abbreviations.close();
+			}
+			writer.close();
+		} catch (IOException e)
+		{
+			throw new RuntimeException("Error while exporting file: writing!");
+		}
+	}
+	
+	/** public static void exportAsPdf()
 	{
 		int width  = Gui.sectionPanelsList.get(0).getWidth();
 		int height = 0, current_height = 0;
@@ -276,5 +593,5 @@ public class FileOperaitons
 			//Handle exception
 		}
 	}
-	//*/
+	*/
 }

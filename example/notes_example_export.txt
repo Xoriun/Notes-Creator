@@ -1,8 +1,13 @@
+***abbreviations_file;H:\Programming\Notes_Creator\notes_example_abbreviations.txt
 ---I am a section title---; 
 This is a normal cell;HelloWorld
-This is an image;#Belt#
+This is an image;#Transport_belt#
 This is a layered image;#Furnace:Iron:c:c#||This is a task
 This is all in one;HelloWorld\n#Belt##Furnace:Iron:c:c#
 This is an action;click me and paste>>write_to_clipboard:Hello World
-------
+------;
 This is content in a section;without title
+***ABBREVIATIONS***
+Belt:Transport_belt
+Furnace:Stone_furnace
+Iron:Iron_plate

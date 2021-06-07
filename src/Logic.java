@@ -1,28 +1,39 @@
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.TextField;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.UIManager;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.MouseInputAdapter;
 
 public class Logic
 {
@@ -30,17 +41,18 @@ public class Logic
 	public static String[] sections;
 	public static Integer[] sectionIndices;
 	public static String[] todoList;
+	public static ArrayList<String[]> abbreviationsList = new ArrayList<String[]>();
 	public static int maxRowLength;
 	public static boolean unsavedChanges = false;
+	public static String missingImagesMessage = "";
+	public static boolean creatMissingImagesMessage = false;
 	
 	public static void main(String[] args)
 	{
 		try
 		{
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e)
-		{
-		}
+		} catch (Exception e) { }
 		FileOperaitons.readSettingsFile();
 		Gui.prepareGui();
 		readAndDisplayNotes();
@@ -48,7 +60,7 @@ public class Logic
 
 	public static void readAndDisplayNotes()
 	{
-		FileOperaitons.getContentFromFile();
+		FileOperaitons.readNotesFile();
 		Gui.arrangeContent();
 		Gui.spaceColums();
 	}
@@ -193,14 +205,42 @@ public class Logic
 						if (images.length != 4) throw new RuntimeException("Error while parsing layered images: " + str + "! There have to be 2 images and 2 poition tags (t/b/c and l/r/c)");
 						try
 						{
+							// wiki Strings
+							String wiki_str_bg = getAbbreviation(images[0] );
+							String wiki_str_fg = getAbbreviation(images[1] );
+							
 							// preparing Files
-							File file_bG = new File("Images\\" + Helper.getWikiName(images[0] ) + ".png");
-							File file_fG = new File("Images\\" + Helper.getWikiName(images[1] ) + ".png");
+							File file_bg = new File("Images\\" + wiki_str_bg + ".png");
+							File file_fg = new File("Images\\" + wiki_str_fg + ".png");
 							File error = new File("Images\\Destroyed-icon.png");
 							
 							// preparing BufferedImages
-							final BufferedImage back_ground = ImageIO.read(file_bG.exists() ? file_bG : error);
-							final BufferedImage fore_ground = ImageIO.read(file_fG.exists() ? file_fG : error);
+							final BufferedImage back_ground;
+							final BufferedImage fore_ground;
+							if (file_bg.exists() )
+								back_ground = ImageIO.read(file_bg);
+							else
+							{
+								back_ground = ImageIO.read(error);
+								if (creatMissingImagesMessage)
+								{
+									String new_message = wiki_str_bg + ".png" + (images[0].equals(wiki_str_bg) ? "" : " (" + images[0] + ")");
+									if (!missingImagesMessage.contains(new_message) )
+											missingImagesMessage += "\n" + new_message;
+								}
+							}
+							if (file_fg.exists() )
+								fore_ground = ImageIO.read(file_fg);
+							else
+							{
+								fore_ground = ImageIO.read(error);
+								if (creatMissingImagesMessage)
+								{
+									String new_message = wiki_str_fg + ".png" + (images[1].equals(wiki_str_fg) ? "" : " (" + images[1] + ")");
+									if (!missingImagesMessage.contains(new_message) )
+									missingImagesMessage += "\n" + new_message;
+								}
+							}
 							final BufferedImage layer_dot = ImageIO.read(new File("Images\\Layer_dot.png")); // Black layer between images for better visibility
 							final BufferedImage scaled = new BufferedImage(Gui.ImageSize, Gui.ImageSize, BufferedImage.TYPE_INT_ARGB); // empty BufferedImage to draw on
 							Graphics g = scaled.getGraphics();
@@ -229,8 +269,22 @@ public class Logic
 					else
 					{
 						// normal Image
-						File file = new File("Images\\" + Helper.getWikiName(str) + ".png");
-						JLabel label = new JLabel(new ImageIcon(new ImageIcon("Images\\" + (file.exists() ? Helper.getWikiName(str) : "Destroyed-icon") + ".png").getImage().getScaledInstance(Gui.ImageSize, Gui.ImageSize, Image.SCALE_DEFAULT) ) );
+						String wiki_str = getAbbreviation(str); 
+						String file_string = "Images\\" + wiki_str + ".png";
+						ImageIcon icon;
+						if (new File(file_string).exists() )
+							icon = new ImageIcon(file_string);
+						else
+						{
+							icon = new ImageIcon("Images\\Destroyed-icon.png");
+							if (creatMissingImagesMessage)
+							{
+								String new_message = wiki_str + ".png" + (str.equals(wiki_str) ? "" : " (" + str + ")");
+								if (!missingImagesMessage.contains(new_message) )
+								missingImagesMessage += "\n" + new_message;
+							}
+						}
+						JLabel label = new JLabel(new ImageIcon(icon.getImage().getScaledInstance(Gui.ImageSize, Gui.ImageSize, Image.SCALE_DEFAULT) ) );
 						//label.addMouseListener(getIconEdit(file, null) );
 						horizontal_panel.add(label);
 						}
@@ -406,29 +460,51 @@ public class Logic
 	
 	public static void fillColorSettingsRow(JPanel panel, GridBagConstraints gbc, Color color, String name)
 	{
+		
 		gbc.gridx = 0;
-		panel.add(new JLabel(name), gbc);
+		JLabel label_name = new JLabel(name);
+		label_name.setForeground(Gui.currentColorSetting.text);
+		label_name.setOpaque(false);
+		panel.add(label_name, gbc);
 		
 		gbc.gridx = 1;
-		panel.add(new JLabel(" r "), gbc);
+		JLabel label_r = new JLabel(" r ");
+		label_r.setForeground(Gui.currentColorSetting.text);
+		label_r.setOpaque(false);
+		panel.add(label_r, gbc);
 		gbc.gridx = 2;
-		TextField text1 = new TextField("" + color.getRed() );
+		JTextField text1 = new JTextField("" + color.getRed() );
+		text1.setForeground(Gui.currentColorSetting.text);
+		text1.setBackground(Gui.currentColorSetting.background);
+		text1.setBorder(BorderFactory.createMatteBorder(name.equals("Text") ? 1 : 0, 1, 1, 1, Gui.currentColorSetting.border) );
 		text1.setName(name + "r");
 		panel.add(text1, gbc);
 		gbc.gridy ++;
 		
 		gbc.gridx = 1;
-		panel.add(new JLabel("g"), gbc);
+		JLabel label_g = new JLabel(" g ");
+		label_g.setForeground(Gui.currentColorSetting.text);
+		label_g.setOpaque(false);
+		panel.add(label_g, gbc);
 		gbc.gridx = 2;
-		TextField text2 = new TextField("" + color.getGreen() );
+		JTextField text2 = new JTextField("" + color.getGreen() );
+		text2.setForeground(Gui.currentColorSetting.text);
+		text2.setBackground(Gui.currentColorSetting.background);
+		text2.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, Gui.currentColorSetting.border) );
 		text2.setName(name + "g");
 		panel.add(text2, gbc);
 		gbc.gridy ++;
 		
 		gbc.gridx = 1;
-		panel.add(new JLabel("b"), gbc);
+		JLabel label_b = new JLabel(" b ");
+		label_b.setForeground(Gui.currentColorSetting.text);
+		label_b.setOpaque(false);
+		panel.add(label_b, gbc);
 		gbc.gridx = 2;
-		TextField text3 = new TextField("" + color.getBlue() );
+		JTextField text3 = new JTextField("" + color.getBlue() );
+		text3.setForeground(Gui.currentColorSetting.text);
+		text3.setBackground(Gui.currentColorSetting.background);
+		text3.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, Gui.currentColorSetting.border) );
 		text3.setName(name + "b");
 		panel.add(text3, gbc);
 		gbc.gridy ++;
@@ -451,7 +527,7 @@ public class Logic
 		Gui.colorSettings[2].background = new Color(colors[2][0], colors[2][1], colors[2][2]);
 		Gui.currentColorSetting = Gui.colorSettings[2];
 		
-		FileOperaitons.updateSettingsFile();
+		FileOperaitons.writeSettingsFile();
 		options.dispose();
 	}
 	
@@ -464,6 +540,190 @@ public class Logic
             compList.addAll(getAllComponents((Container) comp));
     }
     return compList;
+	}
+	
+	public static void getAbbreviationSettings(String abbr_location_copy, ArrayList<String[]> abbr_list_copy)
+	{
+		JDialog abbreviations_dialog = new JDialog(Gui.window);
+		abbreviations_dialog.setModal(true);
+		abbreviations_dialog.setTitle("Edit abbreviations");
+		abbreviations_dialog.setMinimumSize(new Dimension(400, 200) );
+		
+		JPanel outer_panel = new JPanel();
+		outer_panel.setLayout(new BoxLayout(outer_panel, BoxLayout.Y_AXIS) );
+		outer_panel.setBackground(Gui.currentColorSetting.background);
+		outer_panel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Gui.currentColorSetting.text) );
+		
+		JPanel settings_panel = new JPanel();
+		settings_panel.setLayout(new BoxLayout(settings_panel, BoxLayout.Y_AXIS) );
+		settings_panel.setOpaque(false);
+		settings_panel.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 2));
+		
+	  // file panel
+			JPanel file_panel = new JPanel();
+			file_panel.setLayout(new BoxLayout(file_panel, BoxLayout.Y_AXIS) );
+			file_panel.setOpaque(false);
+			
+			// file location
+			JPanel current_file_panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+			current_file_panel.setOpaque(false);
+			JLabel current_file = new JLabel("Selected abbreviations file: " + abbr_location_copy);
+			current_file.setForeground(Gui.currentColorSetting.text);
+			current_file_panel.add(current_file);
+			
+			// load file
+			JPanel file_actions_panel = new JPanel();
+			file_actions_panel.setOpaque(false);
+			JButton file_select = new JButton("Select abbreviations file");
+			JButton file_new    = new JButton("New abbreviations file");
+			JButton file_remove = new JButton("Remove abbreviations file");
+			file_select.addActionListener(e -> {
+				String new_abbr_loaction = FileOperaitons.selectAbbreviationsFile();
+				abbreviations_dialog.dispose();
+				ArrayList<String[]> new_abbr_list = FileOperaitons.readAbbriviationsFile(new_abbr_loaction);
+				if (!new_abbr_list.isEmpty() )
+					getAbbreviationSettings(new_abbr_loaction, new_abbr_list);
+			} );
+			file_new.addActionListener(e -> {
+				abbreviations_dialog.dispose();
+				getAbbreviationSettings(FileOperaitons.newAbbreviationsFile(abbr_list_copy), abbr_list_copy);
+			} );
+			file_remove.addActionListener(e -> {
+				abbreviations_dialog.dispose();
+				getAbbreviationSettings("", new ArrayList<String[]>() );
+			} );
+			file_actions_panel.add(file_select);
+			file_actions_panel.add(file_new);
+			file_actions_panel.add(file_remove);
+	    
+			// fill panels
+			file_panel.add(current_file_panel);
+			file_panel.add(file_actions_panel);
+			
+			settings_panel.add(file_panel);
+		
+		// abbreviationsList panel
+			JPanel abbr_panel = new JPanel();
+			abbr_panel.setLayout(new BoxLayout(abbr_panel, BoxLayout.Y_AXIS) );
+			abbr_panel.setOpaque(false);
+			JButton abbr_add_button = new JButton("Add abbreviation");
+			
+			// abbreviationsList list panel
+			JPanel abbr_list_panel = new JPanel(new GridBagLayout() );
+			abbr_list_panel.setBackground(Gui.currentColorSetting.background);
+			GridBagConstraints gbc = new GridBagConstraints();
+			Dimension min_dim = new Dimension(150,20);
+			ArrayList<JTextField[]> textfield_list = new ArrayList<JTextField[]>();
+			
+			gbc.gridy = 0;
+			for (String[] abbr : abbr_list_copy)
+			{
+				JTextField[] row = new JTextField[2];
+				for (int i = 0; i < 2; i ++)
+				{
+					gbc.gridx = i;
+					JTextField textfield = new JTextField(abbr[i] );
+					textfield.setBorder(BorderFactory.createMatteBorder(gbc.gridy == 0 ? 1 : 0, 1, 1, i, Gui.currentColorSetting.border) );
+					textfield.setPreferredSize(min_dim);
+					row[i] = textfield;
+					textfield.setOpaque(false);
+					textfield.setForeground(Gui.currentColorSetting.text);
+					abbr_list_panel.add(textfield, gbc);
+				}
+				textfield_list.add(row);
+				JLabel remove = new JLabel(" - ");
+				remove.setOpaque(false);
+				remove.setForeground(Gui.currentColorSetting.text);
+				remove.addMouseListener(new MouseInputAdapter() {
+					@Override
+					public void mouseClicked(MouseEvent e)
+					{
+						abbreviations_dialog.dispose();
+						textfield_list.remove(row);
+						abbr_list_copy.remove(abbr);
+						getAbbreviationSettings(abbr_location_copy, abbr_list_copy);
+					}
+				} );
+				gbc.gridx = 3;
+				abbreviations_dialog.dispose();
+				abbr_list_panel.add(remove, gbc);
+				gbc.gridy ++;
+			}
+			
+			// abbreviation add button
+			JPanel abbr_add_panel = new JPanel();
+			abbr_add_panel.setOpaque(false);
+			abbr_add_button.addActionListener(e -> {
+				abbr_list_copy.add(new String[] {"",""} );
+				JTextField[] new_row = new JTextField[2];
+				for (int i = 0; i < 2; i ++)
+				{
+					gbc.gridx = i;
+					JTextField textfield = new JTextField("");
+					textfield.setBorder(BorderFactory.createMatteBorder(gbc.gridy == 0 ? 1 : 0, 1, 1, i, Gui.currentColorSetting.border) );
+					textfield.setPreferredSize(min_dim);
+					new_row[i] = textfield;
+					textfield.setOpaque(false);
+					textfield.setForeground(Gui.currentColorSetting.text);
+					abbr_list_panel.add(textfield, gbc);
+				}
+				textfield_list.add(new_row);
+				gbc.gridy ++;
+				abbreviations_dialog.pack();
+				abbreviations_dialog.repaint();
+			} );
+			abbr_add_panel.add(abbr_add_button);
+			
+			// fill panels
+			JScrollPane abbr_scroll_pane = new JScrollPane(abbr_list_panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+			abbr_scroll_pane.getVerticalScrollBar().setUnitIncrement(16);
+			abbr_scroll_pane.setBackground(Gui.currentColorSetting.background);
+			abbr_scroll_pane.setBorder(null);
+			abbr_panel.add(abbr_scroll_pane);
+			abbr_panel.add(abbr_add_panel);
+			
+			settings_panel.add(abbr_panel);
+		
+		// controls panel
+			JPanel controls_panel = new JPanel();
+			controls_panel.setOpaque(false);
+			
+			JButton confirm = new JButton("Confirm");
+			JButton cancel  = new JButton("Cancel");
+			
+			confirm.addActionListener(e -> {
+				abbreviations_dialog.dispose();
+				unsavedChanges = true;
+				creatMissingImagesMessage = true;
+				abbreviationsList = textfield_list.stream().map(row -> new String[] {row[0].getText(), row[1].getText() } ).collect(Collectors.toCollection(ArrayList::new) );
+				FileOperaitons.fileAbbreviations = abbr_location_copy;
+				FileOperaitons.saveAbbereviationsFile();
+				Gui.arrangeContent();
+				Gui.spaceColums();
+			} );
+			cancel .addActionListener(e -> { abbreviations_dialog.dispose(); } );
+		
+			controls_panel.add(confirm);
+			controls_panel.add(cancel);
+			
+			settings_panel.add(controls_panel);
+			
+		outer_panel.add(settings_panel);
+		abbreviations_dialog.add(outer_panel);
+		abbreviations_dialog.pack();
+		Gui.setLocation(abbreviations_dialog, -200);
+		abbreviations_dialog.pack();
+		abbreviations_dialog.setVisible(true);
+		abbreviations_dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	}
+	
+	public static String getAbbreviation(String str)
+	{
+		if (abbreviationsList != null)
+			for (String[] abbr : abbreviationsList)
+				if (str.equals(abbr[0]) )
+					return abbr[1];
+		return str;
 	}
 	
 	/** public MouseInputAdapter getTextEdit(JLabel label)

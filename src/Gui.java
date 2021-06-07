@@ -1,4 +1,7 @@
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -6,6 +9,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,6 +29,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.MatteBorder;
@@ -37,9 +43,11 @@ public class Gui {
 	public static JScrollPane scrollPane;
 	public static JPanel mainPanel;
 	private static JDialog sectionManagerDialog;
+	private static JPanel sectionManagerPanel;
 	
 	public final static int ImageSize = 30;
 	public static boolean inEditMode = false;
+	private static JCheckBoxMenuItem edit_enabled;
 	public static JMenu edit_add;
 	public static JMenu edit_remove;
 	
@@ -55,12 +63,14 @@ public class Gui {
 	public static ArrayList<JPanel> sectionPanelsList = new ArrayList<JPanel>();
 	public static ArrayList<GridBagConstraints> sectionConstraints = new ArrayList<GridBagConstraints>();
 	public static Set<JPanel> cells = new HashSet<JPanel>();
+	public static Set<JLabel> sectionLabels = new HashSet<JLabel>();
 	public static Set<JLabel> labelsTextcolor = new HashSet<JLabel>();
 	public static Set<JLabel> labelsBackgroundcolorTextcolor = new HashSet<JLabel>();
 	public static Set<JLabel> labelsHideUnhide = new HashSet<JLabel>(); 
 	public static ArrayList<JPanel[][]> cellPanelsList = new ArrayList<JPanel[][]>();
 	public static ArrayList<JPanel[]> spacingPanelsList = new ArrayList<JPanel[]>();
 	
+	@SuppressWarnings("unchecked")
 	public static void prepareGui()
 	{
 		currentColorSetting = colorSettings[1]; // dark_mode
@@ -81,36 +91,42 @@ public class Gui {
 			JMenuItem file_new     = new JMenuItem("New notes");
 			JMenuItem file_save    = new JMenuItem("Save");
 			JMenuItem file_save_as = new JMenuItem("Save as");
+			JMenuItem file_import  = new JMenuItem("Import file");
+			JMenuItem file_export  = new JMenuItem("Export file");
 			//JMenuItem file_pdf     = new JMenuItem("Export as PDF");
 			
 			// Edit
-			JCheckBoxMenuItem edit_enabled = new JCheckBoxMenuItem("Edit mode");
-			edit_add = new JMenu("add Column");
-			edit_remove = new JMenu("remove Column");
+			edit_enabled              = new JCheckBoxMenuItem("Edit mode");
+			edit_add                  = new JMenu("add Column");
+			edit_remove               = new JMenu("remove Column");
+			JMenuItem edit_abbr_edit  = new JMenuItem("Abbreviations settings");
 			
 			// Settings Menu
 			JRadioButtonMenuItem settings_dark_mode  = new JRadioButtonMenuItem("Dark mode");
 			JRadioButtonMenuItem settings_light_mode = new JRadioButtonMenuItem("Light mode");
 			JRadioButtonMenuItem settings_custom     = new JRadioButtonMenuItem("Custom");
-			JMenuItem settings_custom_change = new JMenuItem("Modify Custom");
+			JMenuItem settings_custom_change         = new JMenuItem("Modify Custom");
 		
 		// Action Listeners
 			// File
-			file_open   .addActionListener( e -> { FileOperaitons.getFile(); Logic.readAndDisplayNotes();} );
-			file_reload .addActionListener( e -> { keepGuiSize = false; Logic.readAndDisplayNotes(); } );
-			file_new    .addActionListener( e -> { FileOperaitons.newFile(); } );
+			file_open   .addActionListener( e -> { FileOperaitons.selectNotesFile(); Logic.readAndDisplayNotes();} );
+			file_reload .addActionListener( e -> { keepGuiSize = false; edit_enabled.setSelected(false); inEditMode = false; Logic.readAndDisplayNotes(); } );
+			file_new    .addActionListener( e -> { FileOperaitons.createNewFile(); } );
 			file_save   .addActionListener( e -> { FileOperaitons.saveFile(); } );
 			file_save_as.addActionListener( e -> { FileOperaitons.saveAsFile(); } );
 			//file_pdf    .addActionListener( e -> { FileOperaitons.exportAsPdf(); } );
+			file_import .addActionListener( e -> { FileOperaitons.importFile(); arrangeContent(); spaceColums(); } );
+			file_export .addActionListener( e -> { FileOperaitons.exportFile(); } );
 			
 			// Edit
-			edit_enabled.addActionListener( e -> { updateEditMode(edit_enabled); } );
+			edit_enabled    .addActionListener(e -> { updateEditMode(edit_enabled); } );
+			edit_abbr_edit  .addActionListener(e -> { Logic.getAbbreviationSettings(FileOperaitons.fileAbbreviations, (ArrayList<String[]>) Logic.abbreviationsList.clone() ); } );
 			
 			// Settings
-			settings_light_mode.addActionListener(		e -> { currentColorSetting = colorSettings[0]; applyLightingMode(); } );
-			settings_dark_mode.addActionListener(			e -> { currentColorSetting = colorSettings[1]; applyLightingMode(); } );
-			settings_custom.addActionListener(				e -> { currentColorSetting = colorSettings[2]; applyLightingMode(); } );
-			settings_custom_change.addActionListener( e -> { changeCustomLightingSettings(); } );
+			settings_light_mode   .addActionListener(e -> { currentColorSetting = colorSettings[0]; applyLightingMode(); } );
+			settings_dark_mode    .addActionListener(e -> { currentColorSetting = colorSettings[1]; applyLightingMode(); } );
+			settings_custom       .addActionListener(e -> { currentColorSetting = colorSettings[2]; applyLightingMode(); } );
+			settings_custom_change.addActionListener(e -> { changeCustomLightingSettings(); } );
 			
 		// Shortcuts
 			// File
@@ -127,11 +143,16 @@ public class Gui {
 			file_menu.add(file_save);
 			file_menu.add(file_save_as);
 			//file_menu.add(file_pdf);
+			file_menu.addSeparator();
+			file_menu.add(file_import);
+			file_menu.add(file_export);
 			
 			// Edit
 			edit_menu.add(edit_enabled);
 			edit_menu.add(edit_add);
 			edit_menu.add(edit_remove);
+			edit_menu.addSeparator();
+			edit_menu.add(edit_abbr_edit);
 			
 			// Settings
 			ButtonGroup lighting_group = new ButtonGroup();
@@ -164,10 +185,10 @@ public class Gui {
 		window.pack();
 		window.setVisible(true);
 
-		if (FileOperaitons.fileDirectory.equals("") || FileOperaitons.fileName.equals("") )
-			FileOperaitons.getFile();
+		if (FileOperaitons.fileDirectoryNotes.equals("") || FileOperaitons.fileNameNotes.equals("") )
+			FileOperaitons.selectNotesFile();
 		else
-			window.setTitle(FileOperaitons.fileName.replace('_', ' ') );
+			window.setTitle(FileOperaitons.fileNameNotes.replace('_', ' ') );
 		
 		sectionManagerDialog = new JDialog(window);
 		sectionManagerDialog.setTitle("Section Manager");
@@ -178,6 +199,8 @@ public class Gui {
 	public static void arrangeContent()
 	{
 		getAddRemoveColumnsMenuItems();
+		
+		Logic.missingImagesMessage = "";
 		
 		height = scrollPane.getHeight();
 		scrollValue = scrollPane.getVerticalScrollBar().getValue();
@@ -293,6 +316,11 @@ public class Gui {
 		
 		keepGuiSize = true;
 		contentRearraged = false;
+		
+		if (!Logic.missingImagesMessage.equals("") )
+			showMissingImagesMessage();
+		Logic.missingImagesMessage = "";
+		Logic.creatMissingImagesMessage = false;
 	}
 	
 	public static void getAddRemoveColumnsMenuItems()
@@ -331,12 +359,81 @@ public class Gui {
 		window.pack();
 		window.repaint();
 	}
+	
+	public static void showMissingImagesMessage()
+	{
+		JDialog missing_dialog = new JDialog(window);
+		missing_dialog.setModal(true);
+		missing_dialog.setTitle("Missing images");
+		//missing_dialog.setUndecorated(true);
+		
+		// main panel
+		JPanel missing_panel = new JPanel();
+		missing_panel.setLayout(new BoxLayout(missing_panel, BoxLayout.Y_AXIS) );
+		missing_panel.setBackground(currentColorSetting.background);
+		missing_panel.setBorder(BorderFactory.createLineBorder(currentColorSetting.text, 2) );
+		
+		// title
+			JLabel title = new JLabel("Missing images");
+			title.setForeground(currentColorSetting.text);
+			title.setAlignmentX(Component.CENTER_ALIGNMENT);
+			title.setFont(new Font("MonoSpaced", Font.PLAIN, 15) );
+			missing_panel.add(title);
+		
+		// message panel
+			JTextArea message = new JTextArea("The following images are missing in your 'Images' folder:" + Logic.missingImagesMessage);
+			message.setBackground(currentColorSetting.background);
+			message.setForeground(currentColorSetting.text);
+			message.setEditable(false);
+			JScrollPane scroll_pane = new JScrollPane(message,
+					ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+			scroll_pane.setBackground(currentColorSetting.background);
+			scroll_pane.setBorder(BorderFactory.createEmptyBorder() );
+		
+		// controls panel
+			JPanel controls_panel = new JPanel(new FlowLayout(FlowLayout.CENTER) );
+			controls_panel.setBackground(currentColorSetting.background);
+			JButton open_folder = new JButton("Open Image folder");
+			JButton close = new JButton("OK");
+			
+			open_folder.addActionListener(e -> {
+					try
+					{
+						Desktop.getDesktop().open(new File("Images\\"));
+					} catch (IOException e1)
+					{
+						System.out.println("Error while opening 'Images' directory!");
+					}
+				});
+			close.addActionListener(e -> { missing_dialog.dispose(); } );
+			
+			controls_panel.add(open_folder);
+			controls_panel.add(close);
+		
+		// filling panels
+		missing_panel.add(scroll_pane);
+		missing_panel.add(controls_panel);
+		missing_dialog.add(missing_panel);
+		
+		missing_dialog.pack();
+		if (missing_dialog.getHeight() > window.getHeight() - 150)
+			missing_dialog.setPreferredSize(new Dimension(missing_dialog.getWidth() + 20, window.getHeight() - 150) );
+		missing_dialog.pack();
+		setLocation(missing_dialog);
+		missing_dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		missing_dialog.setVisible(true);
+	}
 
 	public static void updateSectionManagerDialog()
 	{
 		sectionManagerDialog.getContentPane().removeAll();
 		
-		JPanel section_manager_panel = new JPanel(new GridBagLayout() );
+		sectionManagerPanel = new JPanel();
+		sectionManagerPanel.setBackground(currentColorSetting.background);
+		sectionManagerPanel.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, currentColorSetting.text) );
+		JPanel inner_panel = new JPanel(new GridBagLayout() );
+		inner_panel.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 2));
+		inner_panel.setOpaque(false);
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.fill = GridBagConstraints.BOTH;
 		gbc.gridy = 0;
@@ -345,13 +442,15 @@ public class Gui {
 		while (section_index < Logic.sections.length)
 		{
 			gbc.gridx = 0;
-			section_manager_panel.add(getAddRemoveSectionControl(section_index, Logic.sectionIndices[section_index], false), gbc);
+			inner_panel.add(getAddRemoveSectionControl(section_index, Logic.sectionIndices[section_index], false), gbc);
 			
 			gbc.gridx = 1;
 			JLabel label = new JLabel(Logic.sections[section_index] );
+			label.setForeground(currentColorSetting.text);
 			label.addMouseListener(MouseAdapters.getSectionTitleEdit(label,Logic.sectionIndices[section_index] ) );
-			label.setBorder(BorderFactory.createMatteBorder(section_index == 0 ? 1 : 0, 1, 1, 1, colorSettings[0].border) );
-			section_manager_panel.add(label, gbc);
+			label.setBorder(BorderFactory.createMatteBorder(section_index == 0 ? 1 : 0, 1, 1, 1, currentColorSetting.border) );
+			inner_panel.add(label, gbc);
+			sectionLabels.add(label);
 			//System.out.println(gbc.gridy + ", " + Logic.sectionIndices[section_index] + ", " + Logic.sections[section_index] );
 			
 			section_index ++;
@@ -359,10 +458,14 @@ public class Gui {
 		}
 		
 		gbc.gridx = 0;
-		section_manager_panel.add(getAddRemoveSectionControl(section_index, Logic.content.length, true), gbc);
+		inner_panel.add(getAddRemoveSectionControl(section_index, Logic.content.length, true), gbc);
 		
-		sectionManagerDialog.add(section_manager_panel);
+		sectionManagerPanel.add(inner_panel);
+		sectionManagerDialog.add(sectionManagerPanel);
 
+		sectionManagerDialog.pack();
+		if (sectionManagerDialog.getHeight() > window.getHeight() - 150)
+			sectionManagerDialog.setPreferredSize(new Dimension(sectionManagerDialog.getWidth() + 20, window.getHeight() - 150) );
 		sectionManagerDialog.pack();
 		sectionManagerDialog.setVisible(true);
 	}
@@ -371,7 +474,7 @@ public class Gui {
 	{
 		JPanel control = new JPanel(new GridLayout(only_add ? 1 : 2, 2) );
 		//Color color = inEditMode ? currentColorSetting.text : currentColorSetting.background;
-		Color color = colorSettings[0].text;
+		Color color = currentColorSetting.text;
 		
 		JLabel add = new JLabel(" + ");
 		add.setForeground(color);
@@ -402,19 +505,22 @@ public class Gui {
 		options.setModal(true);
 		options.setTitle("Modify custom lighting settings");
 		
+		JPanel outer_panel = new JPanel();
+		outer_panel.setBackground(Gui.currentColorSetting.background);
+		outer_panel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Gui.currentColorSetting.text) );
+		
 		JPanel options_panel = new JPanel();
 		options_panel.setLayout(new BoxLayout(options_panel, BoxLayout.Y_AXIS) );
-		
-		
-		options_panel.add(new JLabel(currentColorSetting.name) );
+		options_panel.setBackground(currentColorSetting.background);
 		
 		JPanel color_settings_panel = new JPanel();
 		color_settings_panel.setLayout(new GridBagLayout() );
+		color_settings_panel.setOpaque(false);
 		Logic.fillColorSettingsPane(color_settings_panel, colorSettings[2] );
 		options_panel.add(color_settings_panel);
 		
 		JPanel controls = new JPanel();
-		controls.setLayout(new BoxLayout(controls, BoxLayout.X_AXIS) );
+		controls.setOpaque(false);
 		
 		JButton apply = new JButton("Confirm and apply");
 		JButton confirm = new JButton("Confirm");
@@ -429,13 +535,15 @@ public class Gui {
 		controls.add(cancel);
 		
 		options_panel.add(controls);
+		outer_panel.add(options_panel);
 		
-		options.add(options_panel);
+		options.add(outer_panel);
 		options.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		options.pack();
 		
-		options_panel.setPreferredSize(new Dimension(50 + options_panel.getSize().width, options_panel.getSize().height) );
+		options.setPreferredSize(new Dimension(50 + options.getSize().width, options.getSize().height) );
 		options.pack();
+		setLocation(options);
 		options.setVisible(true);
 		options.repaint();
 	}
@@ -461,6 +569,20 @@ public class Gui {
 		// border for cells
 		for (JPanel cell : cells)
 			cell.setBorder(new MatteBorder( ((MatteBorder) cell.getBorder() ).getBorderInsets(), currentColorSetting.border) );
+		
+		// border for section label cells
+		for (JLabel label : sectionLabels)
+		{
+			label.setBorder(new MatteBorder( ((MatteBorder) label.getBorder() ).getBorderInsets(), currentColorSetting.border) );
+			label.setForeground(currentColorSetting.text);
+		}
+		
+		// background and border for sectionManagerDialog
+		if (sectionManagerPanel!= null)
+		{
+			sectionManagerPanel.setBackground(currentColorSetting.background);
+			sectionManagerPanel.setBorder(new MatteBorder( ((MatteBorder) sectionManagerPanel.getBorder() ).getBorderInsets(), currentColorSetting.text) );
+		}
 	}
 	
 	public static void updateEditMode(JCheckBoxMenuItem check_box)
@@ -470,6 +592,7 @@ public class Gui {
 		{
 			for (JLabel label : labelsBackgroundcolorTextcolor) label.setForeground(currentColorSetting.text);
 			updateSectionManagerDialog();
+			setLocation(sectionManagerDialog);
 		}
 		else
 		{
@@ -516,9 +639,28 @@ public class Gui {
 		save_dialog.setVisible(true);
 	}
 
+	public static void setLocation(Container container)
+	{
+		setLocation(container, 1000);
+	}
+	
+	public static void setLocation(Container container, int max_height_rel_to_window)
+	{
+		Dimension dim_container  = container.getSize();
+		Dimension dim_window = window.getSize();
+		
+		if (dim_container.height > dim_window.height + max_height_rel_to_window)
+		{
+			dim_container.height = dim_window.height + max_height_rel_to_window;
+			container.setPreferredSize(dim_container);
+		}
+		
+		container.setLocation(window.getLocation().x + (dim_window.width - dim_container.width)/2, window.getLocation().y + (dim_window.height - dim_container.height)/2);
+	}
+
 	public static void exit()
 	{
-		FileOperaitons.updateSettingsFile();
+		FileOperaitons.writeSettingsFile();
 		System.exit(0);
 	}
 }

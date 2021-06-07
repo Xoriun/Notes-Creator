@@ -46,6 +46,7 @@ public class MouseAdapters
 			}
 		};
 	}
+	
 	public static ActionListener addContentCol(int col_to_add)
 	{
 		return new ActionListener() {
@@ -230,6 +231,7 @@ public class MouseAdapters
 			{
 				throw new RuntimeException("Each action has to follow the syntax 'action_command':'action_parameter'!");
 			}
+			
 			switch (action_command)
 			{
 				case "write_to_clipboard": return getCellWriteToClpiboard(action_param);

@@ -1,11 +1,12 @@
-bin/
-builds/
+/bin/
+/builds/
 settings.txt
-src/test.java
-test.png
-example.pdf
-Images/*
+/src/test.java
+/Images/*
 !Images/Destroyed-icon.png
 !Images/Layer_dot.png
 !Images/Not-enough-repair-packs-icon.png
 /tests/
+/example/*
+!example/images for example.zip
+!example/notes_example_export.txt
