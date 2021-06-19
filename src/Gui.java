@@ -8,7 +8,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.event.KeyEvent;
+import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,7 +30,6 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.KeyStroke;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.MatteBorder;
 import javax.swing.border.TitledBorder;
@@ -56,12 +55,13 @@ public class Gui {
 	public static boolean keepGuiSize = false;
 	public static boolean contentRearraged = false;
 	private static int height = 0;
-	private static int scrollValue = 0;
+	public static int scrollValue = 0;
 	public static ColorSetting[] colorSettings;
 	public static ColorSetting currentColorSetting;
 	
 	public static ArrayList<JPanel> sectionPanelsList = new ArrayList<JPanel>();
 	public static ArrayList<GridBagConstraints> sectionConstraints = new ArrayList<GridBagConstraints>();
+	public static ArrayList<Integer> sectionLocationList = new ArrayList<Integer>();
 	public static Set<JPanel> cells = new HashSet<JPanel>();
 	public static Set<JLabel> sectionLabels = new HashSet<JLabel>();
 	public static Set<JLabel> labelsTextcolor = new HashSet<JLabel>();
@@ -70,19 +70,25 @@ public class Gui {
 	public static ArrayList<JPanel[][]> cellPanelsList = new ArrayList<JPanel[][]>();
 	public static ArrayList<JPanel[]> spacingPanelsList = new ArrayList<JPanel[]>();
 	
+	private static Dimension screensize;
+	
 	@SuppressWarnings("unchecked")
 	public static void prepareGui()
 	{
+		screensize = Toolkit.getDefaultToolkit().getScreenSize();
+		
 		currentColorSetting = colorSettings[1]; // dark_mode
 		
 		// Menus
 		JMenuBar bar = new JMenuBar();
-		JMenu file_menu = new JMenu("File");
-		JMenu edit_menu = new JMenu("Edit");
-		JMenu setting_menu = new JMenu("Settings");
-		bar.add(file_menu);
-		bar.add(edit_menu);
-		bar.add(setting_menu);
+		JMenu menu_file     = new JMenu("File");
+		JMenu menu_edit     = new JMenu("Edit");
+		JMenu menu_speedrun = new JMenu("Speedrun");
+		JMenu menu_setting  = new JMenu("Settings");
+		bar.add(menu_file);
+		bar.add(menu_edit);
+		bar.add(menu_speedrun);
+		bar.add(menu_setting);
 		
 		// Menu Items
 			// File
@@ -100,6 +106,10 @@ public class Gui {
 			edit_add                  = new JMenu("add Column");
 			edit_remove               = new JMenu("remove Column");
 			JMenuItem edit_abbr_edit  = new JMenuItem("Abbreviations settings");
+			
+			// Speedrun
+			JCheckBoxMenuItem speedrun_enabled  = new JCheckBoxMenuItem("Enable Speedruning mode");
+			JMenuItem speedrun_settings = new JMenuItem("Speedrun settings");
 			
 			// Settings Menu
 			JRadioButtonMenuItem settings_dark_mode  = new JRadioButtonMenuItem("Dark mode");
@@ -122,6 +132,10 @@ public class Gui {
 			edit_enabled    .addActionListener(e -> { updateEditMode(edit_enabled); } );
 			edit_abbr_edit  .addActionListener(e -> { Logic.getAbbreviationSettings(FileOperaitons.fileAbbreviations, (ArrayList<String[]>) Logic.abbreviationsList.clone() ); } );
 			
+			// Speedrun
+			speedrun_enabled .addActionListener(e -> { Hotkeys.isSpeedrunModeEnabled = speedrun_enabled.isSelected(); } );
+			speedrun_settings.addActionListener(e -> { Hotkeys.getHotkeySettingsWindow((ArrayList<HotkeyProfile>) Hotkeys.profiles.clone() ); } );
+			
 			// Settings
 			settings_light_mode   .addActionListener(e -> { currentColorSetting = colorSettings[0]; applyLightingMode(); } );
 			settings_dark_mode    .addActionListener(e -> { currentColorSetting = colorSettings[1]; applyLightingMode(); } );
@@ -130,29 +144,33 @@ public class Gui {
 			
 		// Shortcuts
 			// File
-			file_open   .setAccelerator(KeyStroke.getKeyStroke("control O") );
-			file_reload .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0) );
-			file_save   .setAccelerator(KeyStroke.getKeyStroke("control S") );
-			file_save_as.setAccelerator(KeyStroke.getKeyStroke("control alt S") );
+			//file_open   .setAccelerator(KeyStroke.getKeyStroke("control O") );
+			//file_reload .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0) );
+			//file_save   .setAccelerator(KeyStroke.getKeyStroke("control S") );
+			//file_save_as.setAccelerator(KeyStroke.getKeyStroke("control alt S") );
 			
 		// Filling Menus
 			// Fill File Menu
-			file_menu.add(file_open);
-			file_menu.add(file_reload);
-			file_menu.add(file_new);
-			file_menu.add(file_save);
-			file_menu.add(file_save_as);
+			menu_file.add(file_open);
+			menu_file.add(file_reload);
+			menu_file.add(file_new);
+			menu_file.add(file_save);
+			menu_file.add(file_save_as);
 			//file_menu.add(file_pdf);
-			file_menu.addSeparator();
-			file_menu.add(file_import);
-			file_menu.add(file_export);
+			menu_file.addSeparator();
+			menu_file.add(file_import);
+			menu_file.add(file_export);
 			
 			// Edit
-			edit_menu.add(edit_enabled);
-			edit_menu.add(edit_add);
-			edit_menu.add(edit_remove);
-			edit_menu.addSeparator();
-			edit_menu.add(edit_abbr_edit);
+			menu_edit.add(edit_enabled);
+			menu_edit.add(edit_add);
+			menu_edit.add(edit_remove);
+			menu_edit.addSeparator();
+			menu_edit.add(edit_abbr_edit);
+			
+			// Speedrun
+			menu_speedrun.add(speedrun_enabled);
+			menu_speedrun.add(speedrun_settings);
 			
 			// Settings
 			ButtonGroup lighting_group = new ButtonGroup();
@@ -161,11 +179,11 @@ public class Gui {
 			lighting_group.add(settings_dark_mode);
 			lighting_group.add(settings_custom);
 			
-			setting_menu.add(settings_dark_mode);
-			setting_menu.add(settings_light_mode);
-			setting_menu.add(settings_custom);
-			setting_menu.addSeparator();
-			setting_menu.add(settings_custom_change);
+			menu_setting.add(settings_dark_mode);
+			menu_setting.add(settings_light_mode);
+			menu_setting.add(settings_custom);
+			menu_setting.addSeparator();
+			menu_setting.add(settings_custom_change);
 		
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new GridLayout() );
@@ -178,11 +196,13 @@ public class Gui {
 		
 		window = new JFrame();
 		window.setJMenuBar(bar);
+		window.setLayout(new BoxLayout(window.getContentPane(), BoxLayout.Y_AXIS) );
 		window.add(scrollPane);
 		window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		window.addWindowListener(MouseAdapters.getOnCloseAdapter() );
 		window.setTitle("");
 		window.pack();
+		window.setMaximumSize(screensize);
 		window.setVisible(true);
 
 		if (FileOperaitons.fileDirectoryNotes.equals("") || FileOperaitons.fileNameNotes.equals("") )
@@ -255,6 +275,11 @@ public class Gui {
 			window.pack();
 			window.setVisible(true);
 			window.repaint();
+			window.setMaximumSize(screensize);
+			
+			sectionLocationList.clear();
+			for (int i = 0; i < sectionPanelsList.size(); i ++)
+				sectionLocationList.add(sectionPanelsList.get(i).getLocation().y);
 		}
 	}
 
@@ -280,6 +305,7 @@ public class Gui {
 		window.pack();
 		window.setVisible(true);
 		window.repaint();
+		window.setMaximumSize(screensize);
 		
 		// determining the maximal width for each column
 		int[] max_widths = new int[Logic.maxRowLength + 2];
@@ -309,7 +335,6 @@ public class Gui {
 		}
 		
 		scrollPane.setPreferredSize(new Dimension(scrollPane.getWidth() + 100, keepGuiSize ? height : scrollPane.getHeight() ) );
-		//scrollPane.setMaximumSize(new Dimension(scrollPane.getWidth() + 100, keepGuiSize ? height : scrollPane.getHeight() ) );
 		
 		window.pack();
 		scrollPane.getVerticalScrollBar().setValue(scrollValue);
@@ -658,6 +683,13 @@ public class Gui {
 		container.setLocation(window.getLocation().x + (dim_window.width - dim_container.width)/2, window.getLocation().y + (dim_window.height - dim_container.height)/2);
 	}
 
+	public static JLabel getNewJLabelWithCurrentTextColor(String text)
+	{
+		JLabel label = new JLabel(text);
+		label.setForeground(currentColorSetting.text);
+		return label;
+	}
+	
 	public static void exit()
 	{
 		FileOperaitons.writeSettingsFile();

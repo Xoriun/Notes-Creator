@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
@@ -30,10 +32,14 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.MouseInputAdapter;
+
+import org.jnativehook.GlobalScreen;
+import org.jnativehook.NativeHookException;
 
 public class Logic
 {
@@ -49,10 +55,38 @@ public class Logic
 	
 	public static void main(String[] args)
 	{
+		Logger.getLogger(GlobalScreen.class.getPackage().getName() ).setLevel(Level.OFF);
+		
+		//**
+		try {
+			GlobalScreen.registerNativeHook();
+		}
+		catch (NativeHookException ex) {
+			System.err.println("There was a problem registering the native hook.");
+			System.err.println(ex.getMessage());
+
+			System.exit(1);
+		}
+		//*/
+		
+		GlobalScreen.addNativeKeyListener(new Hotkeys() );
+		
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run()
+			{
+				initializeLogic();
+			}
+		});
+	}
+	
+	public static void initializeLogic()
+	{
 		try
 		{
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName() );
 		} catch (Exception e) { }
+		
 		FileOperaitons.readSettingsFile();
 		Gui.prepareGui();
 		readAndDisplayNotes();
@@ -641,11 +675,10 @@ public class Logic
 						abbreviations_dialog.dispose();
 						textfield_list.remove(row);
 						abbr_list_copy.remove(abbr);
-						getAbbreviationSettings(abbr_location_copy, abbr_list_copy);
+						getAbbreviationSettings(abbr_location_copy, getAbbreviationsListFromTextfiles(textfield_list) );
 					}
 				} );
 				gbc.gridx = 3;
-				abbreviations_dialog.dispose();
 				abbr_list_panel.add(remove, gbc);
 				gbc.gridy ++;
 			}
@@ -654,7 +687,8 @@ public class Logic
 			JPanel abbr_add_panel = new JPanel();
 			abbr_add_panel.setOpaque(false);
 			abbr_add_button.addActionListener(e -> {
-				abbr_list_copy.add(new String[] {"",""} );
+				String[] new_abbr = new String[] {"",""};
+				abbr_list_copy.add(new_abbr);
 				JTextField[] new_row = new JTextField[2];
 				for (int i = 0; i < 2; i ++)
 				{
@@ -668,6 +702,21 @@ public class Logic
 					abbr_list_panel.add(textfield, gbc);
 				}
 				textfield_list.add(new_row);
+				JLabel remove = new JLabel(" - ");
+				remove.setOpaque(false);
+				remove.setForeground(Gui.currentColorSetting.text);
+				remove.addMouseListener(new MouseInputAdapter() {
+					@Override
+					public void mouseClicked(MouseEvent e)
+					{
+						abbreviations_dialog.dispose();
+						textfield_list.remove(new_row);
+						abbr_list_copy.remove(new_abbr);
+						getAbbreviationSettings(abbr_location_copy, getAbbreviationsListFromTextfiles(textfield_list) );
+					}
+				} );
+				gbc.gridx = 3;
+				abbr_list_panel.add(remove, gbc);
 				gbc.gridy ++;
 				abbreviations_dialog.pack();
 				abbreviations_dialog.repaint();
@@ -695,7 +744,7 @@ public class Logic
 				abbreviations_dialog.dispose();
 				unsavedChanges = true;
 				creatMissingImagesMessage = true;
-				abbreviationsList = textfield_list.stream().map(row -> new String[] {row[0].getText(), row[1].getText() } ).collect(Collectors.toCollection(ArrayList::new) );
+				abbreviationsList = getAbbreviationsListFromTextfiles(textfield_list);
 				FileOperaitons.fileAbbreviations = abbr_location_copy;
 				FileOperaitons.saveAbbereviationsFile();
 				Gui.arrangeContent();
@@ -715,6 +764,11 @@ public class Logic
 		abbreviations_dialog.pack();
 		abbreviations_dialog.setVisible(true);
 		abbreviations_dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	}
+	
+	public static ArrayList<String[]> getAbbreviationsListFromTextfiles(ArrayList<JTextField[]> textfields)
+	{
+		return textfields.stream().map(row -> new String[] {row[0].getText(), row[1].getText() } ).collect(Collectors.toCollection(ArrayList::new) );
 	}
 	
 	public static String getAbbreviation(String str)

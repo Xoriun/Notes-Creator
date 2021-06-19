@@ -1,6 +1,7 @@
 /bin/
 /builds/
 settings.txt
+.gitignore
 /src/test.java
 /Images/*
 !Images/Destroyed-icon.png

@@ -30,6 +30,11 @@ You can export and import notes to easily share them between users.
 The exported file will also include the current abbreviations file.\
 When importing, you will be asked for saving locations for the notes-file and the abbreviations-file, in this order.
 
+## Hotkeys:
+You can import your hotkey profiles from LiveSplit.
+When speedrunning mode is activated, each split/skip/undo action will jump to the next/previous section.
+For this to work properly, your sections and splits should coincide.
+
 ## Actions:
 To perform an action when clicking on a cell, use the following syntax:\
 &emsp;&emsp;cell_content>>action_command:action_parameter#action_command:action_parameter\
@@ -55,6 +60,6 @@ When encountering any bug, please let me know.
 Also, feel free to suggest any changes or new features.
 
 Planned additions:
- - Global hotkey support for scrolling/jumping during a speedrun.
+ - Improvements on the hotkey feature.
  - Nicer edit window for cells.
  - Different color setting for each section.

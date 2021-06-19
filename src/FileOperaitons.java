@@ -63,42 +63,77 @@ public class FileOperaitons
 		try {
 			reader = new BufferedReader(new FileReader(settings) );
 		} catch (FileNotFoundException e) {
-			throw new RuntimeException("File not found!");
+			throw new RuntimeException("Settings File not found!");
 		}
 		
 		ArrayList<ColorSetting> colors_list = new ArrayList<ColorSetting>();
 		String line, name = "";
 		int[][] colors = new int[3][3];
-		try {
-			for (int i = 0; (line = reader.readLine() ) != null; i++ )
+		try
+		{
+			// last used notes-file
+			if (null != (line = reader.readLine() ) ) // last notes-file
 			{
-				if (i == 0 && !line.equals("Light") ) // last file
-				{
-					int split = line.lastIndexOf('\\');
-					fileDirectoryNotes = line.substring(0, split + 1);
-					fileNameNotes = line.substring(split + 1);
-					i = 0;
-					line = reader.readLine();
-					if (line == null) break;
-				}
-				
-				if (i%4 == 0) name = line;
-				else colors[i%4-1] = Stream.of(line.split(":") ).mapToInt(Integer::parseInt).toArray();
-				if (i%4 == 3)
-					colors_list.add(new ColorSetting(name,	new Color(colors[0][0], colors[0][1], colors[0][2] ),
-																									new Color(colors[1][0], colors[1][1], colors[1][2] ),
-																									new Color(colors[2][0], colors[2][1], colors[2][2] )
-																									) );
+				int split = line.lastIndexOf('\\');
+				fileDirectoryNotes = line.substring(0, split + 1);
+				fileNameNotes = line.substring(split + 1);
 			}
 			
+			// color settings
+			while ( (line = reader.readLine() ) != null)
+			{
+				name = line;
+				if ( !line.equals("Light") && !line.equals("Dark") && !line.equals("Custom") ) // All color settings are read
+					break;
+				
+				for (int i = 0; i < 3 && (line = reader.readLine() ) != null; i ++)
+				{
+					colors[i] = Stream.of(line.split(":") ).mapToInt(Integer::parseInt).toArray();
+					
+					if (i == 2)
+						colors_list.add(new ColorSetting(name,	new Color(colors[0][0], colors[0][1], colors[0][2] ),
+																										new Color(colors[1][0], colors[1][1], colors[1][2] ),
+																										new Color(colors[2][0], colors[2][1], colors[2][2] )
+																										) );
+				}
+			}
+			Gui.colorSettings = colors_list.toArray(new ColorSetting[colors_list.size() ] );
+			
+			// hotkey settings
+			String workaraound_activated = line;
+			if (workaraound_activated != null && !workaraound_activated.isEmpty() )
+				Hotkeys.workaround_box.setSelected(Boolean.parseBoolean(workaraound_activated.split(":")[1] ) );
+			
+			String activeProfile = line = reader.readLine();
+			
+			if (activeProfile != null)
+			{
+				Hotkeys.profiles.clear();
+				
+				// reading
+				while (null != (line = reader.readLine() ) )
+				{				
+					HotkeyProfile profile = new HotkeyProfile(line);
+					
+					for (int i = 0; i < 4; i ++)
+						if (null != (line = reader.readLine() ) && !line.isEmpty() )
+							Hotkeys.readHotkeySetting(line.split(":"), profile);
+					
+					Hotkeys.profiles.add(profile);
+				}
+				
+				// setting active profile
+				for (HotkeyProfile profile : Hotkeys.profiles)
+					if (profile.name.equals(activeProfile) )
+					{
+						Hotkeys.activeProfile = profile;
+						break;
+					}
+			}
 			reader.close();
 		} catch (IOException e) {
 			throw new RuntimeException("Error while reading settings file!");
-		} catch (IndexOutOfBoundsException e) {
-			throw new RuntimeException("Error while reading settings file!");
 		}
-		
-		Gui.colorSettings = colors_list.toArray(new ColorSetting[colors_list.size() ] );
 	}
 	
 	public static void readNotesFile()
@@ -133,7 +168,7 @@ public class FileOperaitons
 		}
 		
 		String[] header = header_string.split(Pattern.quote("||"), -1);
-		String[] header_content = header[0].split(";");
+		String[] header_content = header[0].split(";", -1);
 		Logic.maxRowLength = header_content.length;
 		content_list.add(header_content);
 		todo_list.add(header_string.contains("||") ? header[1] : "");
@@ -154,7 +189,7 @@ public class FileOperaitons
 				
 				// splitting line_string into cells without the todo-part
 				line = line_string.split(Pattern.quote("||"), -1);
-				line_content = line[0].split(";", -1); 
+				line_content = line[0].split(";", Logic.maxRowLength); 
 				
 				if (line_content.length > Logic.maxRowLength) // checking number of cells
 				{
@@ -197,6 +232,10 @@ public class FileOperaitons
 										color.border.getRed() +     ":" + color.border.getGreen() +     ":" + color.border.getBlue() + "\n" +
 										color.background.getRed() + ":" + color.background.getGreen() + ":" + color.background.getBlue()  + "\n");
 			}
+			writer.write("WorkaroundActivated:" + Hotkeys.workaround_box.isSelected() + "\n");
+			writer.write(Hotkeys.activeProfile.name);
+			for (HotkeyProfile profile : Hotkeys.profiles)
+				writer.write("\n" + profile.getHotkeySettingsString() );
 			writer.close();
 		} catch (IOException e)
 		{
