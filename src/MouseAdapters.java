@@ -124,7 +124,7 @@ public class MouseAdapters
 			@Override
 	    public void mouseClicked(MouseEvent e)
 			{
-				String newText = JOptionPane.showInputDialog(null, "Set the section title!", label.getText() );
+				String newText = JOptionPane.showInputDialog(Gui.window, "Set the section title!", label.getText() );
 				if (newText != null)
 				{
 					label.setText(newText);
@@ -146,7 +146,7 @@ public class MouseAdapters
 			{
 				if (Gui.inEditMode)
 				{	
-					String string = JOptionPane.showInputDialog(null, "Set the text!", Logic.content[row][col] );
+					String string = JOptionPane.showInputDialog(Gui.window, "Set the text!", Logic.content[row][col] );
 					if (string != null) {
 						Logic.content[row][col] = string; 
 						cell.removeAll();
@@ -168,7 +168,7 @@ public class MouseAdapters
 			{
 				if (Gui.inEditMode)
 				{	
-					String string = JOptionPane.showInputDialog(null, "Set the text!", label.getText() );
+					String string = JOptionPane.showInputDialog(Gui.window, "Set the text!", label.getText() );
 					if (string != null) {
 						Logic.content[row][col] = string; 
 						cell.removeAll();
@@ -188,7 +188,7 @@ public class MouseAdapters
 			@Override
 			public void mouseClicked(MouseEvent arg0)
 			{
-				String string = JOptionPane.showInputDialog(null, "TODO", Logic.todoList[current_row] );
+				String string = JOptionPane.showInputDialog(Gui.window, "TODO", Logic.todoList[current_row] );
 				if (string != null)
 				{
 					Logic.todoList[current_row] = string;
