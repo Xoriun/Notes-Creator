@@ -1,3 +1,4 @@
+package logic;
 import java.awt.Color;
 import java.awt.FileDialog;
 import java.io.BufferedReader;
@@ -8,25 +9,35 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
+import gui.Abbreviations;
+import gui.ColorSettingProfile;
+import gui.ColorSettings;
+import gui.MainGui;
+import gui.PopupAlerts;
 
 //import javax.imageio.ImageIO;
 //import javax.swing.JFrame;
 //import javax.swing.JPanel;
 //import javax.swing.SwingUtilities;
 
-public class FileOperaitons
+public class FileOperations
 {
 	public static String fileDirectoryNotes = "";
 	public static String fileNameNotes = "";
 	public static String fileAbbreviations = "";
 	
+	public static int numberOfColumns;
+	public static boolean unsavedChanges = false;
+
 	public static void selectNotesFile()
 	{
-		FileDialog dialog = new FileDialog(Gui.window, "Select File to Open");
+		FileDialog dialog = new FileDialog(MainGui.window, "Select File to Open");
 		dialog.setMode(FileDialog.LOAD);
-		Gui.setLocation(dialog);
+		PopupAlerts.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
@@ -36,8 +47,8 @@ public class FileOperaitons
 		fileNameNotes = dialog.getFile();
 		
 		String new_title = fileNameNotes.replace('_', ' ');
-		Gui.keepGuiSize = false;
-		Gui.window.setTitle(new_title);
+		MainGui.keepGuiSize = false;
+		MainGui.window.setTitle(new_title);
 	}
 
 	public static void readSettingsFile()
@@ -48,11 +59,11 @@ public class FileOperaitons
 			// no settings file
 			if (settings.createNewFile() )
 			{
-				ColorSetting[] res = new ColorSetting[] { new ColorSetting("Light" , Color.BLACK, Color.BLACK, Color.WHITE),
-																									new ColorSetting("Dark"  , Color.LIGHT_GRAY, Color.DARK_GRAY, Color.BLACK),
-																									new ColorSetting("Custom", Color.WHITE, Color.WHITE, Color.WHITE)
+				ColorSettingProfile[] res = new ColorSettingProfile[] { new ColorSettingProfile("Light" , Color.BLACK, Color.BLACK, Color.WHITE),
+																									new ColorSettingProfile("Dark"  , Color.LIGHT_GRAY, Color.DARK_GRAY, Color.BLACK),
+																									new ColorSettingProfile("Custom", Color.WHITE, Color.WHITE, Color.WHITE)
 																									};
-				Gui.colorSettings = res;
+				ColorSettings.colorSettingProfiles = res;
 				writeSettingsFile();
 			}
 		} catch (IOException e) {
@@ -66,7 +77,7 @@ public class FileOperaitons
 			throw new RuntimeException("Settings File not found!");
 		}
 		
-		ArrayList<ColorSetting> colors_list = new ArrayList<ColorSetting>();
+		ArrayList<ColorSettingProfile> colors_list = new ArrayList<ColorSettingProfile>();
 		String line, name = "";
 		int[][] colors = new int[3][3];
 		try
@@ -91,13 +102,13 @@ public class FileOperaitons
 					colors[i] = Stream.of(line.split(":") ).mapToInt(Integer::parseInt).toArray();
 					
 					if (i == 2)
-						colors_list.add(new ColorSetting(name,	new Color(colors[0][0], colors[0][1], colors[0][2] ),
+						colors_list.add(new ColorSettingProfile(name,	new Color(colors[0][0], colors[0][1], colors[0][2] ),
 																										new Color(colors[1][0], colors[1][1], colors[1][2] ),
 																										new Color(colors[2][0], colors[2][1], colors[2][2] )
 																										) );
 				}
 			}
-			Gui.colorSettings = colors_list.toArray(new ColorSetting[colors_list.size() ] );
+			ColorSettings.colorSettingProfiles = colors_list.toArray(new ColorSettingProfile[colors_list.size() ] );
 			
 			// hotkey settings
 			String workaraound_activated = line;
@@ -138,10 +149,9 @@ public class FileOperaitons
 	
 	public static void readNotesFile()
 	{
-		Logic.creatMissingImagesMessage = true;
+		PopupAlerts.creatMissingImagesMessage = true;
+		MainGui.sectionsList.clear();
 		
-		ArrayList<String[]> content_list = new ArrayList<String[]>();
-		ArrayList<String> todo_list = new ArrayList<String>();
 		BufferedReader reader = null;
 		while (reader == null)
 		{
@@ -152,70 +162,54 @@ public class FileOperaitons
 			}
 		}
 		
-		String header_string;
 		String line_string;
 		try {
 			line_string = reader.readLine();
+			
+			// Checking for abbreviations file
 			if (line_string.startsWith("***abbreviations_file;") )
 			{
 				fileAbbreviations = line_string.split(";")[1];
-				Logic.abbreviationsList = readAbbriviationsFile();
+				Abbreviations.abbreviationsList = readAbbriviationsFile();
 				line_string = reader.readLine();
 			}
-			header_string = line_string.substring(line_string.startsWith("�") ? 3 : 0);
 		} catch (Exception e) {
 			throw new RuntimeException("Error while reading header!");
 		}
 		
-		String[] header = header_string.split(Pattern.quote("||"), -1);
-		String[] header_content = header[0].split(";", -1);
-		Logic.maxRowLength = header_content.length;
-		content_list.add(header_content);
-		todo_list.add(header_string.contains("||") ? header[1] : "");
-		
-		String empty_line = "";
-		for (int i = 1; i < Logic.maxRowLength; i ++) empty_line += ";";
-		
-		String[] line;
-		String[] line_content;
-		
-		int row = 0;
-		
-		try {
-			while ( (line_string = reader.readLine() ) != null)
+		String title_pattern = "---.*---.*";
+		try
+		{
+			while (line_string != null)
 			{
-				row ++;
-				if (empty_line.contains(line_string) ) continue;
+				String section_header = line_string;
 				
-				// splitting line_string into cells without the todo-part
-				line = line_string.split(Pattern.quote("||"), -1);
-				line_content = line[0].split(";", Logic.maxRowLength); 
+				ArrayList<String[]> content_list = new ArrayList<String[]>();
+				ArrayList<String> todo_list = new ArrayList<String>();
 				
-				if (line_content.length > Logic.maxRowLength) // checking number of cells
+				line_string = reader.readLine();
+				
+				while (line_string != null && !line_string.matches(title_pattern))
 				{
-					reader.close();
-					throw new RuntimeException("The maximum number of cells was exeeded in row " + row + "! Maximum is " + Logic.maxRowLength + " but was " + line.length);
-				}
-				else if (line_content.length < Logic.maxRowLength) // appending cells if necessary
-				{
-					String[] dummy = new String[Logic.maxRowLength];
-					for (int i = 0; i < Logic.maxRowLength; i ++)
-						if (i < line_content.length)
-							dummy[i] = line_content[i];
-						else
-							dummy[i] = "";
-					line_content = dummy;
+					String[] line_arr = line_string.split(Pattern.quote("||"), 2);
+					content_list.add(line_arr[0].split(";", -1) );
+					if (line_arr.length == 2)
+						todo_list.add(line_arr[1] );
+					else
+						todo_list.add("");
+					
+					if (numberOfColumns == 0)
+						numberOfColumns = line_arr[0].split(";", -1).length;
+						
+					line_string = reader.readLine();
 				}
 				
-				content_list.add(line_content);
-				todo_list.add(line_string.contains("||") ? line[1] : "");
+				MainGui.sectionsList.add(new Section(section_header, content_list, todo_list) );
 			}
-			
-			Logic.content = content_list.toArray(new String[content_list.size() ][Logic.maxRowLength] );
-			Logic.todoList = todo_list.toArray(new String[todo_list.size() ] );
-			reader.close();
-		} catch (IOException e) {
-			throw new RuntimeException("Error while reading file!");
+		} catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	
@@ -225,7 +219,7 @@ public class FileOperaitons
 		{
 			FileWriter writer = new FileWriter(new File("settings.txt"), false);
 			writer.write(fileDirectoryNotes + fileNameNotes + '\n');
-			for (ColorSetting color : Gui.colorSettings)
+			for (ColorSettingProfile color : ColorSettings.colorSettingProfiles)
 			{
 				writer.write(color.name + "\n" +
 										color.text.getRed() +       ":" + color.text.getGreen() +       ":" + color.text.getBlue() + "\n" +
@@ -246,21 +240,27 @@ public class FileOperaitons
 	public static void createNewFile()
 	{
 		fileDirectoryNotes = fileNameNotes = null;
-		Logic.content = new String[][] {{"---section 1---"," "},{"new","file"}};
-		Logic.maxRowLength = 2;
-		Gui.arrangeContent();
-		Gui.contentRearraged = false; // to reset the height of the window
-		Gui.spaceColums();
+		MainGui.sectionsList.clear();
+		
+		ArrayList<String[]> content = new ArrayList<String[]>();
+		content.add(new String[] {"new", "file"} );
+		MainGui.sectionsList.add(new Section("---section 1---", content, new ArrayList<String>(Arrays.asList("") ) ) );
+		numberOfColumns = 2;
+		
+		MainGui.arrangeContent();
+		MainGui.contentRearraged = false; // to reset the height of the window
+		unsavedChanges = true;
+		MainGui.spaceColums();
 	}
 	
 	public static String newAbbreviationsFile(ArrayList<String[]> abbreviations_list)
 	{
 		saveAbbereviationsFile();
 		
-		FileDialog dialog = new FileDialog(Gui.window, "Select locations for new abbreviation file");
+		FileDialog dialog = new FileDialog(MainGui.window, "Select locations for new abbreviation file");
 		dialog.setFile("\\abbreviation_new.txt");
 		dialog.setMode(FileDialog.SAVE);
-		Gui.setLocation(dialog);
+		PopupAlerts.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
@@ -274,9 +274,9 @@ public class FileOperaitons
 	{
 		saveAbbereviationsFile();
 		
-		FileDialog dialog = new FileDialog(Gui.window, "Select abbreviation file to load");
+		FileDialog dialog = new FileDialog(MainGui.window, "Select abbreviation file to load");
 		dialog.setMode(FileDialog.LOAD);
-		Gui.setLocation(dialog);
+		PopupAlerts.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
@@ -350,7 +350,7 @@ public class FileOperaitons
 		{
 			try (PrintWriter out = new PrintWriter(fileAbbreviations) )
 			{
-				for (String[] abbreviation : Logic.abbreviationsList)
+				for (String[] abbreviation : Abbreviations.abbreviationsList)
 					out.println(abbreviation[0] + ":" + abbreviation[1] );
 			} catch (FileNotFoundException e)
 			{
@@ -361,9 +361,9 @@ public class FileOperaitons
 	
 	public static void saveAsFile()
 	{
-		FileDialog dialog = new FileDialog(Gui.window, "Save as", FileDialog.SAVE);
+		FileDialog dialog = new FileDialog(MainGui.window, "Save as", FileDialog.SAVE);
 		dialog.setFile(".txt");
-		Gui.setLocation(dialog);
+		PopupAlerts.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
@@ -372,7 +372,7 @@ public class FileOperaitons
 		fileNameNotes = dialog.getFile();
 		
 		String new_title = fileNameNotes.replace('_', ' ');
-		Gui.window.setTitle(new_title);
+		MainGui.window.setTitle(new_title);
 		
 		saveFile();
 	}
@@ -389,18 +389,13 @@ public class FileOperaitons
 			{
 				if (fileAbbreviations != null)
 					out.println("***abbreviations_file;" + fileAbbreviations);
-				for (int i = 0; i < Logic.content.length; i ++)
-				{
-					String rowStr = "";
-					for (String cell : Logic.content[i])
-						rowStr += cell + ";";
-					out.println(rowStr.substring(0, rowStr.length() - 1) + (Logic.todoList[i].equals("") ? "" : ("||" + Logic.todoList[i] ) ) );
-				}
+				for (Section section : MainGui.sectionsList)
+					out.println(section.getSaveString() );
 			} catch (FileNotFoundException e)
 			{
 				// TODO
 			} finally {
-				Logic.unsavedChanges = false;
+				unsavedChanges = false;
 			}
 		}
 	}
@@ -408,9 +403,9 @@ public class FileOperaitons
 	public static void importFile()
 	{
 		// selecting which file to import
-		FileDialog dialog = new FileDialog(Gui.window, "Select File to Import");
+		FileDialog dialog = new FileDialog(MainGui.window, "Select File to Import");
 		dialog.setMode(FileDialog.LOAD);
-		Gui.setLocation(dialog);
+		PopupAlerts.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
@@ -434,10 +429,10 @@ public class FileOperaitons
 		String[] file_name_split = import_name.split(Pattern.quote(".") );
 			
 		String file = null;
-		dialog = new FileDialog(Gui.window, "Save notes file", FileDialog.SAVE);
+		dialog = new FileDialog(MainGui.window, "Save notes file", FileDialog.SAVE);
 		dialog.setDirectory(import_dir);
 		dialog.setFile(file_name_split[0] + "_import." + file_name_split[1]);
-		Gui.setLocation(dialog);
+		PopupAlerts.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getFile() == null)
@@ -473,10 +468,10 @@ public class FileOperaitons
 		if (line != null && line.equals("***ABBREVIATIONS***") )
 		{
 			String import_name_abbr = file_name_split[0] + "_abbreviations." + file_name_split[1];
-			dialog = new FileDialog(Gui.window, "Save abbreviations file", FileDialog.SAVE);
+			dialog = new FileDialog(MainGui.window, "Save abbreviations file", FileDialog.SAVE);
 			dialog.setDirectory(import_dir);
 			dialog.setFile(import_name_abbr);
-			Gui.setLocation(dialog);
+			PopupAlerts.setLocationToCenter(dialog);
 			dialog.setVisible(true);
 			file = dialog.getFile();
 			if (file == null)
@@ -511,7 +506,7 @@ public class FileOperaitons
 				throw new RuntimeException("Error while importing file: writing!");
 			}
 			
-			Logic.abbreviationsList = readAbbriviationsFile(import_dir_abbr + import_name_abbr);
+			Abbreviations.abbreviationsList = readAbbriviationsFile(import_dir_abbr + import_name_abbr);
 		}
 		
 
@@ -532,7 +527,7 @@ public class FileOperaitons
 	
 	public static void exportFile()
 	{
-		if (Logic.unsavedChanges)
+		if (unsavedChanges)
 			saveFile();
 		
 		// creating notes reader
@@ -561,10 +556,10 @@ public class FileOperaitons
 		PrintWriter writer;
 		String[] file_name_split = fileNameNotes.split(Pattern.quote(".") );
 		
-		FileDialog dialog = new FileDialog(Gui.window, "Save notes file", FileDialog.SAVE);
+		FileDialog dialog = new FileDialog(MainGui.window, "Save notes file", FileDialog.SAVE);
 		dialog.setDirectory(fileDirectoryNotes);
 		dialog.setFile(file_name_split[0] + "_export." + file_name_split[1]);
-		Gui.setLocation(dialog);
+		PopupAlerts.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getFile() == null)
@@ -610,16 +605,16 @@ public class FileOperaitons
 	
 	/** public static void exportAsPdf()
 	{
-		int width  = Gui.sectionPanelsList.get(0).getWidth();
+		int width  = MainGui.sectionPanelsList.get(0).getWidth();
 		int height = 0, current_height = 0;
-		for (JPanel panel : Gui.sectionPanelsList)
+		for (JPanel panel : MainGui.sectionPanelsList)
 			height += panel.getHeight();
 		
 		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
 		JFrame buffer_window = new JFrame();
 		
-		//Gui.scrollPane.printAll(image.getGraphics());
-		for (JPanel panel : Gui.sectionPanelsList)
+		//MainGui.scrollPane.printAll(image.getGraphics());
+		for (JPanel panel : MainGui.sectionPanelsList)
 		{
 			SwingUtilities.paintComponent(image.getGraphics(), panel, buffer_window.getContentPane(), 0, current_height, panel.getWidth(), panel.getHeight() );
 			current_height += panel.getHeight();

@@ -1,5 +1,5 @@
 eclipse.preferences.version=1
-encoding//src/Gui.java=UTF-8
-encoding//src/Logic.java=UTF-8
-encoding//src/MouseAdapters.java=UTF-8
+encoding//src/gui/Abbreviations.java=UTF-8
+encoding//src/gui/MainGui.java=UTF-8
+encoding//src/logic/MouseAdapters.java=UTF-8
 encoding/<project>=UTF-8

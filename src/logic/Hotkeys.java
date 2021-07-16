@@ -1,3 +1,4 @@
+package logic;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.FileDialog;
@@ -26,6 +27,11 @@ import javax.swing.event.MouseInputAdapter;
 
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
+
+import gui.ColorSettings;
+import gui.MainGui;
+import gui.PopupAlerts;
+import logic.HotkeyProfile;
 
 public class Hotkeys implements NativeKeyListener
 {
@@ -73,23 +79,23 @@ public class Hotkeys implements NativeKeyListener
 				case HK_Split:
 				case HK_Skip:
 					currentSectionIndex ++;
-					if (currentSectionIndex < Gui.sectionLocationList.size() )
+					if (currentSectionIndex < MainGui.sectionsList.size() )
 						if (splitType == SPLIT_SCROLL)
-							Gui.scrollPane.getVerticalScrollBar().setValue(Gui.sectionLocationList.get(currentSectionIndex) );
+							MainGui.scrollPane.getVerticalScrollBar().setValue(MainGui.sectionsList.get(currentSectionIndex).getScrollLocation() );
 						else
 						{
-							Gui.mainPanel.removeAll();
-							Gui.mainPanel.add(Gui.sectionPanelsList.get(currentSectionIndex) );
+							MainGui.mainPanel.removeAll();
+							MainGui.mainPanel.add(MainGui.sectionsList.get(currentSectionIndex) );
 						}
 					break;
 				case HK_Reset:
 					currentSectionIndex = -1;
-					Gui.scrollPane.getVerticalScrollBar().setValue(Gui.sectionLocationList.get(0) );
+					MainGui.scrollPane.getVerticalScrollBar().setValue(MainGui.sectionsList.get(0).getScrollLocation() );
 					if (splitType == SPLIT_HIDE)
 					{
-						Gui.mainPanel.removeAll();
-						for (JPanel section : Gui.sectionPanelsList)
-							Gui.mainPanel.add(section);
+						MainGui.mainPanel.removeAll();
+						for (Section section : MainGui.sectionsList)
+							MainGui.mainPanel.add(section );
 					}
 					break;
 				case HK_Undo:
@@ -98,28 +104,28 @@ public class Hotkeys implements NativeKeyListener
 					if (currentSectionIndex < 0)
 					{
 						if (splitType == SPLIT_SCROLL)
-							Gui.scrollPane.getVerticalScrollBar().setValue(Gui.sectionLocationList.get(0) );
+							MainGui.scrollPane.getVerticalScrollBar().setValue(MainGui.sectionsList.get(0).getScrollLocation() );
 						else
 						{
-							Gui.mainPanel.removeAll();
-							for (JPanel section : Gui.sectionPanelsList)
-								Gui.mainPanel.add(section);
+							MainGui.mainPanel.removeAll();
+							for (Section section : MainGui.sectionsList)
+								MainGui.mainPanel.add(section );
 						}
 					}
 					else
 						if (splitType == SPLIT_SCROLL)
-							Gui.scrollPane.getVerticalScrollBar().setValue(Gui.sectionLocationList.get(currentSectionIndex) );
+							MainGui.scrollPane.getVerticalScrollBar().setValue(MainGui.sectionsList.get(currentSectionIndex).getScrollLocation() );
 						else
 						{
-							Gui.mainPanel.removeAll();
-							Gui.mainPanel.add(Gui.sectionPanelsList.get(currentSectionIndex) );
+							MainGui.mainPanel.removeAll();
+							MainGui.mainPanel.add(MainGui.sectionsList.get(currentSectionIndex) );
 						}
 					break;
 			}
 			if (splitType == SPLIT_HIDE)
 			{
-				Gui.keepGuiSize = false;
-				Gui.window.pack();
+				MainGui.keepGuiSize = false;
+				MainGui.window.pack();
 			}
 		}
 	}
@@ -136,9 +142,15 @@ public class Hotkeys implements NativeKeyListener
 		//System.out.println("Key Typed: " + NativeKeyEvent.getKeyText(e.getKeyCode() ) );
 	}
 	
-	public static void getHotkeySettingsWindow(ArrayList<HotkeyProfile> profiles_copy)
+	@SuppressWarnings("unchecked")
+	public static void showHotkeySettingsWindow()
 	{
-		JDialog dialog = new JDialog(Gui.window);
+		showHotkeySettingsWindow((ArrayList<HotkeyProfile>) Hotkeys.profiles.clone() );
+	}
+	
+	public static void showHotkeySettingsWindow(ArrayList<HotkeyProfile> profiles_copy)
+	{
+		JDialog dialog = new JDialog(MainGui.window);
 		dialog.setTitle("Hotkey settings");
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.setModalityType(ModalityType.APPLICATION_MODAL);
@@ -147,7 +159,7 @@ public class Hotkeys implements NativeKeyListener
 			JPanel main_panel = new JPanel();
 			main_panel.setLayout(new BoxLayout(main_panel, BoxLayout.Y_AXIS) );
 			main_panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5) );
-			main_panel.setBackground(Gui.currentColorSetting.background);
+			main_panel.setBackground(ColorSettings.currentColorSetting.background);
 		
 		// settings panel
 			JPanel settings_panel = new JPanel();
@@ -157,7 +169,7 @@ public class Hotkeys implements NativeKeyListener
 			// profile combobox
 			JPanel profile_panel = new JPanel();
 			profile_panel.setOpaque(false);
-			profile_panel.add(Gui.getNewJLabelWithCurrentTextColor("Active profile: ") );
+			profile_panel.add(ColorSettings.getNewJLabelWithCurrentTextColor("Active profile: ") );
 			JComboBox<HotkeyProfile> comboBox = new JComboBox<HotkeyProfile>( profiles_copy.toArray(new HotkeyProfile[profiles_copy.size() ] ) );
 			comboBox.setSelectedItem(activeProfile);
 			comboBox.addItemListener(new ItemListener() {
@@ -179,13 +191,13 @@ public class Hotkeys implements NativeKeyListener
 			if (profile != null)
 			{
 				split.setText(profile.getHotkeyDisplay("Split") );
-				split.setForeground(Gui.currentColorSetting.text);
+				split.setForeground(ColorSettings.currentColorSetting.text);
 				reset.setText(profile.getHotkeyDisplay("Reset") );
-				reset.setForeground(Gui.currentColorSetting.text);
+				reset.setForeground(ColorSettings.currentColorSetting.text);
 				undo .setText(profile.getHotkeyDisplay("Undo" ) );
-				undo .setForeground(Gui.currentColorSetting.text);
+				undo .setForeground(ColorSettings.currentColorSetting.text);
 				skip .setText(profile.getHotkeyDisplay("Skip" ) );
-				skip .setForeground(Gui.currentColorSetting.text);
+				skip .setForeground(ColorSettings.currentColorSetting.text);
 			}
 			JPanel split_panel = new JPanel();
 			split_panel.setOpaque(false);
@@ -217,7 +229,7 @@ public class Hotkeys implements NativeKeyListener
 				{
 					selectLiveSplitFile(profiles_copy);
 					dialog.dispose();
-					getHotkeySettingsWindow(profiles_copy);
+					showHotkeySettingsWindow(profiles_copy);
 				}
 			});
 			settings_panel.add(load);
@@ -234,10 +246,10 @@ public class Hotkeys implements NativeKeyListener
 					Color.RED) );
 			workaraound_panel.setLayout(new BoxLayout(workaraound_panel, BoxLayout.Y_AXIS) );
 			workaraound_panel.setOpaque(false);
-			workaraound_panel.add(Gui.getNewJLabelWithCurrentTextColor("Currently, the 'Control' modifier doesn't work porperly!") );
+			workaraound_panel.add(ColorSettings.getNewJLabelWithCurrentTextColor("Currently, the 'Control' modifier doesn't work porperly!") );
 			workaround_box = new JCheckBox("Ignore the 'Control' Modifier entirely! (false by default)", workaround_box.isSelected() );
 			workaround_box.setOpaque(false);
-			workaround_box.setForeground(Gui.currentColorSetting.text);
+			workaround_box.setForeground(ColorSettings.currentColorSetting.text);
 			workaraound_panel.add(workaround_box);
 			
 			settings_panel.add(workaraound_panel);
@@ -285,14 +297,14 @@ public class Hotkeys implements NativeKeyListener
 		main_panel.add(controls_panel);
 		dialog.add(main_panel);
 		dialog.pack();
-		Gui.setLocation(dialog);
+		PopupAlerts.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 	}
 	
 	public static void selectLiveSplitFile(ArrayList<HotkeyProfile> new_profiles)
 	{
-		FileDialog dialog = new FileDialog(Gui.window, "Select 'LiceSplit.exe'", FileDialog.LOAD);
-		Gui.setLocation(dialog);
+		FileDialog dialog = new FileDialog(MainGui.window, "Select 'LiceSplit.exe'", FileDialog.LOAD);
+		PopupAlerts.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		String dir = dialog.getDirectory();
 		

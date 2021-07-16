@@ -1,3 +1,4 @@
+package logic;
 import org.jnativehook.keyboard.NativeKeyEvent;
 
 class HotkeyProfile
