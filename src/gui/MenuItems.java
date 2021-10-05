@@ -11,6 +11,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 
+import edit.SectionManagerDialog;
 import logic.FileOperations;
 import logic.Hotkeys;
 import logic.MouseAdapters;
@@ -47,9 +48,9 @@ public class MenuItems
 			//JMenuItem file_pdf     = new JMenuItem("Export as PDF");
 			
 			// Edit
-			MenuItems.edit_enabled              = new JCheckBoxMenuItem("Edit mode");
-			MenuItems.edit_add                  = new JMenu("add Column");
-			MenuItems.edit_remove               = new JMenu("remove Column");
+			edit_enabled              = new JCheckBoxMenuItem("Edit mode");
+			edit_add                  = new JMenu("add Column");
+			edit_remove               = new JMenu("remove Column");
 			JMenuItem edit_abbr_edit  = new JMenuItem("Abbreviations settings");
 			
 			// Speedrun
@@ -65,7 +66,7 @@ public class MenuItems
 		// Action Listeners
 			// File
 			file_open   .addActionListener( e -> { FileOperations.selectNotesFile(); MainGui.readAndDisplayNotes();} );
-			file_reload .addActionListener( e -> { MainGui.keepGuiSize = false; MenuItems.edit_enabled.setSelected(false); MainGui.inEditMode = false; MainGui.readAndDisplayNotes(); } );
+			file_reload .addActionListener( e -> { MainGui.keepGuiSize = false; edit_enabled.setSelected(false); MainGui.inEditMode = false; MainGui.readAndDisplayNotes(); } );
 			file_new    .addActionListener( e -> { FileOperations.createNewFile(); } );
 			file_save   .addActionListener( e -> { FileOperations.saveFile(); } );
 			file_save_as.addActionListener( e -> { FileOperations.saveAsFile(); } );
@@ -74,7 +75,7 @@ public class MenuItems
 			file_export .addActionListener( e -> { FileOperations.exportFile(); } );
 			
 			// Edit
-			MenuItems.edit_enabled    .addActionListener(e -> { MainGui.updateEditMode(MenuItems.edit_enabled); } );
+			edit_enabled    .addActionListener(e -> { MainGui.updateEditMode(edit_enabled); } );
 			edit_abbr_edit  .addActionListener(e -> { Abbreviations.getAbbreviationSettings(FileOperations.fileAbbreviations, (ArrayList<String[]>) Abbreviations.abbreviationsList.clone() ); } );
 			
 			// Speedrun
@@ -106,9 +107,9 @@ public class MenuItems
 			menu_file.add(file_export);
 			
 			// Edit
-			menu_edit.add(MenuItems.edit_enabled);
-			menu_edit.add(MenuItems.edit_add);
-			menu_edit.add(MenuItems.edit_remove);
+			menu_edit.add(edit_enabled);
+			menu_edit.add(edit_add);
+			menu_edit.add(edit_remove);
 			menu_edit.addSeparator();
 			menu_edit.add(edit_abbr_edit);
 			
@@ -134,23 +135,23 @@ public class MenuItems
 	
 	public static void getAddRemoveColumnsMenuItems()
 	{
-		MenuItems.edit_add.removeAll();
-		MenuItems.edit_remove.removeAll();
+		edit_add.removeAll();
+		edit_remove.removeAll();
 		
 		for (int col = 0; col < FileOperations.numberOfColumns; col ++)
 		{
 			JMenuItem remove = new JMenuItem("Remove " + getNumeral(col + 1) + " column");
 			remove.addActionListener(MouseAdapters.getRemoveContentColAdapter(col) );
-			MenuItems.edit_remove.add(remove);
+			edit_remove.add(remove);
 			
 			JMenuItem add = new JMenuItem(col == 0 ? "Add before 1st column" : "Add between " + getNumeral(col) + " and " + getNumeral(col + 1) + " column");
 			add.addActionListener(MouseAdapters.getAddContentColAdapter(col) );
-			MenuItems.edit_add.add(add);
+			edit_add.add(add);
 		}
 		
 		JMenuItem add = new JMenuItem("Add after " + getNumeral(FileOperations.numberOfColumns) + " column");
 		add.addActionListener(MouseAdapters.getAddContentColAdapter(FileOperations.numberOfColumns) );
-		MenuItems.edit_add.add(add);
+		edit_add.add(add);
 	}
 
 	public static String getNumeral(int num)

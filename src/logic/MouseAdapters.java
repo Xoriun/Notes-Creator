@@ -1,4 +1,5 @@
 package logic;
+
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
@@ -14,6 +15,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.event.MouseInputAdapter;
 
+import edit.CellEditDialog;
 import gui.MainGui;
 import gui.PopupAlerts;
 
@@ -103,7 +105,7 @@ public class MouseAdapters
 					MainGui.sectionsList.add(current_section_index, new Section() );
 					MainGui.arrangeContent();
 					MainGui.spaceColums();
-					MainGui.updateSectionManagerDialog();
+					edit.SectionManagerDialog.updateSectionManagerDialog();
 				}
 			}
 		};
@@ -121,7 +123,7 @@ public class MouseAdapters
 					MainGui.sectionsList.remove(current_section_index);
 					MainGui.arrangeContent();
 					MainGui.spaceColums();
-					MainGui.updateSectionManagerDialog();
+					edit.SectionManagerDialog.updateSectionManagerDialog();
 				}
 			}
 		};
@@ -140,14 +142,14 @@ public class MouseAdapters
 					MainGui.sectionsList.get(current_section_index).setTitle(newText);
 					MainGui.arrangeContent();
 					MainGui.spaceColums();
-					MainGui.updateSectionManagerDialog();
+					edit.SectionManagerDialog.updateSectionManagerDialog();
 					FileOperations.unsavedChanges = true;
 				}
 			}
 		};
 	}
 
-	public static MouseInputAdapter getEditCellAdapter(JPanel cell, String current_text, String[] row, int col)
+	public static MouseInputAdapter getEditCellAdapter(Cell cell)
 	{
 		return new MouseInputAdapter() {
 			@Override
@@ -155,22 +157,23 @@ public class MouseAdapters
 			{
 				if (MainGui.inEditMode)
 				{
+					CellEditDialog.processCell(cell);
+					String current_text = cell.getContentString();
 					String string = JOptionPane.showInputDialog(MainGui.window, "Set the text!", current_text);
 					if (string != null && !string.equals(current_text) )
 					{
 						// resetting cell
-						cell.removeAll();
-						cell.removeMouseListener(this);
+						cell.clearContentAndListeners();
 						
 						// updating content of section
-						row[col] = string; 
+						cell.setContentString(string); 
 						
 						// refilling cell
-						Section.fillCellPanel(cell, string.split(">>", 2)[0] );
+						cell.fillCellPanel(string.split(">>", 2)[0] );
 						if (string.contains(">>") )
 							for (String action_str : string.split(">>", 2)[1].split("#", -1) )
 								cell.addMouseListener(getCellActionAdapter(action_str) );
-						cell.addMouseListener(getEditCellAdapter(cell, string, row, col) );
+						cell.addMouseListener(getEditCellAdapter(cell) );
 						
 						// reorganizing gui
 						MainGui.spaceColums();
@@ -196,7 +199,7 @@ public class MouseAdapters
 					if (string.isEmpty() && icon != null) // remove existing icon
 					{
 						panel.remove(icon);
-						MainGui.labelsHideUnhide.remove(icon);
+						MainGui.labelsIconsHideWhenNotInEdit.remove(icon);
 						label.removeMouseListener(this);
 						label.addMouseListener(getEditTodoAdapter(current_row, section, panel, label, null) );
 					}
@@ -205,7 +208,7 @@ public class MouseAdapters
 						JLabel new_icon = new JLabel(new ImageIcon(new ImageIcon("Images\\Not-enough-repair-packs-icon" + ".png").getImage().getScaledInstance(MainGui.ImageSize, MainGui.ImageSize, Image.SCALE_DEFAULT) ) );
 						panel.add(new_icon);
 						new_icon.setVisible(MainGui.inEditMode);
-						MainGui.labelsHideUnhide.add(new_icon);
+						MainGui.labelsIconsHideWhenNotInEdit.add(new_icon);
 						label.removeMouseListener(this);
 						label.addMouseListener(getEditTodoAdapter(current_row, section, panel, label, new_icon) );
 					}

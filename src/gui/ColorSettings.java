@@ -138,10 +138,10 @@ public class ColorSettings
 		MainGui.mainPanel.setBackground(currentColorSetting.background);
 		
 		// text for cells
-		for (JLabel label : MainGui.labelsTextcolor) label.setForeground(currentColorSetting.text);
+		for (JLabel label : MainGui.labelsText) label.setForeground(currentColorSetting.text);
 		
 		// text for add-remove-controls
-		for (JLabel label : MainGui.labelsBackgroundcolorTextcolor) label.setForeground(MainGui.inEditMode ? currentColorSetting.text : currentColorSetting.background);
+		for (JLabel label : MainGui.labelsTextsHideWhenNotInEdit) label.setForeground(MainGui.inEditMode ? currentColorSetting.text : currentColorSetting.background);
 		
 		// border color for sections
 		for (Section section : MainGui.sectionsList)
@@ -150,7 +150,7 @@ public class ColorSettings
 		
 		// border for cells
 		for (Section section : MainGui.sectionsList)
-			for (JPanel[] cell_row : section.getCells() )
+			for (JPanel[] cell_row : section.getContentCells() )
 				for (JPanel cell : cell_row)
 					if (cell.getBorder() != null)
 						cell.setBorder(new MatteBorder( ((MatteBorder) cell.getBorder() ).getBorderInsets(), currentColorSetting.border) );
@@ -163,10 +163,10 @@ public class ColorSettings
 		}
 		
 		// background and border for sectionManagerDialog
-		if (MainGui.sectionManagerPanel!= null)
+		if (edit.SectionManagerDialog.sectionManagerPanel!= null)
 		{
-			MainGui.sectionManagerPanel.setBackground(currentColorSetting.background);
-			MainGui.sectionManagerPanel.setBorder(new MatteBorder( ((MatteBorder) MainGui.sectionManagerPanel.getBorder() ).getBorderInsets(), currentColorSetting.text) );
+			edit.SectionManagerDialog.sectionManagerPanel.setBackground(currentColorSetting.background);
+			edit.SectionManagerDialog.sectionManagerPanel.setBorder(new MatteBorder( ((MatteBorder) edit.SectionManagerDialog.sectionManagerPanel.getBorder() ).getBorderInsets(), currentColorSetting.text) );
 		}
 	}
 	
