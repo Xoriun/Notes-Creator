@@ -2,6 +2,9 @@
 
 Create notes for a speedrun.
 
+## Setup
+Go to release (on the right side) and download the latest version. Extract the .zip file and run 'Notes-Creator_x.x.jar'.
+
 ## Edit Mode
 Enabling edit mode will allow you to edit, add and remove rows, columns and sections.\
 To start a new line within a cell, type \n.
