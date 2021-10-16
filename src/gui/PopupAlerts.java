@@ -9,7 +9,6 @@ import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
 
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -37,29 +36,29 @@ public class PopupAlerts
 		// main panel
 		JPanel missing_panel = new JPanel();
 		missing_panel.setLayout(new BoxLayout(missing_panel, BoxLayout.Y_AXIS) );
-		missing_panel.setBackground(ColorSettings.currentColorSetting.background);
-		missing_panel.setBorder(BorderFactory.createLineBorder(ColorSettings.currentColorSetting.text, 2) );
+		missing_panel.setBackground(ColorSettings.getBackgroundColor() );
+		missing_panel.setBorder(GuiHelper.getDialogBorder() );
 		
 		// title
 			JLabel title = new JLabel("Missing images");
-			title.setForeground(ColorSettings.currentColorSetting.text);
+			title.setForeground(ColorSettings.getTextColor() );
 			title.setAlignmentX(Component.CENTER_ALIGNMENT);
 			title.setFont(new Font("MonoSpaced", Font.PLAIN, 15) );
 			missing_panel.add(title);
 		
 		// message panel
 			JTextArea message = new JTextArea("The following images are missing in your 'Images' folder:" + missingImagesMessage);
-			message.setBackground(ColorSettings.currentColorSetting.background);
-			message.setForeground(ColorSettings.currentColorSetting.text);
+			message.setBackground(ColorSettings.getBackgroundColor() );
+			message.setForeground(ColorSettings.getTextColor() );
 			message.setEditable(false);
 			JScrollPane scroll_pane = new JScrollPane(message,
 					ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-			scroll_pane.setBackground(ColorSettings.currentColorSetting.background);
-			scroll_pane.setBorder(BorderFactory.createEmptyBorder() );
+			scroll_pane.setBackground(ColorSettings.getBackgroundColor() );
+			scroll_pane.setBorder(GuiHelper.getEmptyBorder() );
 		
 		// controls panel
 			JPanel controls_panel = new JPanel(new FlowLayout(FlowLayout.CENTER) );
-			controls_panel.setBackground(ColorSettings.currentColorSetting.background);
+			controls_panel.setBackground(ColorSettings.getBackgroundColor() );
 			JButton open_folder = new JButton("Open Image folder");
 			JButton close = new JButton("OK");
 			

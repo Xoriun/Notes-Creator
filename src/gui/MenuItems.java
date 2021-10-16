@@ -1,7 +1,6 @@
 package gui;
 
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
@@ -11,7 +10,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 
-import edit.SectionManagerDialog;
 import logic.FileOperations;
 import logic.Hotkeys;
 import logic.MouseAdapters;
@@ -22,7 +20,6 @@ public class MenuItems
 	public static JMenu edit_add;
 	public static JMenu edit_remove;
 	
-	@SuppressWarnings("unchecked")
 	public static JMenuBar createMenuBar()
 	{
 		// Menus
@@ -76,16 +73,16 @@ public class MenuItems
 			
 			// Edit
 			edit_enabled    .addActionListener(e -> { MainGui.updateEditMode(edit_enabled); } );
-			edit_abbr_edit  .addActionListener(e -> { Abbreviations.getAbbreviationSettings(FileOperations.fileAbbreviations, (ArrayList<String[]>) Abbreviations.abbreviationsList.clone() ); } );
+			edit_abbr_edit  .addActionListener(e -> { Abbreviations.editAbbreviationSettings(); } );
 			
 			// Speedrun
 			speedrun_enabled .addActionListener(e -> { Hotkeys.isSpeedrunModeEnabled = speedrun_enabled.isSelected(); } );
 			speedrun_settings.addActionListener(e -> { Hotkeys.showHotkeySettingsWindow(); } );
 			
 			// Settings
-			settings_light_mode   .addActionListener(e -> { ColorSettings.currentColorSetting = ColorSettings.colorSettingProfiles[0]; ColorSettings.applyLightingMode(); } );
-			settings_dark_mode    .addActionListener(e -> { ColorSettings.currentColorSetting = ColorSettings.colorSettingProfiles[1]; ColorSettings.applyLightingMode(); } );
-			settings_custom       .addActionListener(e -> { ColorSettings.currentColorSetting = ColorSettings.colorSettingProfiles[2]; ColorSettings.applyLightingMode(); } );
+			settings_light_mode   .addActionListener(e -> { ColorSettings.selectColorSettings(0); ColorSettings.applyLightingMode(); } );
+			settings_dark_mode    .addActionListener(e -> { ColorSettings.selectColorSettings(1); ColorSettings.applyLightingMode(); } );
+			settings_custom       .addActionListener(e -> { ColorSettings.selectColorSettings(2); ColorSettings.applyLightingMode(); } );
 			settings_custom_change.addActionListener(e -> { ColorSettings.changeCustomLightingSettings(); } );
 			
 		// Shortcuts

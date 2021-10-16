@@ -9,7 +9,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -151,6 +150,7 @@ public class FileOperations
 	{
 		PopupAlerts.creatMissingImagesMessage = true;
 		MainGui.sectionsList.clear();
+		numberOfColumns = 0;
 		
 		BufferedReader reader = null;
 		while (reader == null)
@@ -170,7 +170,7 @@ public class FileOperations
 			if (line_string.startsWith("***abbreviations_file;") )
 			{
 				fileAbbreviations = line_string.split(";")[1];
-				Abbreviations.abbreviationsList = readAbbriviationsFile();
+				Abbreviations.setAbbreviationsList(readAbbriviationsFile() );
 				line_string = reader.readLine();
 			}
 		} catch (Exception e) {
@@ -178,37 +178,27 @@ public class FileOperations
 		}
 		
 		String title_pattern = "---.*---.*";
+		Section current_section;
 		try
 		{
 			while (line_string != null)
 			{
-				String section_header = line_string;
-				
-				ArrayList<String[]> content_list = new ArrayList<String[]>();
-				ArrayList<String> todo_list = new ArrayList<String>();
+				current_section = new Section(line_string);
 				
 				line_string = reader.readLine();
 				
 				while (line_string != null && !line_string.matches(title_pattern))
 				{
-					String[] line_arr = line_string.split(Pattern.quote("||"), 2);
-					content_list.add(line_arr[0].split(";", -1) );
-					if (line_arr.length == 2)
-						todo_list.add(line_arr[1] );
-					else
-						todo_list.add("");
-					
-					if (numberOfColumns == 0)
-						numberOfColumns = line_arr[0].split(";", -1).length;
-						
+					current_section.addRow(line_string);
 					line_string = reader.readLine();
 				}
 				
-				MainGui.sectionsList.add(new Section(section_header, content_list, todo_list) );
+				current_section.addEmptyRow();
+				current_section.fillPanel();
+				MainGui.sectionsList.add(current_section);
 			}
 		} catch (IOException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -242,9 +232,9 @@ public class FileOperations
 		fileDirectoryNotes = fileNameNotes = null;
 		MainGui.sectionsList.clear();
 		
-		ArrayList<String[]> content = new ArrayList<String[]>();
-		content.add(new String[] {"new", "file"} );
-		MainGui.sectionsList.add(new Section("---section 1---", content, new ArrayList<String>(Arrays.asList("") ) ) );
+		Section section = new Section("section 1");
+		section.addRow("new;file");
+		MainGui.sectionsList.add(section);
 		numberOfColumns = 2;
 		
 		MainGui.arrangeContent();
@@ -350,8 +340,7 @@ public class FileOperations
 		{
 			try (PrintWriter out = new PrintWriter(fileAbbreviations) )
 			{
-				for (String[] abbreviation : Abbreviations.abbreviationsList)
-					out.println(abbreviation[0] + ":" + abbreviation[1] );
+				out.print(Abbreviations.getAbbreviationSaveString() );
 			} catch (FileNotFoundException e)
 			{
 				fileAbbreviations = null;
@@ -506,7 +495,7 @@ public class FileOperations
 				throw new RuntimeException("Error while importing file: writing!");
 			}
 			
-			Abbreviations.abbreviationsList = readAbbriviationsFile(import_dir_abbr + import_name_abbr);
+			Abbreviations.setAbbreviationsList(readAbbriviationsFile(import_dir_abbr + import_name_abbr) );
 		}
 		
 

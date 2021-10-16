@@ -1,24 +1,22 @@
 package logic;
 
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Graphics;
-import java.awt.Image;
 import java.awt.event.MouseListener;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.regex.Pattern;
 
-import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import edit.EditIconLabel;
+import edit.EditPanel;
+import edit.EditTextField;
 import gui.Abbreviations;
 import gui.ColorSettings;
+import gui.GuiHelper;
 import gui.MainGui;
 import gui.PopupAlerts;
 
@@ -27,89 +25,99 @@ public class Cell extends JPanel
 	//auto-generated serialVersionUID
 	private static final long serialVersionUID = 1L;
 	
-	private int row;
+	private Row row;
 	private int col;
-	private Section section;
-	private boolean top_border, left_border;
-	private String cellContentStr;
-	private String cellActionsString;
+	private boolean topBorder, leftBorder;
+	private String contentString;
+	private String actionsString;
+	private ArrayList<CellLabel> cellLabels;
 	
-	public Cell(Section section, String cell_str, int row, int col)
+	public Cell(Row row, String cell_str, int col)
 	{
-		this.section = section;
 		this.row = row;
 		this.col = col;
-		this.top_border = (row == 0);
-		this.left_border = (col == 0);
+		this.topBorder = (row.getRowIndex() == 0);
+		this.leftBorder = (col == 0);
+		this.setOpaque(false);
+		cellLabels = new ArrayList<CellLabel>();
+		
+		updateCell(cell_str);
+	}
+	
+	public void updateCell(String cell_str)
+	{
+		clearContentAndListeners();
 		
 		if (cell_str.contains(">>") )
 		{
 			String[] temp = cell_str.split(">>", 2);
-			cellContentStr = temp[0];
-			cellActionsString = temp[1];
+			contentString = temp[0];
+			actionsString = temp[1];
 		}
 		else
 		{
-			cellContentStr = cell_str;
-			cellActionsString = "";
+			contentString = cell_str;
+			actionsString = "";
 		}
-		
-		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS) );
-		fillCellPanel(cellContentStr);
-		setDefaultBorder();
+
 		this.addMouseListener(MouseAdapters.getEditCellAdapter(this) );
-		if (!cellActionsString.isEmpty() )
-			this.addMouseListener(MouseAdapters.getCellActionAdapter(cellActionsString) );
-		this.setOpaque(false);
+		if (!actionsString.isEmpty() )
+			this.addMouseListener(MouseAdapters.getCellActionAdapter(actionsString) );
+		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS) );
+		fillCellPanel();
+		setDefaultBorder();
 	}
 	
 	public String getInfo()
 	{
-		return "Section " + section.getTitle() + " at [" + row + ", " + col + "]";
+		return "Section " + row.getSection().getTitle() + " at [" + row.getRowIndex() + ", " + col + "]";
 	}
 	
-	public String getContentString() { return section.getContent().get(row)[col]; }
-	public void setContentString(String new_content) { section.getContent().get(row)[col] = new_content; } 
-	public Section getSection() { return section; }
+	public ArrayList<CellLabel> getCellLabels() { return cellLabels; }
+	public Section getSection() { return row.getSection(); }
 	public int getCol() { return col; }
-	public int getRow() { return row; }
-	public String getCellString() { return cellContentStr + (cellActionsString.isEmpty() ? "" : ">>" + cellActionsString); }
+	public void increaseCol() { col ++; }
+	public void decreaseCol() { col --; }
+	public int getRow() { return row.getRowIndex(); }
+	public String getCellString() { return contentString + (actionsString.isEmpty() ? "" : ">>" + actionsString); }
+	public String getContentString() { return contentString; }
+	public String getActionString() { return actionsString; }
 	
 	public void setDefaultBorder()
 	{
-		this.setBorder(BorderFactory.createMatteBorder(top_border ? 1 : 0, left_border ? 1 : 0, 1, 1, ColorSettings.currentColorSetting.border) );
+		this.setBorder(GuiHelper.getDefaultBorder(topBorder, leftBorder) );
 	}
 	
 	public void setSelectedBorder()
 	{
-		this.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.RED) );
+		this.setBorder(GuiHelper.getSelectedBorder() );
 	}
 	
-	public void clearContentAndListeners()
+	private void clearContentAndListeners()
 	{
 		this.removeAll();
+		cellLabels.clear();
 		for (MouseListener listener : this.getMouseListeners() )
 			this.removeMouseListener(listener);
 	}
 	
-	public void fillCellPanel(String cell_string)
+	private void fillCellPanel()
 	{
-		cell_string = cell_string.replace("\\n", "\n").replace("->", "⇨"); 
-		for (String row : cell_string.split("\n") )
+		for (String row : contentString.replace("->", "⇨").split(Pattern.quote("\\n") ) )
 		{
 			JPanel horizontal_panel = new JPanel();
 			horizontal_panel.setLayout(new BoxLayout(horizontal_panel, BoxLayout.X_AXIS) );
 			horizontal_panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 			boolean text = true;
+			CellLabel cell_label;
 			for (String str : row.split("#") )
 			{
 				if (text)
-					horizontal_panel.add(new TextLabel(str) );
+					cell_label = new TextLabel(str, cellLabels.size() );
 				else // Icon
-					if (str.contains(":") ) // layered Icon
-						horizontal_panel.add(new LayeredIconLabel(str) );
-					else // normal Icon
-						horizontal_panel.add(new SimpleIconLabel(str) );
+					cell_label = new IconLabel(str, cellLabels.size() );
+				horizontal_panel.add(cell_label);
+				cellLabels.add(cell_label);
 				text = !text;
 			}
 			horizontal_panel.setOpaque(false);
@@ -117,123 +125,118 @@ public class Cell extends JPanel
 		}
 	}
 	
-	private class TextLabel extends JLabel
+	public abstract class CellLabel extends JLabel
 	{
-		//auto-generated serialVersionUID
-		private static final long serialVersionUID = 162996911984988275L;
+		// auto-generated serialVersionUID
+		private static final long serialVersionUID = 5537576761542517191L;
+		
+		private int index;
 
-		public TextLabel(String str)
+		public CellLabel(String str, int index)
 		{
 			super(str);
+			this.index = index;
+		}
+		
+		public CellLabel(int index)
+		{
+			this.index = index;
+		}
+		
+		public abstract EditPanel getEditPanel();
+		
+		public int getIndex() { return index; }
+	}
+	
+	private class TextLabel extends CellLabel
+	{
+		// auto-generated serialVersionUID
+		private static final long serialVersionUID = 162996911984988275L;
+		
+		public TextLabel(String str, int index)
+		{
+			super(str, index);
 			this.setFont(MainGui.font);
-			this.setForeground(ColorSettings.currentColorSetting.text);
+			this.setForeground(ColorSettings.getTextColor() );
 			MainGui.labelsText.add(this);
+		}
+		
+		public EditPanel getEditPanel()
+		{
+			return new EditTextField(this.getText() );
 		}
 	}
 	
-	private class SimpleIconLabel extends JLabel
+	private class IconLabel extends CellLabel
 	{
-		//auto-generated serialVersionUID
-		private static final long serialVersionUID = -8750448441950807834L;
+		// auto-generated serialVersionUID
+		private static final long serialVersionUID = 5976606087766686091L;
 		
-		private String iconImageName;
+		private String mainImageAbbr = "";
+		private String layeredImageAbbr = "";
+		private String horizontalAlignment = "";
+		private String verticalAlignment = "";
+		
+		private Icon icon;
 
-		public SimpleIconLabel(String str)
+		public IconLabel(String str, int index)
 		{
-			iconImageName = Abbreviations.getAbbreviation(str); 
-			String file_string = "Images\\" + iconImageName + ".png";
-			ImageIcon icon;
-			if (new File(file_string).exists() )
-				icon = new ImageIcon(file_string);
-			else
+			super(index);
+			if (str.contains(":") )
 			{
-				icon = new ImageIcon("Images\\Destroyed-icon.png");
-				if (PopupAlerts.creatMissingImagesMessage)
+				// Layered Images
+				String[] images = str.split(":");
+				if (images.length != 4) throw new RuntimeException("Error while parsing layered images: " + str + "! There have to be 2 images and 2 poition tags (t/b/c and l/r/c)");
+				
+				mainImageAbbr       = images[0];
+				layeredImageAbbr    = images[1];
+				horizontalAlignment = images[2];
+				verticalAlignment   = images[3];
+				
+				String main_image_name    = Abbreviations.getNameFromAbbreviation(mainImageAbbr);
+				String layered_image_name = Abbreviations.getNameFromAbbreviation(layeredImageAbbr);
+				
+				if ( PopupAlerts.creatMissingImagesMessage && ! new File("Images\\" + main_image_name + ".png").exists() )
 				{
-					String new_message = iconImageName + ".png" + (str.equals(iconImageName) ? "" : " (" + str + ")");
+					String new_message = main_image_name + ".png" + (mainImageAbbr.equals(main_image_name) ? "" : " (" + mainImageAbbr + ")");
 					if (!PopupAlerts.missingImagesMessage.contains(new_message) )
 						PopupAlerts.missingImagesMessage += "\n" + new_message;
 				}
+				if ( PopupAlerts.creatMissingImagesMessage && ! new File("Images\\" + layered_image_name + ".png").exists() )
+				{
+					String new_message = layered_image_name + ".png" + (layeredImageAbbr.equals(layered_image_name) ? "" : " (" + layeredImageAbbr + ")");
+					if (!PopupAlerts.missingImagesMessage.contains(new_message) )
+						PopupAlerts.missingImagesMessage += "\n" + new_message;
+				}
+				
+				icon = GuiHelper.getScaledLayeredImage(mainImageAbbr, layeredImageAbbr, horizontalAlignment, verticalAlignment);
+				this.setIcon(icon);
 			}
-			
-			this.setIcon(new ImageIcon(icon.getImage().getScaledInstance(MainGui.ImageSize, MainGui.ImageSize, Image.SCALE_DEFAULT) ) );
+			else
+			{
+				mainImageAbbr = str;
+				String main_image_name = Abbreviations.getNameFromAbbreviation(mainImageAbbr);
+				
+				if ( ! new File("Images\\" + main_image_name + ".png").exists() )
+				{
+					if (PopupAlerts.creatMissingImagesMessage)
+					{
+						String new_message = main_image_name + ".png" + (mainImageAbbr.equals(main_image_name) ? "" : " (" + mainImageAbbr + ")");
+						if (!PopupAlerts.missingImagesMessage.contains(new_message) )
+							PopupAlerts.missingImagesMessage += "\n" + new_message;
+					}
+				}
+				
+				icon = GuiHelper.getScaledImageIcon(mainImageAbbr);
+				this.setIcon(icon);
+			}
 		}
-	}
-	
-	private class LayeredIconLabel extends JLabel
-	{
-		//auto-generated serialVersionUID
-		private static final long serialVersionUID = 5976606087766686091L;
 		
-		private String iconBackgroundName;
-		private String iconForegroundName;
-
-		public LayeredIconLabel(String str)
+		public EditPanel getEditPanel()
 		{
-			// Layered Images
-			String[] images = str.split(":");
-			if (images.length != 4) throw new RuntimeException("Error while parsing layered images: " + str + "! There have to be 2 images and 2 poition tags (t/b/c and l/r/c)");
-			try
-			{
-				iconBackgroundName = Abbreviations.getAbbreviation(images[0] );
-				iconForegroundName = Abbreviations.getAbbreviation(images[1] );
-				
-				// preparing Files
-				File file_bg = new File("Images\\" + iconBackgroundName + ".png");
-				File file_fg = new File("Images\\" + iconForegroundName + ".png");
-				File error = new File("Images\\Destroyed-icon.png");
-				
-				// preparing BufferedImages
-				final BufferedImage back_ground;
-				final BufferedImage fore_ground;
-				if (file_bg.exists() )
-					back_ground = ImageIO.read(file_bg);
-				else
-				{
-					back_ground = ImageIO.read(error);
-					if (PopupAlerts.creatMissingImagesMessage)
-					{
-						String new_message = iconBackgroundName + ".png" + (images[0].equals(iconBackgroundName) ? "" : " (" + images[0] + ")");
-						if (!PopupAlerts.missingImagesMessage.contains(new_message) )
-							PopupAlerts.missingImagesMessage += "\n" + new_message;
-					}
-				}
-				if (file_fg.exists() )
-					fore_ground = ImageIO.read(file_fg);
-				else
-				{
-					fore_ground = ImageIO.read(error);
-					if (PopupAlerts.creatMissingImagesMessage)
-					{
-						String new_message = iconForegroundName + ".png" + (images[1].equals(iconForegroundName) ? "" : " (" + images[1] + ")");
-						if (!PopupAlerts.missingImagesMessage.contains(new_message) )
-							PopupAlerts.missingImagesMessage += "\n" + new_message;
-					}
-				}
-				final BufferedImage layer_dot = ImageIO.read(new File("Images\\Layer_dot.png")); // Black layer between images for better visibility
-				final BufferedImage scaled = new BufferedImage(MainGui.ImageSize, MainGui.ImageSize, BufferedImage.TYPE_INT_ARGB); // empty BufferedImage to draw on
-				Graphics g = scaled.getGraphics();
-				
-				// drawing images
-				g.drawImage(back_ground, 0, 0, scaled.getWidth(), scaled.getHeight(), null);
-				int dot_image_size = 2 * MainGui.ImageSize / 3;
-				int small_image_size = 3 * MainGui.ImageSize / 5;
-				int x_dot = images[2].equals("t") ? 0 : (MainGui.ImageSize - dot_image_size) / (images[2].equals("c") ? 2 : 1);
-				int y_dot = images[3].equals("l") ? 0 : (MainGui.ImageSize - dot_image_size) / (images[3].equals("c") ? 2 : 1);
-				int x = images[2].equals("t") ? 0 : (MainGui.ImageSize - small_image_size) / (images[2].equals("c") ? 2 : 1);
-				int y = images[3].equals("l") ? 0 : (MainGui.ImageSize - small_image_size) / (images[3].equals("c") ? 2 : 1);
-				g.drawImage(layer_dot, x_dot, y_dot, dot_image_size, dot_image_size, null);
-				g.drawImage(fore_ground, x, y, small_image_size, small_image_size, null);
-				
-				
-				this.setIcon(new ImageIcon(scaled) );
-			} catch (MalformedURLException e)
-			{
-				e.printStackTrace();
-			} catch (IOException e)
-			{
-				e.printStackTrace();
-			}
+			return new EditIconLabel(icon, mainImageAbbr, layeredImageAbbr, verticalAlignment, horizontalAlignment);
 		}
+		
+		public Icon getIcon() { return icon; }
 	}
 }

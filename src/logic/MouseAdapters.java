@@ -1,6 +1,5 @@
 package logic;
 
-import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
@@ -9,19 +8,19 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.event.MouseInputAdapter;
 
 import edit.CellEditDialog;
+import gui.GuiHelper;
 import gui.MainGui;
 import gui.PopupAlerts;
 
 public class MouseAdapters
 {
-	public static MouseInputAdapter getAddContentRowAdapter(int row_to_add, Section section)
+	public static MouseInputAdapter getAddContentRowAdapter(Row row)
 	{
 		return new MouseInputAdapter() {
 			@Override
@@ -30,7 +29,16 @@ public class MouseAdapters
 				if (MainGui.inEditMode)
 				{
 					FileOperations.unsavedChanges = true;
-					section.addContentLine(row_to_add);
+					
+					// adding actual row
+					row.getSection().addContentLine(row.getRowIndex() );
+					
+					// increasing the rowIndices of the following rows
+					for (Row any_row : row.getSection().getRows() )
+						if (any_row.getRowIndex() >= row.getRowIndex() )
+							any_row.increaseRowIndex();
+					
+					// redrawing GUI
 					MainGui.arrangeContent();
 					MainGui.spaceColums();
 				}
@@ -38,7 +46,7 @@ public class MouseAdapters
 		};
 	}
 	
-	public static MouseInputAdapter getRemoveContentRowAdapter(int row_to_remove, Section section)
+	public static MouseInputAdapter getRemoveContentRowAdapter(Row row)
 	{
 		return new MouseInputAdapter() {
 			@Override
@@ -47,7 +55,16 @@ public class MouseAdapters
 				if (MainGui.inEditMode)
 				{
 					FileOperations.unsavedChanges = true;
-					section.removeContentLine(row_to_remove);
+					
+					// removing actual row
+					row.getSection().removeContentLine(row.getRowIndex() );
+					
+					// decreasing the rowIndices of the following rows
+					for (Row any_row : row.getSection().getRows() )
+						if (any_row.getRowIndex() >= row.getRowIndex() )
+							any_row.decreaseRowIndex();
+					
+					// redrawing GUI
 					MainGui.arrangeContent();
 					MainGui.spaceColums();
 				}
@@ -158,42 +175,32 @@ public class MouseAdapters
 				if (MainGui.inEditMode)
 				{
 					CellEditDialog.processCell(cell);
-					String current_text = cell.getContentString();
+					/*String current_text = cell.getString();
 					String string = JOptionPane.showInputDialog(MainGui.window, "Set the text!", current_text);
 					if (string != null && !string.equals(current_text) )
 					{
-						// resetting cell
-						cell.clearContentAndListeners();
-						
 						// updating content of section
-						cell.setContentString(string); 
-						
-						// refilling cell
-						cell.fillCellPanel(string.split(">>", 2)[0] );
-						if (string.contains(">>") )
-							for (String action_str : string.split(">>", 2)[1].split("#", -1) )
-								cell.addMouseListener(getCellActionAdapter(action_str) );
-						cell.addMouseListener(getEditCellAdapter(cell) );
+						cell.updateCell(string); 
 						
 						// reorganizing gui
 						MainGui.spaceColums();
 						FileOperations.unsavedChanges = true;
-					}
+					}*/
 				}
 			}
 		};
 	}
 	
-	public static MouseInputAdapter getEditTodoAdapter(int current_row, Section section, JPanel panel, JLabel label, JLabel icon)
+	public static MouseInputAdapter getEditTodoAdapter(int current_row, Row row, JPanel panel, JLabel label, JLabel icon)
 	{
 		return new MouseInputAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0)
 			{
-				String string = JOptionPane.showInputDialog(MainGui.window, "TODO", section.getTodo().get(current_row) );
+				String string = JOptionPane.showInputDialog(MainGui.window, "TODO", row.getTodoString() );
 				if (string != null)
 				{
-					section.getTodo().set(current_row, string);
+					row.setTodoString(string);
 					FileOperations.unsavedChanges = true;
 					
 					if (string.isEmpty() && icon != null) // remove existing icon
@@ -201,16 +208,17 @@ public class MouseAdapters
 						panel.remove(icon);
 						MainGui.labelsIconsHideWhenNotInEdit.remove(icon);
 						label.removeMouseListener(this);
-						label.addMouseListener(getEditTodoAdapter(current_row, section, panel, label, null) );
+						label.addMouseListener(getEditTodoAdapter(current_row, row, panel, label, null) );
 					}
+					
 					if (!string.isEmpty() && icon == null) // add new icon
 					{
-						JLabel new_icon = new JLabel(new ImageIcon(new ImageIcon("Images\\Not-enough-repair-packs-icon" + ".png").getImage().getScaledInstance(MainGui.ImageSize, MainGui.ImageSize, Image.SCALE_DEFAULT) ) );
+						JLabel new_icon = new JLabel(GuiHelper.getScaledImageIcon("Todo") );
 						panel.add(new_icon);
 						new_icon.setVisible(MainGui.inEditMode);
 						MainGui.labelsIconsHideWhenNotInEdit.add(new_icon);
 						label.removeMouseListener(this);
-						label.addMouseListener(getEditTodoAdapter(current_row, section, panel, label, new_icon) );
+						label.addMouseListener(getEditTodoAdapter(current_row, row, panel, label, new_icon) );
 					}
 				}
 

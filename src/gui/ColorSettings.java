@@ -6,11 +6,9 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.TextField;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -21,18 +19,28 @@ import javax.swing.JTextField;
 import javax.swing.border.MatteBorder;
 import javax.swing.border.TitledBorder;
 
+import logic.Row;
 import logic.Section;
 
 public class ColorSettings
 {
 	public static ColorSettingProfile[] colorSettingProfiles;
-	public static ColorSettingProfile currentColorSetting;
+	private static ColorSettingProfile currentColorSetting;
+	
+	public static Color getTextColor() { return currentColorSetting.text; }
+	public static Color getBackgroundColor() { return currentColorSetting.background; }
+	public static Color getBorderColor() { return currentColorSetting.border; }
 	
 	public static JLabel getNewJLabelWithCurrentTextColor(String text)
 	{
 		JLabel label = new JLabel(text);
 		label.setForeground(currentColorSetting.text);
 		return label;
+	}
+	
+	public static void selectColorSettings(int index)
+	{
+		currentColorSetting = colorSettingProfiles[index];
 	}
 
 	public static void fillColorSettingsPane(JPanel options_panel, ColorSettingProfile color_setting)
@@ -47,7 +55,6 @@ public class ColorSettings
 
 	public static void fillColorSettingsRow(JPanel panel, GridBagConstraints gbc, Color color, String name)
 	{
-		
 		gbc.gridx = 0;
 		JLabel label_name = new JLabel(name);
 		label_name.setForeground(currentColorSetting.text);
@@ -60,10 +67,10 @@ public class ColorSettings
 		label_r.setOpaque(false);
 		panel.add(label_r, gbc);
 		gbc.gridx = 2;
-		JTextField text1 = new JTextField("" + color.getRed() );
+		JTextField text1 = new JTextField("" + color.getRed(), 3);
 		text1.setForeground(currentColorSetting.text);
 		text1.setBackground(currentColorSetting.background);
-		text1.setBorder(BorderFactory.createMatteBorder(name.equals("Text") ? 1 : 0, 1, 1, 1, currentColorSetting.border) );
+		text1.setBorder(GuiHelper.getDefaultBorder(name.equals("Text"), true) );
 		text1.setName(name + "r");
 		panel.add(text1, gbc);
 		gbc.gridy ++;
@@ -74,10 +81,10 @@ public class ColorSettings
 		label_g.setOpaque(false);
 		panel.add(label_g, gbc);
 		gbc.gridx = 2;
-		JTextField text2 = new JTextField("" + color.getGreen() );
+		JTextField text2 = new JTextField("" + color.getGreen(), 3);
 		text2.setForeground(currentColorSetting.text);
 		text2.setBackground(currentColorSetting.background);
-		text2.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, currentColorSetting.border) );
+		text2.setBorder(GuiHelper.getDefaultBorder(false, true) );
 		text2.setName(name + "g");
 		panel.add(text2, gbc);
 		gbc.gridy ++;
@@ -88,10 +95,10 @@ public class ColorSettings
 		label_b.setOpaque(false);
 		panel.add(label_b, gbc);
 		gbc.gridx = 2;
-		JTextField text3 = new JTextField("" + color.getBlue() );
+		JTextField text3 = new JTextField("" + color.getBlue(), 3);
 		text3.setForeground(currentColorSetting.text);
 		text3.setBackground(currentColorSetting.background);
-		text3.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, currentColorSetting.border) );
+		text3.setBorder(GuiHelper.getDefaultBorder(false, true) );
 		text3.setName(name + "b");
 		panel.add(text3, gbc);
 		gbc.gridy ++;
@@ -100,28 +107,25 @@ public class ColorSettings
 	public static void updateCustomColorSettings(JDialog options)
 	{
 		int[][] colors = new int[3][3];
-		ColorSettings.getAllComponents(options).stream().filter(comp -> comp instanceof TextField).forEach(text -> 
-		{
-			text.setBackground(Color.white);
+		getAllComponents(options).stream().filter(comp -> comp instanceof JTextField).forEach(text -> {
 			String name = text.getName();
-			colors[name.startsWith("Text") ? 0 : name.startsWith("Border") ? 1 : 2][name.endsWith("r") ? 0 : name.endsWith("g") ? 1 : 2] = getColorInt( (TextField) text);
+			colors[name.startsWith("Text") ? 0 : name.startsWith("Border") ? 1 : 2][name.endsWith("r") ? 0 : name.endsWith("g") ? 1 : 2] = getColorInt( (JTextField) text);
 		});
 		
 		for (int[] row : colors) for (int cell : row) if (cell < 0 || cell > 255) return;
 		
-		colorSettingProfiles[2].text 			= new Color(colors[0][0], colors[0][1], colors[0][2]);
-		colorSettingProfiles[2].border		  = new Color(colors[1][0], colors[1][1], colors[1][2]);
+		colorSettingProfiles[2].text 			 = new Color(colors[0][0], colors[0][1], colors[0][2]);
+		colorSettingProfiles[2].border		 = new Color(colors[1][0], colors[1][1], colors[1][2]);
 		colorSettingProfiles[2].background = new Color(colors[2][0], colors[2][1], colors[2][2]);
-		currentColorSetting = colorSettingProfiles[2];
 		
 		options.dispose();
 	}
 
-	public static int getColorInt(TextField text)
+	public static int getColorInt(JTextField text)
 	{
 		int res = 0;
 		try {
-			res = Integer.parseInt( ( (TextField) text).getText() );
+			res = Integer.parseInt(text.getText() );
 		} catch (NumberFormatException e) { res = -1;  }
 		
 		if (res < 0 || res > 255)
@@ -150,8 +154,8 @@ public class ColorSettings
 		
 		// border for cells
 		for (Section section : MainGui.sectionsList)
-			for (JPanel[] cell_row : section.getContentCells() )
-				for (JPanel cell : cell_row)
+			for (Row row : section.getRows() )
+				for (JPanel cell : row.getCells() )
 					if (cell.getBorder() != null)
 						cell.setBorder(new MatteBorder( ((MatteBorder) cell.getBorder() ).getBorderInsets(), currentColorSetting.border) );
 		
@@ -178,7 +182,7 @@ public class ColorSettings
 		
 		JPanel outer_panel = new JPanel();
 		outer_panel.setBackground(currentColorSetting.background);
-		outer_panel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, currentColorSetting.text) );
+		outer_panel.setBorder(GuiHelper.getDefaultBorder() );
 		
 		JPanel options_panel = new JPanel();
 		options_panel.setLayout(new BoxLayout(options_panel, BoxLayout.Y_AXIS) );

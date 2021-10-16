@@ -14,14 +14,12 @@ import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-//import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-//import javax.swing.JRadioButton;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.MouseInputAdapter;
 
@@ -29,6 +27,7 @@ import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
 
 import gui.ColorSettings;
+import gui.GuiHelper;
 import gui.MainGui;
 import gui.PopupAlerts;
 import logic.HotkeyProfile;
@@ -158,8 +157,8 @@ public class Hotkeys implements NativeKeyListener
 		// main panel
 			JPanel main_panel = new JPanel();
 			main_panel.setLayout(new BoxLayout(main_panel, BoxLayout.Y_AXIS) );
-			main_panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5) );
-			main_panel.setBackground(ColorSettings.currentColorSetting.background);
+			main_panel.setBorder(GuiHelper.getDialogBorder() );
+			main_panel.setBackground(ColorSettings.getBackgroundColor() );
 		
 		// settings panel
 			JPanel settings_panel = new JPanel();
@@ -191,13 +190,13 @@ public class Hotkeys implements NativeKeyListener
 			if (profile != null)
 			{
 				split.setText(profile.getHotkeyDisplay("Split") );
-				split.setForeground(ColorSettings.currentColorSetting.text);
+				split.setForeground(ColorSettings.getTextColor() );
 				reset.setText(profile.getHotkeyDisplay("Reset") );
-				reset.setForeground(ColorSettings.currentColorSetting.text);
+				reset.setForeground(ColorSettings.getTextColor() );
 				undo .setText(profile.getHotkeyDisplay("Undo" ) );
-				undo .setForeground(ColorSettings.currentColorSetting.text);
+				undo .setForeground(ColorSettings.getTextColor() );
 				skip .setText(profile.getHotkeyDisplay("Skip" ) );
-				skip .setForeground(ColorSettings.currentColorSetting.text);
+				skip .setForeground(ColorSettings.getTextColor() );
 			}
 			JPanel split_panel = new JPanel();
 			split_panel.setOpaque(false);
@@ -249,12 +248,12 @@ public class Hotkeys implements NativeKeyListener
 			workaraound_panel.add(ColorSettings.getNewJLabelWithCurrentTextColor("Currently, the 'Control' modifier doesn't work porperly!") );
 			workaround_box = new JCheckBox("Ignore the 'Control' Modifier entirely! (false by default)", workaround_box.isSelected() );
 			workaround_box.setOpaque(false);
-			workaround_box.setForeground(ColorSettings.currentColorSetting.text);
+			workaround_box.setForeground(ColorSettings.getTextColor() );
 			workaraound_panel.add(workaround_box);
 			
 			settings_panel.add(workaraound_panel);
 			
-			/**
+			/*
 			// split type
 			JPanel splittype_panel = new JPanel();
 			//split_panel.setLayout(new BoxLayout(splittype_panel, BoxLayout.Y_AXIS) );

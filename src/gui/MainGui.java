@@ -38,7 +38,6 @@ public class MainGui {
 	public static JScrollPane scrollPane;
 	public static JPanel mainPanel;
 	
-	public final static int ImageSize = 30;
 	public static boolean inEditMode = false;
 	public static boolean keepGuiSize = false;
 	public static boolean contentRearraged = false;
@@ -56,7 +55,8 @@ public class MainGui {
 	public static void prepareGui()
 	{
 		screensize = Toolkit.getDefaultToolkit().getScreenSize();
-		ColorSettings.currentColorSetting = ColorSettings.colorSettingProfiles[1]; // dark_mode
+		ColorSettings.selectColorSettings(1); // dark_mode
+		UIManager.put("Panel.opaque", Boolean.valueOf(false) );
 		
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new GridLayout() );
@@ -101,7 +101,7 @@ public class MainGui {
 		
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS) );
-		mainPanel.setBackground(ColorSettings.currentColorSetting.background);
+		mainPanel.setBackground(ColorSettings.getBackgroundColor() );
 		
 		for (Section section : sectionsList)
 			mainPanel.add(section);
@@ -210,12 +210,12 @@ public class MainGui {
 		MainGui.inEditMode = check_box.isSelected();
 		if (MainGui.inEditMode)
 		{
-			for (JLabel label : MainGui.labelsTextsHideWhenNotInEdit) label.setForeground(ColorSettings.currentColorSetting.text);
+			for (JLabel label : MainGui.labelsTextsHideWhenNotInEdit) label.setForeground(ColorSettings.getTextColor() );
 			SectionManagerDialog.updateSectionManagerDialog();
 		}
 		else
 		{
-			for (JLabel label : MainGui.labelsTextsHideWhenNotInEdit) label.setForeground(ColorSettings.currentColorSetting.background);
+			for (JLabel label : MainGui.labelsTextsHideWhenNotInEdit) label.setForeground(ColorSettings.getBackgroundColor() );
 			SectionManagerDialog.sectionManagerDialog.setVisible(false);
 		}
 		for (JLabel label : MainGui.labelsIconsHideWhenNotInEdit) label.setVisible(MainGui.inEditMode);

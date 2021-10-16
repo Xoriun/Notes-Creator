@@ -2,12 +2,10 @@
 /builds/
 settings.txt
 Layer_dot.psd
-.gitignore
+.gitignore.txt
 /src/test.java
 /Images/*
-!Images/Destroyed-icon.png
-!Images/Layer_dot.png
-!Images/Not-enough-repair-packs-icon.png
+/releases/
 /tests/
 /example/*
 !example/images for example.zip

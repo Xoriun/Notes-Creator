@@ -5,13 +5,13 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 
-import javax.swing.BorderFactory;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
 import gui.ColorSettings;
+import gui.GuiHelper;
 import gui.MainGui;
 import logic.MouseAdapters;
 
@@ -33,10 +33,9 @@ public class SectionManagerDialog
 		sectionManagerDialog.getContentPane().removeAll();
 		
 		sectionManagerPanel = new JPanel();
-		sectionManagerPanel.setBackground(ColorSettings.currentColorSetting.background);
-		sectionManagerPanel.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, ColorSettings.currentColorSetting.text) );
+		sectionManagerPanel.setBackground(ColorSettings.getBackgroundColor());
+		sectionManagerPanel.setBorder(GuiHelper.getDialogBorder() );
 		JPanel inner_panel = new JPanel(new GridBagLayout() );
-		inner_panel.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 2));
 		inner_panel.setOpaque(false);
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.fill = GridBagConstraints.BOTH;
@@ -50,9 +49,9 @@ public class SectionManagerDialog
 			
 			gbc.gridx = 1;
 			JLabel label = new JLabel(MainGui.sectionsList.get(section_index).getTitle() );
-			label.setForeground(ColorSettings.currentColorSetting.text);
+			label.setForeground(ColorSettings.getTextColor() );
 			label.addMouseListener(MouseAdapters.getEditSectionTitleAdapter(label, section_index) );
-			label.setBorder(BorderFactory.createMatteBorder(section_index == 0 ? 1 : 0, 1, 1, 1, ColorSettings.currentColorSetting.border) );
+			label.setBorder(GuiHelper.getDefaultBorder(section_index == 0, true) );
 			inner_panel.add(label, gbc);
 			MainGui.sectionLabels.add(label);
 			//System.out.println(gbc.gridy + ", " + Abbreviations.sectionIndices[section_index] + ", " + Abbreviations.sections[section_index] );
@@ -79,7 +78,7 @@ public class SectionManagerDialog
 		JPanel control = new JPanel(new GridLayout(only_add ? 1 : 2, 2) );
 		
 		JLabel add = new JLabel(" + ");
-		add.setForeground(ColorSettings.currentColorSetting.text);
+		add.setForeground(ColorSettings.getTextColor() );
 		add.addMouseListener(MouseAdapters.getAddSectionAdapter(current_section_index) );
 		
 		MainGui.labelsTextsHideWhenNotInEdit.add(add);
@@ -89,7 +88,7 @@ public class SectionManagerDialog
 		if (! only_add)
 		{
 			JLabel remove = new JLabel(" - ");
-			remove.setForeground(ColorSettings.currentColorSetting.text);
+			remove.setForeground(ColorSettings.getTextColor() );
 			remove.addMouseListener(MouseAdapters.getRemoveSectionAdapter(current_section_index) );
 			
 			MainGui.labelsTextsHideWhenNotInEdit.add(remove);
