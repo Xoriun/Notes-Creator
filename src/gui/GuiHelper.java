@@ -1,6 +1,7 @@
 package gui;
 
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -152,5 +153,10 @@ public class GuiHelper
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	public static void setLocationToCenter(Container container)
+	{
+		PopupAlerts.setLocationToCenter(container, 1000);
 	}
 }

@@ -52,6 +52,8 @@ public class MainGui {
 	
 	private static Dimension screensize;
 	
+	public static String currentVersionTag = "v2.0";
+	
 	public static void prepareGui()
 	{
 		screensize = Toolkit.getDefaultToolkit().getScreenSize();

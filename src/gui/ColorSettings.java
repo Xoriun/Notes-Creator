@@ -218,7 +218,7 @@ public class ColorSettings
 		
 		options.setPreferredSize(new Dimension(50 + options.getSize().width, options.getSize().height) );
 		options.pack();
-		PopupAlerts.setLocationToCenter(options);
+		GuiHelper.setLocationToCenter(options);
 		options.setVisible(true);
 		options.repaint();
 	}

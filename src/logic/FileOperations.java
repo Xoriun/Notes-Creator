@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import gui.Abbreviations;
 import gui.ColorSettingProfile;
 import gui.ColorSettings;
+import gui.GuiHelper;
 import gui.MainGui;
 import gui.PopupAlerts;
 
@@ -36,7 +37,7 @@ public class FileOperations
 	{
 		FileDialog dialog = new FileDialog(MainGui.window, "Select File to Open");
 		dialog.setMode(FileDialog.LOAD);
-		PopupAlerts.setLocationToCenter(dialog);
+		GuiHelper.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
@@ -250,7 +251,7 @@ public class FileOperations
 		FileDialog dialog = new FileDialog(MainGui.window, "Select locations for new abbreviation file");
 		dialog.setFile("\\abbreviation_new.txt");
 		dialog.setMode(FileDialog.SAVE);
-		PopupAlerts.setLocationToCenter(dialog);
+		GuiHelper.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
@@ -266,7 +267,7 @@ public class FileOperations
 		
 		FileDialog dialog = new FileDialog(MainGui.window, "Select abbreviation file to load");
 		dialog.setMode(FileDialog.LOAD);
-		PopupAlerts.setLocationToCenter(dialog);
+		GuiHelper.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
@@ -352,7 +353,7 @@ public class FileOperations
 	{
 		FileDialog dialog = new FileDialog(MainGui.window, "Save as", FileDialog.SAVE);
 		dialog.setFile(".txt");
-		PopupAlerts.setLocationToCenter(dialog);
+		GuiHelper.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
@@ -394,7 +395,7 @@ public class FileOperations
 		// selecting which file to import
 		FileDialog dialog = new FileDialog(MainGui.window, "Select File to Import");
 		dialog.setMode(FileDialog.LOAD);
-		PopupAlerts.setLocationToCenter(dialog);
+		GuiHelper.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
@@ -421,7 +422,7 @@ public class FileOperations
 		dialog = new FileDialog(MainGui.window, "Save notes file", FileDialog.SAVE);
 		dialog.setDirectory(import_dir);
 		dialog.setFile(file_name_split[0] + "_import." + file_name_split[1]);
-		PopupAlerts.setLocationToCenter(dialog);
+		GuiHelper.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getFile() == null)
@@ -460,7 +461,7 @@ public class FileOperations
 			dialog = new FileDialog(MainGui.window, "Save abbreviations file", FileDialog.SAVE);
 			dialog.setDirectory(import_dir);
 			dialog.setFile(import_name_abbr);
-			PopupAlerts.setLocationToCenter(dialog);
+			GuiHelper.setLocationToCenter(dialog);
 			dialog.setVisible(true);
 			file = dialog.getFile();
 			if (file == null)
@@ -548,7 +549,7 @@ public class FileOperations
 		FileDialog dialog = new FileDialog(MainGui.window, "Save notes file", FileDialog.SAVE);
 		dialog.setDirectory(fileDirectoryNotes);
 		dialog.setFile(file_name_split[0] + "_export." + file_name_split[1]);
-		PopupAlerts.setLocationToCenter(dialog);
+		GuiHelper.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getFile() == null)

@@ -36,7 +36,6 @@ import gui.Abbreviations;
 import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
-import gui.PopupAlerts;
 import logic.Cell;
 import logic.FileOperations;
 import logic.Cell.CellLabel;
@@ -529,7 +528,7 @@ public class CellEditDialog
 						{
 							FileDialog dialog = new FileDialog(MainGui.window, "Select image");
 							dialog.setMode(FileDialog.LOAD);
-							PopupAlerts.setLocationToCenter(dialog);
+							GuiHelper.setLocationToCenter(dialog);
 							dialog.setVisible(true);
 							
 							if (dialog.getDirectory() != null)

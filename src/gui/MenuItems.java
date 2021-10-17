@@ -1,14 +1,27 @@
 package gui;
 
+import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 
 import logic.FileOperations;
 import logic.Hotkeys;
@@ -28,10 +41,12 @@ public class MenuItems
 		JMenu menu_edit     = new JMenu("Edit");
 		JMenu menu_speedrun = new JMenu("Speedrun");
 		JMenu menu_setting  = new JMenu("Settings");
+		JMenu menu_about    = new JMenu("About");
 		bar.add(menu_file);
 		bar.add(menu_edit);
 		bar.add(menu_speedrun);
 		bar.add(menu_setting);
+		bar.add(menu_about);
 		
 		// Menu Items
 			// File
@@ -59,6 +74,10 @@ public class MenuItems
 			JRadioButtonMenuItem settings_light_mode = new JRadioButtonMenuItem("Light mode");
 			JRadioButtonMenuItem settings_custom     = new JRadioButtonMenuItem("Custom");
 			JMenuItem settings_custom_change         = new JMenuItem("Modify Custom");
+			
+			// About
+			JMenuItem about_github = new JMenuItem("Github page");
+			JMenuItem about_update = new JMenuItem("Check for updates");
 		
 		// Action Listeners
 			// File
@@ -84,6 +103,69 @@ public class MenuItems
 			settings_dark_mode    .addActionListener(e -> { ColorSettings.selectColorSettings(1); ColorSettings.applyLightingMode(); } );
 			settings_custom       .addActionListener(e -> { ColorSettings.selectColorSettings(2); ColorSettings.applyLightingMode(); } );
 			settings_custom_change.addActionListener(e -> { ColorSettings.changeCustomLightingSettings(); } );
+			
+			// About
+			about_github.addActionListener(action -> {
+				try {
+	        Desktop.getDesktop().browse(new URL("https://github.com/Xoriun/Notes-Creator").toURI() );
+		    } catch (Exception e) {
+		        e.printStackTrace();
+		    }
+			});
+			about_update.addActionListener(action -> {
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run()
+					{
+						String version = null;
+						try
+						{
+							HttpURLConnection con = (HttpURLConnection) new URL("https://api.github.com/repos/Xoriun/Notes-Creator/releases/latest").openConnection();
+							con.setRequestMethod("GET");
+							BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream() ) );
+							String line = in.readLine();
+							in.close();
+							
+							int index_1 = line.indexOf("\"tag_name\":\"") + 12;
+							int index_2 = line.indexOf("\",", index_1);
+							
+							version = line.substring(index_1, index_2);
+						}
+						catch (Exception e) { }
+						
+						JDialog dialog = new JDialog(MainGui.window);
+						dialog.setTitle("Check for updates");
+						JPanel panel = new JPanel();
+						panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS) );
+						panel.setBorder(GuiHelper.getDialogBorder() );
+						panel.setBackground(ColorSettings.getBackgroundColor() );
+						
+						String text;
+						if (version == null)
+							text = "An error occured while getting information from GitHub!";
+						else if (version.equals(MainGui.currentVersionTag) )
+							text = "You have the current version!";
+						else
+							text = "A new version (" + version + ") is availabe on GitHub!";
+						
+						JLabel label = new JLabel(text);
+						label.setForeground(ColorSettings.getTextColor() );
+						label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10) );
+						label.setAlignmentX(Component.CENTER_ALIGNMENT);
+						panel.add(label);
+						
+						JButton confirm = new JButton("Confrim");
+						confirm.addActionListener(action -> { dialog.dispose(); } );
+						confirm.setAlignmentX(Component.CENTER_ALIGNMENT);
+						panel.add(confirm);
+						
+						dialog.add(panel);
+						dialog.pack();
+						GuiHelper.setLocationToCenter(dialog);
+						dialog.setVisible(true);
+					}
+				});
+			});
 			
 		// Shortcuts
 			file_open   .setAccelerator(KeyStroke.getKeyStroke("control O") );
@@ -126,6 +208,10 @@ public class MenuItems
 			menu_setting.add(settings_custom);
 			menu_setting.addSeparator();
 			menu_setting.add(settings_custom_change);
+			
+			// About
+			menu_about.add(about_github);
+			menu_about.add(about_update);
 			
 		return bar;
 	}

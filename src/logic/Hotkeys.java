@@ -29,7 +29,6 @@ import org.jnativehook.keyboard.NativeKeyListener;
 import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
-import gui.PopupAlerts;
 import logic.HotkeyProfile;
 
 public class Hotkeys implements NativeKeyListener
@@ -296,14 +295,14 @@ public class Hotkeys implements NativeKeyListener
 		main_panel.add(controls_panel);
 		dialog.add(main_panel);
 		dialog.pack();
-		PopupAlerts.setLocationToCenter(dialog);
+		GuiHelper.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 	}
 	
 	public static void selectLiveSplitFile(ArrayList<HotkeyProfile> new_profiles)
 	{
 		FileDialog dialog = new FileDialog(MainGui.window, "Select 'LiceSplit.exe'", FileDialog.LOAD);
-		PopupAlerts.setLocationToCenter(dialog);
+		GuiHelper.setLocationToCenter(dialog);
 		dialog.setVisible(true);
 		String dir = dialog.getDirectory();
 		

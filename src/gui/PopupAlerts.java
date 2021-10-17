@@ -85,10 +85,11 @@ public class PopupAlerts
 		if (missing_dialog.getHeight() > MainGui.window.getHeight() - 150)
 			missing_dialog.setPreferredSize(new Dimension(missing_dialog.getWidth() + 20, MainGui.window.getHeight() - 150) );
 		missing_dialog.pack();
-		setLocationToCenter(missing_dialog);
+		GuiHelper.setLocationToCenter(missing_dialog);
 		missing_dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		missing_dialog.setVisible(true);
 	}
+	
 	public static void unsavedChangesDialog()
 	{
 		JDialog save_dialog = new JDialog(MainGui.window);
@@ -124,10 +125,7 @@ public class PopupAlerts
 		save_dialog.setLocationRelativeTo(MainGui.window);
 		save_dialog.setVisible(true);
 	}
-	public static void setLocationToCenter(Container container)
-	{
-		setLocationToCenter(container, 1000);
-	}
+	
 	public static void setLocationToCenter(Container container, int max_height_rel_to_window)
 	{
 		Dimension dim_container  = container.getSize();
