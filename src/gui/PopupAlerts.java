@@ -1,7 +1,6 @@
 package gui;
 
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -125,19 +124,4 @@ public class PopupAlerts
 		save_dialog.setLocationRelativeTo(MainGui.window);
 		save_dialog.setVisible(true);
 	}
-	
-	public static void setLocationToCenter(Container container, int max_height_rel_to_window)
-	{
-		Dimension dim_container  = container.getSize();
-		Dimension dim_window = MainGui.window.getSize();
-		
-		if (dim_container.height > dim_window.height + max_height_rel_to_window)
-		{
-			dim_container.height = dim_window.height + max_height_rel_to_window;
-			container.setPreferredSize(dim_container);
-		}
-		
-		container.setLocation(MainGui.window.getLocation().x + (dim_window.width - dim_container.width)/2, MainGui.window.getLocation().y + (dim_window.height - dim_container.height)/2);
-	}
-	
 }

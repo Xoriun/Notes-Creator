@@ -215,7 +215,7 @@ public class Abbreviations
 		outer_panel.add(settings_panel);
 		abbreviations_dialog.add(outer_panel);
 		abbreviations_dialog.pack();
-		PopupAlerts.setLocationToCenter(abbreviations_dialog, -200);
+		GuiHelper.setLocationToCenter(abbreviations_dialog, -200);
 		abbreviations_dialog.pack();
 		abbreviations_dialog.setVisible(true);
 		abbreviations_dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

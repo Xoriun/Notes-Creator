@@ -25,18 +25,11 @@ import logic.Section;
 public class ColorSettings
 {
 	public static ColorSettingProfile[] colorSettingProfiles;
-	private static ColorSettingProfile currentColorSetting;
+	static ColorSettingProfile currentColorSetting;
 	
 	public static Color getTextColor() { return currentColorSetting.text; }
 	public static Color getBackgroundColor() { return currentColorSetting.background; }
 	public static Color getBorderColor() { return currentColorSetting.border; }
-	
-	public static JLabel getNewJLabelWithCurrentTextColor(String text)
-	{
-		JLabel label = new JLabel(text);
-		label.setForeground(currentColorSetting.text);
-		return label;
-	}
 	
 	public static void selectColorSettings(int index)
 	{

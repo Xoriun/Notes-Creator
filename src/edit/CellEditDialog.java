@@ -28,7 +28,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.event.MouseInputAdapter;
 
@@ -416,9 +415,12 @@ public class CellEditDialog
 				JDialog icon_dialog = new JDialog(CellEditDialog.cellEditDialog);
 				
 				JPanel main_panel = new JPanel(new BorderLayout() );
+				main_panel.setBackground(ColorSettings.getBackgroundColor() );
+				main_panel.setBorder(GuiHelper.getDialogBorder() );
 				icon_dialog.add(main_panel);
 				
 				JPanel content_panel = new JPanel(new GridBagLayout() );
+				content_panel.setOpaque(false);
 				main_panel.add(content_panel, BorderLayout.CENTER);
 				GridBagConstraints gbc = new GridBagConstraints();
 				
@@ -426,7 +428,7 @@ public class CellEditDialog
 					
 					//label
 					gbc.gridy = gbc.gridx = 0;
-					content_panel.add(new JLabel("Main image", SwingConstants.LEFT), gbc);
+					content_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Main image"), gbc);
 					
 					//image
 					gbc.gridx ++;
@@ -437,10 +439,11 @@ public class CellEditDialog
 					gbc.gridx ++;
 					JPanel main_image_edit_panel = new JPanel();
 					main_image_edit_panel.setLayout(new GridBagLayout() );
+					main_image_edit_panel.setOpaque(false);
 					GridBagConstraints gbc_main = new GridBagConstraints();
 					gbc_main.gridx = gbc_main.gridy = 0;
 					
-					main_image_edit_panel.add(new JLabel("Select from abbreviations:"), gbc_main);
+					main_image_edit_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Select from abbreviations:"), gbc_main);
 					
 					gbc_main.gridx ++;
 					JComboBox<String> abbr_list_main = new JComboBox<String>(Abbreviations.getArrayOfAbbreviations() );
@@ -472,12 +475,13 @@ public class CellEditDialog
 					//label
 					gbc.gridy ++;
 					gbc.gridx = 0;
-					content_panel.add(new JLabel("Layered image", SwingConstants.LEFT), gbc);
+					content_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Layered image"), gbc);
 					
 					//check box
 					gbc.gridx ++;
 					JCheckBox checkbox_layered = new JCheckBox();
 					checkbox_layered.setSelected( ! layered_image_abbr.equals("") );
+					checkbox_layered.setBackground(ColorSettings.getBackgroundColor() );
 					content_panel.add(checkbox_layered, gbc);
 				
 				// layered image
@@ -485,7 +489,7 @@ public class CellEditDialog
 					//label
 					gbc.gridy ++;
 					gbc.gridx = 0;
-					content_panel.add(new JLabel("Layered image", SwingConstants.LEFT), gbc);
+					content_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Layered image"), gbc);
 					
 					//image
 					gbc.gridx ++;
@@ -497,10 +501,11 @@ public class CellEditDialog
 					gbc.gridx ++;
 					JPanel layered_image_edit_panel = new JPanel();
 					layered_image_edit_panel.setLayout(new GridBagLayout() );
+					layered_image_edit_panel.setOpaque(false);
 					GridBagConstraints gbc_layered = new GridBagConstraints();
 					gbc_layered.gridx = gbc_layered.gridy = 0;
 					
-					layered_image_edit_panel.add(new JLabel("Select from abbreviations:"), gbc_layered);
+					layered_image_edit_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Select from abbreviations:"), gbc_layered);
 					
 					gbc_layered.gridx ++;
 					JComboBox<String> abbr_list_layerd = new JComboBox<String>(Abbreviations.getArrayOfAbbreviations() );
@@ -546,28 +551,29 @@ public class CellEditDialog
 					layered_image_edit_panel.add(button_change_layered, gbc_layered);
 					content_panel.add(layered_image_edit_panel, gbc);
 				
-				// horizontal
+				// horizontal alignment
 				gbc.gridy ++;
 				gbc.gridx = 0;
-				content_panel.add(new JLabel("Horizontal alignment", SwingConstants.LEFT), gbc);
+				content_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("  Horizontal alignment  "), gbc);
 				
 				gbc.gridx ++;
 				JComboBox<String> dropdown_horizontal = new JComboBox<String>(new String[] {"l", "c", "r"} );
 				dropdown_horizontal.setSelectedItem( ( (EditIconLabel) selectedCellPanel).getLayeredHorizontalAlignment() );
 				content_panel.add(dropdown_horizontal, gbc);
 				
-				// veritcal
+				// vertical alignment
 				gbc.gridy ++;
 				gbc.gridx = 0;
-				content_panel.add(new JLabel("Vertical alignment", SwingConstants.LEFT), gbc);
+				content_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Vertical alignment"), gbc);
 				
 				gbc.gridx ++;
 				JComboBox<String> dropdown_vertical = new JComboBox<String>(new String[] {"t", "c", "b"} );
 				dropdown_vertical.setSelectedItem( ( (EditIconLabel) selectedCellPanel).getLayeredVerticalAlignment() );
 				content_panel.add(dropdown_vertical, gbc);
 				
-				
+				// controls
 				JPanel control_panel = new JPanel();
+				control_panel.setOpaque(false);
 				main_panel.add(control_panel, BorderLayout.PAGE_END);
 				
 				JButton button_confirm = new JButton("Confirm");

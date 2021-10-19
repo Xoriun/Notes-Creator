@@ -2,6 +2,7 @@ package gui;
 
 import java.awt.Color;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -11,6 +12,8 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.MatteBorder;
@@ -154,9 +157,31 @@ public class GuiHelper
 			return null;
 		}
 	}
-
+	
 	public static void setLocationToCenter(Container container)
 	{
-		PopupAlerts.setLocationToCenter(container, 1000);
+		setLocationToCenter(container, 1000);
+	}
+	
+	public static void setLocationToCenter(Container container, int max_height_rel_to_window)
+	{
+		Dimension dim_container  = container.getSize();
+		Dimension dim_window = MainGui.window.getSize();
+		
+		if (dim_container.height > dim_window.height + max_height_rel_to_window)
+		{
+			dim_container.height = dim_window.height + max_height_rel_to_window;
+			container.setPreferredSize(dim_container);
+		}
+		
+		container.setLocation(MainGui.window.getLocation().x + (dim_window.width - dim_container.width)/2, MainGui.window.getLocation().y + (dim_window.height - dim_container.height)/2);
+	}
+	
+	public static JLabel getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(String text)
+	{
+		JLabel label = new JLabel(text, SwingConstants.LEFT);
+		label.setForeground(ColorSettings.currentColorSetting.text);
+		label.setOpaque(false);
+		return label;
 	}
 }

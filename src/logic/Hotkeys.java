@@ -167,7 +167,7 @@ public class Hotkeys implements NativeKeyListener
 			// profile combobox
 			JPanel profile_panel = new JPanel();
 			profile_panel.setOpaque(false);
-			profile_panel.add(ColorSettings.getNewJLabelWithCurrentTextColor("Active profile: ") );
+			profile_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Active profile: ") );
 			JComboBox<HotkeyProfile> comboBox = new JComboBox<HotkeyProfile>( profiles_copy.toArray(new HotkeyProfile[profiles_copy.size() ] ) );
 			comboBox.setSelectedItem(activeProfile);
 			comboBox.addItemListener(new ItemListener() {
@@ -244,7 +244,7 @@ public class Hotkeys implements NativeKeyListener
 					Color.RED) );
 			workaraound_panel.setLayout(new BoxLayout(workaraound_panel, BoxLayout.Y_AXIS) );
 			workaraound_panel.setOpaque(false);
-			workaraound_panel.add(ColorSettings.getNewJLabelWithCurrentTextColor("Currently, the 'Control' modifier doesn't work porperly!") );
+			workaraound_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Currently, the 'Control' modifier doesn't work porperly!") );
 			workaround_box = new JCheckBox("Ignore the 'Control' Modifier entirely! (false by default)", workaround_box.isSelected() );
 			workaround_box.setOpaque(false);
 			workaround_box.setForeground(ColorSettings.getTextColor() );
