@@ -8,4 +8,5 @@ public interface EditPanel
 	public void setSelectedBorder();
 	public void setDefaultBorder();
 	public void addMouseListener(MouseListener l);
+	public void updateColorSettings();
 }

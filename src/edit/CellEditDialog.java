@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FileDialog;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -47,6 +48,13 @@ public class CellEditDialog
 	private static EditPanel selectedCellPanel;
 	private static ArrayList<EditPanel> editPanels = new ArrayList<EditPanel>();
 	
+	private static JPanel contentPanel;
+	private static JPanel actionsPanel;
+	
+	private static JPanel mainPanel;
+	private static JPanel contentScrollPanel;
+	private static JPanel actionsScrollPanel;
+	
 	private static JPanel contentEditLabelPanel;
 	private static JPanel actionsEditPanel;
 	
@@ -74,45 +82,49 @@ public class CellEditDialog
 		);
 		
 		
-		JPanel main_panel 										= new JPanel();	// main panel for the JDialog
-			JPanel cell_panel 									= new JPanel();		// panel that contains the content and action editing of the cell
-				JPanel content_panel 							= new JPanel();			// panel that contains the content editing (text and icons) of the cell
-				JScrollPane cellLabel_scroll_pane	= new JScrollPane(		// ScrollPane for the content edit
-					JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-					JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-						JPanel content_scroll_panel 	= new JPanel();					// panel within the scroll panel (its only purpose is to add a BorderLayout so the textboxes don't stretch vertically)
-						contentEditLabelPanel 				= new JPanel();					// panel for the EditPanels which represent the different text and icon labels
-					JPanel control_cellLabel_panel	= new JPanel();				// panel for the edit buttons
-				JPanel actions_panel 							= new JPanel();			// panel that contains the action editing of the cell
-					// JScrollPane																				// ScrollPane for the actions edit
-						actionsEditPanel							= new JPanel();					// panel for the actions edit
-			JPanel main_control_panel 					= new JPanel();		// panel for the main control buttons
+		mainPanel 															= new JPanel();	// main panel for the JDialog
+			JPanel cell_panel 										= new JPanel();		// panel that contains the content and action editing of the cell
+				contentPanel 												= new JPanel();			// panel that contains the content editing (text and icons) of the cell
+					JScrollPane cellLabel_scroll_pane	= new JScrollPane(		// ScrollPane for the content edit
+											JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+											JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+						contentScrollPanel 							= new JPanel();					// panel within the scroll panel (its only purpose is to add a BorderLayout so the textboxes don't stretch vertically)
+							contentEditLabelPanel 				= new JPanel();						// panel for the EditPanels which represent the different text and icon labels
+					JPanel control_cellLabel_panel		= new JPanel();				// panel for the edit buttons
+				actionsPanel 												= new JPanel();			// panel that contains the action editing of the cell
+					JScrollPane actions_scroll_pane		= new JScrollPane(		// ScrollPane for the actions edit
+											JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+											JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+						actionsScrollPanel 							= new JPanel();					// panel within the scroll panel (its only purpose is to add a BorderLayout so the textboxes don't stretch vertically)
+							actionsEditPanel							= new JPanel();						// panel for the actions edit
+			JPanel main_control_panel 						= new JPanel();		// panel for the main control buttons
 
-		main_panel.setLayout(new BorderLayout() );
-		main_panel.setBackground(ColorSettings.getBackgroundColor() );
-		main_panel.setPreferredSize(new Dimension(300, 500) );
-		main_panel.setBorder(GuiHelper.getDialogBorder() );
-		main_panel.add(cell_panel, BorderLayout.CENTER);
-		main_panel.add(main_control_panel, BorderLayout.PAGE_END);
+		mainPanel.setLayout(new BorderLayout() );
+		mainPanel.setBackground(ColorSettings.getBackgroundColor() );
+		mainPanel.setPreferredSize(new Dimension(300, 500) );
+		mainPanel.setBorder(GuiHelper.getDialogBorder() );
+		mainPanel.add(cell_panel, BorderLayout.CENTER);
+		mainPanel.add(main_control_panel, BorderLayout.PAGE_END);
 			
 		cell_panel.setLayout(new BorderLayout() );
 		cell_panel.setOpaque(false);
+		cell_panel.add(contentPanel,  BorderLayout.CENTER);
+		cell_panel.add(actionsPanel, BorderLayout.PAGE_END);
 		
-		content_panel.setLayout(new BorderLayout() );
-		content_panel.setOpaque(false);
-		content_panel.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor("Content") );
-		content_panel.add(cellLabel_scroll_pane, BorderLayout.CENTER);
-		content_panel.add(control_cellLabel_panel, BorderLayout.LINE_END);
+		contentPanel.setLayout(new BorderLayout() );
+		contentPanel.setOpaque(false);
+		contentPanel.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor("Content") );
+		contentPanel.add(cellLabel_scroll_pane, BorderLayout.CENTER);
+		contentPanel.add(control_cellLabel_panel, BorderLayout.LINE_END);
 		
 		cellLabel_scroll_pane.setOpaque(false);
 		cellLabel_scroll_pane.setBorder(GuiHelper.getEmptyBorder() );
-		cellLabel_scroll_pane.add(content_scroll_panel);
-		cellLabel_scroll_pane.getViewport().add(content_scroll_panel);
+		cellLabel_scroll_pane.getViewport().add(contentScrollPanel);
 		cellLabel_scroll_pane.getVerticalScrollBar().setUnitIncrement(16);
 		
-		content_scroll_panel.setLayout(new BorderLayout() );
-		content_scroll_panel.setBackground(ColorSettings.getBackgroundColor() );
-		content_scroll_panel.add(contentEditLabelPanel, BorderLayout.PAGE_START);
+		contentScrollPanel.setLayout(new BorderLayout() );
+		contentScrollPanel.setBackground(ColorSettings.getBackgroundColor() );
+		contentScrollPanel.add(contentEditLabelPanel, BorderLayout.PAGE_START);
 		
 		contentEditLabelPanel.setLayout(new BoxLayout(contentEditLabelPanel, BoxLayout.Y_AXIS) );
 		contentEditLabelPanel.setOpaque(false);
@@ -150,20 +162,27 @@ public class CellEditDialog
 		button_add__linebreak_below.addActionListener(getAddLineBreakBelowListener() );
 		control_cellLabel_panel.add(button_add__linebreak_below);
 		
-		actions_panel.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor("Actions") );
-		actions_panel.setPreferredSize(new Dimension(1000, 150) );
-		actions_panel.setOpaque(false);
-		actions_panel.add(actionsEditPanel);
+		actionsPanel.setLayout(new BorderLayout() );
+		actionsPanel.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor("Actions") );
+		actionsPanel.setPreferredSize(new Dimension(1000, 150) );
+		actionsPanel.setOpaque(false);
+		actionsPanel.add(actions_scroll_pane, BorderLayout.CENTER);
+		
+		actions_scroll_pane.setOpaque(false);
+		actions_scroll_pane.setBorder(GuiHelper.getEmptyBorder() );
+		actions_scroll_pane.getViewport().add(actionsScrollPanel);
+		actions_scroll_pane.getVerticalScrollBar().setUnitIncrement(16);
+		
+		actionsScrollPanel.setLayout(new FlowLayout() );
+		actionsScrollPanel.setBackground(ColorSettings.getBackgroundColor() );
+		actionsScrollPanel.add(actionsEditPanel, BorderLayout.PAGE_START);
 		
 		actionsEditPanel.setLayout(new GridBagLayout() );
 		actionsEditPanel.setOpaque(false);
 		actionsEditPanel.setAlignmentX(0f);
 		
-		cell_panel.add(content_panel,  BorderLayout.CENTER);
-		cell_panel.add(actions_panel, BorderLayout.PAGE_END);
-		
 		// control panel with the cancel/confirm buttons
-		main_control_panel.setBackground(ColorSettings.getBackgroundColor() );
+		main_control_panel.setOpaque(false);
 		
 		JButton confirmButton = new JButton("Confirm");
 		JButton cancel_button = new JButton("Cancel");
@@ -174,9 +193,22 @@ public class CellEditDialog
 		main_control_panel.add(confirmButton);
 		main_control_panel.add(cancel_button);
 		
-		cellEditDialog.add(main_panel);
+		cellEditDialog.add(mainPanel);
 		cellEditDialog.pack();
 		cellEditDialog.setVisible(false);
+	}
+	
+	public static void updateColorSettings()
+	{
+		contentPanel.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor("Content") );
+		actionsPanel.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor("Actions") );
+		
+		mainPanel.setBackground(ColorSettings.getBackgroundColor() );
+		contentScrollPanel.setBackground(ColorSettings.getBackgroundColor() );
+		actionsScrollPanel.setBackground(ColorSettings.getBackgroundColor() );
+		
+		updateEditPanels();
+		updateActionsEdit();
 	}
 	
 	private static void saveCell()
@@ -360,7 +392,10 @@ public class CellEditDialog
 	{
 		contentEditLabelPanel.removeAll();
 		for (EditPanel edit_panel : editPanels)
+		{
+			edit_panel.updateColorSettings();
 			contentEditLabelPanel.add( (Component) edit_panel);
+		}
 		cellEditDialog.pack();
 	}
 	

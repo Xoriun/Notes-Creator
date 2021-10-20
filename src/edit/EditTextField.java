@@ -15,10 +15,8 @@ public class EditTextField extends JTextField implements EditPanel
 		super(string);
 		this.setAlignmentX(0f);
 		this.setOpaque(false);
-		this.setBackground(ColorSettings.getBackgroundColor() );
-		this.setForeground(ColorSettings.getTextColor() );
-		this.setCaretColor(ColorSettings.getTextColor() );
 		this.setDefaultBorder();
+		updateColorSettings();
 	}
 	
 	public String getString()
@@ -34,5 +32,13 @@ public class EditTextField extends JTextField implements EditPanel
 	public void setDefaultBorder()
 	{
 		this.setBorder(GuiHelper.getDefaultBorder() );
+	}
+	
+	public void updateColorSettings()
+	{
+		this.setBackground(ColorSettings.getBackgroundColor() );
+		this.setForeground(ColorSettings.getTextColor() );
+		this.setDefaultBorder();
+		this.setCaretColor(ColorSettings.getTextColor() );
 	}
 }

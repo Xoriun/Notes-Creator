@@ -19,6 +19,7 @@ import javax.swing.JTextField;
 import javax.swing.border.MatteBorder;
 import javax.swing.border.TitledBorder;
 
+import edit.CellEditDialog;
 import logic.Row;
 import logic.Section;
 
@@ -165,6 +166,9 @@ public class ColorSettings
 			edit.SectionManagerDialog.sectionManagerPanel.setBackground(currentColorSetting.background);
 			edit.SectionManagerDialog.sectionManagerPanel.setBorder(new MatteBorder( ((MatteBorder) edit.SectionManagerDialog.sectionManagerPanel.getBorder() ).getBorderInsets(), currentColorSetting.text) );
 		}
+		
+		// unpdate CellEditDialog
+		CellEditDialog.updateColorSettings();
 	}
 	
 	public static void changeCustomLightingSettings()

@@ -80,6 +80,11 @@ public class EditIconLabel extends JLabel implements EditPanel
 		return new EditIconLabel();
 	}
 	
+	public void updateColorSettings()
+	{
+		this.setBackground(ColorSettings.getBackgroundColor() );
+	}
+	
 	public String getMainImageAbbr() { return mainImageAbbr; }
 	public String getLayeredImageAbbr() { return layeredImageAbbr; }
 	public String getLayeredVerticalAlignment() { return layeredVerticalAlignment; }
