@@ -52,7 +52,7 @@ public class MainGui {
 	
 	private static Dimension screensize;
 	
-	public static String currentVersionTag = "v2.1";
+	public static String currentVersionTag = "v2.2";
 	
 	public static void prepareGui()
 	{
