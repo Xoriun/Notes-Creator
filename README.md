@@ -44,7 +44,8 @@ To perform an action when clicking on a cell, use the following syntax:\
 and so on.
 This action will only be performed when not in Edit Mode.\
 Currently the following commands are supported:\
-&emsp;&emsp;- write_to_clipboard: writes the action_parameter as String to the System clipboard.\
+&emsp;&emsp;- text_to_clipboard: writes the action_parameter as String to the System clipboard.
+\&emsp;&emsp;- file_to_clipboard: writes the content of a file located at the action_parameter as String to the System clipboard.\
 Feel free to suggest new actions!!
 
 ## TODO

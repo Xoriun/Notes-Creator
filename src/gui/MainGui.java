@@ -219,6 +219,7 @@ public class MainGui {
 		{
 			for (JLabel label : MainGui.labelsTextsHideWhenNotInEdit) label.setForeground(ColorSettings.getBackgroundColor() );
 			SectionManagerDialog.sectionManagerDialog.setVisible(false);
+			CellEditDialog.hideEditDialog();
 		}
 		for (JLabel label : MainGui.labelsIconsHideWhenNotInEdit) label.setVisible(MainGui.inEditMode);
 		MainGui.spaceColums();

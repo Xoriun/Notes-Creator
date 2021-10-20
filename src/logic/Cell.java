@@ -52,7 +52,7 @@ public class Cell extends JPanel
 		{
 			String[] temp = cell_str.split(">>", 2);
 			contentString = temp[0];
-			actionsString = temp[1];
+			actionsString = temp[1].replaceAll("write_to_clipboard", "text_to_clipboard"); // legacy
 		}
 		else
 		{
@@ -62,7 +62,8 @@ public class Cell extends JPanel
 
 		this.addMouseListener(MouseAdapters.getEditCellAdapter(this) );
 		if (!actionsString.isEmpty() )
-			this.addMouseListener(MouseAdapters.getCellActionAdapter(actionsString) );
+			for (String action : actionsString.split(Pattern.quote("#") ) )
+				this.addMouseListener(MouseAdapters.getCellActionAdapter(action) );
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS) );
 		fillCellPanel();
 		setDefaultBorder();

@@ -56,6 +56,8 @@ public class CellEditDialog
 	private static ArrayList<JComboBox<String> > actionComboboxList = new ArrayList<JComboBox<String> >();
 	private static ArrayList<JTextField> actionTextfieldList = new ArrayList<JTextField>();
 	
+	private static String[] possibleActionsArray = new String[] {"", "text_to_clipboard", "file_to_clipboard"}; 
+	
 	public static void initializeCellEditDialog()
 	{
 		cellEditDialog = new JDialog(MainGui.window);
@@ -209,7 +211,7 @@ public class CellEditDialog
 		return res.equals("") ? res : res.substring(0, res.length() - 1);
 	}
 	
-	private static void hideEditDialog()
+	public static void hideEditDialog()
 	{
 		if (selectedCell != null)
 		{
@@ -243,8 +245,10 @@ public class CellEditDialog
 		}
 		
 		int index = 0;
-		for (String line : cell.getCellString().split(Pattern.quote("\\n") ) )
+		String[] lines = cell.getCellString().split(Pattern.quote("\\n") );
+		for (int i = 0; i < lines.length - 1; i ++) // skip last line, no linebreak needed there
 		{
+			String line = lines[i];
 			index += line.split("#").length;
 			EditLineBreak lb = new EditLineBreak();
 			addMosueLisetenerToEditPanel(lb);
@@ -252,20 +256,17 @@ public class CellEditDialog
 			index ++;
 		}
 		
-		editPanels.remove(editPanels.size() - 1);
-		
 		// Actions
 		actionsEditPanel.removeAll();
 		actionComboboxList.clear();
 		actionTextfieldList.clear();
-		String[] possible_actions = new String[] {"", "write_to_clipboard"};
 		for (String action : cell.getActionString().split("#") )
 		{
 			String[] action_arr = action.split(":", 2);
 			if (action_arr.length < 2)
 				continue;
 			
-			JComboBox<String> comboBox = new JComboBox<String>(possible_actions);
+			JComboBox<String> comboBox = new JComboBox<String>(possibleActionsArray);
 			comboBox.setSelectedItem(action_arr[0] );
 			JTextField textField = new JTextField(action_arr[1], 15);
 			
@@ -323,7 +324,7 @@ public class CellEditDialog
 		add_label.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent me) {
-				actionComboboxList.add(new JComboBox<String>(new String[] {"", "write_to_clipboard"} ) );
+				actionComboboxList.add(new JComboBox<String>(possibleActionsArray) );
 				actionTextfieldList.add(new JTextField(15) );
 				updateActionsEdit();
 			}
