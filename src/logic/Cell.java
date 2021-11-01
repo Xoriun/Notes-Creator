@@ -60,7 +60,7 @@ public class Cell extends JPanel
 			actionsString = "";
 		}
 
-		this.addMouseListener(MouseAdapters.getEditCellAdapter(this) );
+		this.addMouseListener(MouseAdapters.editCellAdapter);
 		if (!actionsString.isEmpty() )
 			for (String action : actionsString.split(Pattern.quote("#") ) )
 				this.addMouseListener(MouseAdapters.getCellActionAdapter(action) );

@@ -19,63 +19,119 @@ import javax.swing.JPanel;
 import javax.swing.event.MouseInputAdapter;
 
 import edit.CellEditDialog;
+import gui.AddRemoveControl;
 import gui.GuiHelper;
 import gui.MainGui;
 import gui.PopupAlerts;
 
 public class MouseAdapters
 {
-	public static MouseInputAdapter getAddContentRowAdapter(Row row)
+	public final static MouseInputAdapter editCellAdapter = new MouseInputAdapter()
 	{
-		return new MouseInputAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e)
-			{
-				if (MainGui.inEditMode)
-				{
-					FileOperations.unsavedChanges = true;
-					
-					// adding actual row
-					row.getSection().addContentLine(row.getRowIndex() );
-					
-					// increasing the rowIndices of the following rows
-					for (Row any_row : row.getSection().getRows() )
-						if (any_row.getRowIndex() >= row.getRowIndex() )
-							any_row.increaseRowIndex();
-					
-					// redrawing GUI
-					MainGui.arrangeContent();
-					MainGui.spaceColums();
-				}
-			}
-		};
-	}
+		@Override
+		public void mouseClicked(MouseEvent e)
+		{
+			if (MainGui.inEditMode)
+				CellEditDialog.processCell( (Cell) e.getComponent() );
+		}
+	};
 	
-	public static MouseInputAdapter getRemoveContentRowAdapter(Row row)
+	public final static WindowAdapter windowOnCloseAdapter = new WindowAdapter()
 	{
-		return new MouseInputAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e)
+		@Override
+		public void windowClosing(WindowEvent e)
+		{
+			if (FileOperations.unsavedChanges)
+				PopupAlerts.unsavedChangesDialog();
+			else
+				MainGui.exit();
+		}
+	};
+	
+	public final static MouseInputAdapter addSectionAdapter = new MouseInputAdapter()
+	{
+		@Override
+		public void mouseClicked(MouseEvent e)
+		{
+			if (MainGui.inEditMode)
 			{
-				if (MainGui.inEditMode)
-				{
-					FileOperations.unsavedChanges = true;
-					
-					// removing actual row
-					row.getSection().removeContentLine(row.getRowIndex() );
-					
-					// decreasing the rowIndices of the following rows
-					for (Row any_row : row.getSection().getRows() )
-						if (any_row.getRowIndex() >= row.getRowIndex() )
-							any_row.decreaseRowIndex();
-					
-					// redrawing GUI
-					MainGui.arrangeContent();
-					MainGui.spaceColums();
-				}
+				FileOperations.unsavedChanges = true;
+				int section_index = ( (AddRemoveControl) e.getComponent().getParent() ).getSectionIndex();
+				MainGui.sectionsList.add(section_index, Section.creatEmptySection() );
+				MainGui.arrangeContent();
+				MainGui.spaceColums();
+				edit.SectionManagerDialog.updateSectionManagerDialog();
 			}
-		};
-	}
+		}
+	};
+
+	public final static MouseInputAdapter removeSectionAdapter = new MouseInputAdapter()
+	{
+		@Override
+		public void mouseClicked(MouseEvent e)
+		{
+			if (MainGui.inEditMode)
+			{
+				FileOperations.unsavedChanges = true;
+				int section_index = ( (AddRemoveControl) e.getComponent().getParent() ).getSectionIndex();
+				MainGui.sectionsList.remove(section_index);
+				MainGui.arrangeContent();
+				MainGui.spaceColums();
+				edit.SectionManagerDialog.updateSectionManagerDialog();
+			}
+		}
+	};
+
+	public final static MouseInputAdapter addRowAdapter = new MouseInputAdapter()
+	{
+		@Override
+		public void mouseClicked(MouseEvent e)
+		{
+			if (MainGui.inEditMode)
+			{
+				FileOperations.unsavedChanges = true;
+				AddRemoveControl control = (AddRemoveControl) e.getComponent().getParent();
+				Section section = control.getRow().getSection();
+				
+				// adding actual row
+				section.addContentLine(control.getRow().getRowIndex() );
+				
+				// increasing the rowIndices of the following rows
+				for (Row any_row : section.getRows() )
+					if (any_row.getRowIndex() >= control.getRow().getRowIndex() )
+						any_row.increaseRowIndex();
+					
+				// redrawing GUI
+				MainGui.arrangeContent();
+				MainGui.spaceColums();
+			}
+		}
+	};
+
+	public final static MouseInputAdapter removeRowAdapter = new MouseInputAdapter() {
+		@Override
+		public void mouseClicked(MouseEvent e)
+		{
+			if (MainGui.inEditMode)
+			{
+				FileOperations.unsavedChanges = true;
+				AddRemoveControl control = (AddRemoveControl) e.getComponent().getParent();
+				Section section = control.getRow().getSection();
+				
+				// removing actual row
+				section.removeContentLine(control.getRow().getRowIndex() );
+				
+				// decreasing the rowIndices of the following rows
+				for (Row any_row : section.getRows() )
+					if (any_row.getRowIndex() >= control.getRow().getRowIndex() )
+						any_row.decreaseRowIndex();
+					
+				// redrawing GUI
+				MainGui.arrangeContent();
+				MainGui.spaceColums();
+			}
+		}
+	};
 	
 	public static ActionListener getAddContentColAdapter(int col_to_add)
 	{
@@ -115,49 +171,13 @@ public class MouseAdapters
 		};
 	}
 	
-	public static MouseInputAdapter getAddSectionAdapter(int current_section_index)
-	{
-		return new MouseInputAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e)
-			{
-				if (MainGui.inEditMode)
-				{
-					FileOperations.unsavedChanges = true;
-					MainGui.sectionsList.add(current_section_index, new Section() );
-					MainGui.arrangeContent();
-					MainGui.spaceColums();
-					edit.SectionManagerDialog.updateSectionManagerDialog();
-				}
-			}
-		};
-	}
-	
-	public static MouseInputAdapter getRemoveSectionAdapter(int current_section_index)
-	{
-		return new MouseInputAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e)
-			{
-				if (MainGui.inEditMode)
-				{
-					FileOperations.unsavedChanges = true;
-					MainGui.sectionsList.remove(current_section_index);
-					MainGui.arrangeContent();
-					MainGui.spaceColums();
-					edit.SectionManagerDialog.updateSectionManagerDialog();
-				}
-			}
-		};
-	}
-	
 	public static MouseInputAdapter getEditSectionTitleAdapter(JLabel label, int current_section_index)
 	{
 		return new MouseInputAdapter() {
 			@Override
-	    public void mouseClicked(MouseEvent e)
+			public void mouseClicked(MouseEvent e)
 			{
-				String newText = JOptionPane.showInputDialog(MainGui.window, "Set the section title!", label.getText() );
+				String newText = JOptionPane.showInputDialog(MainGui.window, "Set the section title!", label.getText());
 				if (newText != null)
 				{
 					label.setText(newText);
@@ -170,18 +190,6 @@ public class MouseAdapters
 			}
 		};
 	}
-
-	public static MouseInputAdapter getEditCellAdapter(Cell cell)
-	{
-		return new MouseInputAdapter() {
-			@Override
-      public void mouseClicked(MouseEvent e)
-			{
-				if (MainGui.inEditMode)
-					CellEditDialog.processCell(cell);
-			}
-		};
-	}
 	
 	public static MouseInputAdapter getEditTodoAdapter(int current_row, Row row, JPanel panel, JLabel label, JLabel icon)
 	{
@@ -189,7 +197,7 @@ public class MouseAdapters
 			@Override
 			public void mouseClicked(MouseEvent arg0)
 			{
-				String string = JOptionPane.showInputDialog(MainGui.window, "TODO", row.getTodoString() );
+				String string = JOptionPane.showInputDialog(MainGui.window, "TODO", row.getTodoString());
 				if (string != null)
 				{
 					row.setTodoString(string);
@@ -200,37 +208,22 @@ public class MouseAdapters
 						panel.remove(icon);
 						MainGui.labelsIconsHideWhenNotInEdit.remove(icon);
 						label.removeMouseListener(this);
-						label.addMouseListener(getEditTodoAdapter(current_row, row, panel, label, null) );
+						label.addMouseListener(getEditTodoAdapter(current_row, row, panel, label, null));
 					}
 					
 					if (!string.isEmpty() && icon == null) // add new icon
 					{
-						JLabel new_icon = new JLabel(GuiHelper.getScaledImageIcon("Todo") );
+						JLabel new_icon = new JLabel(GuiHelper.getScaledImageIcon("Todo"));
 						panel.add(new_icon);
 						new_icon.setVisible(MainGui.inEditMode);
 						MainGui.labelsIconsHideWhenNotInEdit.add(new_icon);
 						label.removeMouseListener(this);
-						label.addMouseListener(getEditTodoAdapter(current_row, row, panel, label, new_icon) );
+						label.addMouseListener(getEditTodoAdapter(current_row, row, panel, label, new_icon));
 					}
 				}
-
+				
 				MainGui.arrangeContent();
 				MainGui.spaceColums();
-			}
-		};
-	}
-
-	public static WindowAdapter getWindowOnCloseAdapter()
-	{
-		return new WindowAdapter() {
-			
-			@Override
-			public void windowClosing(WindowEvent e)
-			{
-				if (FileOperations.unsavedChanges)
-					PopupAlerts.unsavedChangesDialog();
-				else
-					MainGui.exit();
 			}
 		};
 	}
@@ -238,12 +231,12 @@ public class MouseAdapters
 	public static MouseInputAdapter getCellActionAdapter(String action_str)
 	{
 		String action_command = "", action_param = "";
-		try {
+		try
+		{
 			String[] temp = action_str.split(":");
 			action_command = temp[0];
 			action_param = temp[1];
-		}
-		catch (Exception e)
+		} catch (Exception e)
 		{
 			throw new RuntimeException("Each action has to follow the syntax 'action_command':'action_parameter'!");
 		}
@@ -251,9 +244,12 @@ public class MouseAdapters
 		switch (action_command)
 		{
 			case "write_to_clipboard": // legacy
-			case "text_to_clipboard": return getActionTextToClpiboardAdapter(action_param);
-			case "file_to_clipboard": return getActionFileToClipboardAdapter(action_param);
-			default : return null;
+			case "text_to_clipboard":
+				return getActionTextToClpiboardAdapter(action_param);
+			case "file_to_clipboard":
+				return getActionFileToClipboardAdapter(action_param);
+			default:
+				return null;
 		}
 	}
 	
@@ -261,10 +257,10 @@ public class MouseAdapters
 	{
 		return new MouseInputAdapter() {
 			@Override
-      public void mouseClicked(MouseEvent e)
+			public void mouseClicked(MouseEvent e)
 			{
 				if (!MainGui.inEditMode)
-		      Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(textToWrite), null);
+					Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(textToWrite), null);
 			}
 		};
 	}
@@ -273,7 +269,7 @@ public class MouseAdapters
 	{
 		return new MouseInputAdapter() {
 			@Override
-      public void mouseClicked(MouseEvent me)
+			public void mouseClicked(MouseEvent me)
 			{
 				if (MainGui.inEditMode)
 					return;
@@ -281,9 +277,9 @@ public class MouseAdapters
 				String output = "";
 				try
 				{
-					BufferedReader reader = new BufferedReader(new FileReader(new File(file_location) ) );
+					BufferedReader reader = new BufferedReader(new FileReader(new File(file_location)));
 					String line = "";
-					while ( (line = reader.readLine() ) != null )
+					while ((line = reader.readLine()) != null)
 						output += line + "\n";
 					reader.close();
 				} catch (FileNotFoundException e)
@@ -298,7 +294,7 @@ public class MouseAdapters
 				
 				if (output.length() > 0)
 					output = output.substring(0, output.length() - 1);
-	      Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(output), null);
+				Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(output), null);
 			}
 		};
 	}

@@ -1,7 +1,5 @@
 package logic;
 
-import java.awt.Color;
-import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
@@ -9,6 +7,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import gui.AddRemoveControl;
 import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
@@ -46,7 +45,7 @@ public class Row
 		todoPanel.setOpaque(false);
 		todoString = "";
 		
-		controlPanel = getAddRemoveContentRowControl(true);
+		controlPanel = AddRemoveControl.createAddRowControl(this);
 		cells = new ArrayList<Cell>();
 	}
 	
@@ -62,7 +61,7 @@ public class Row
 		rowIndex = row_index;
 		this.section = section;
 		
-		controlPanel = getAddRemoveContentRowControl(false);
+		controlPanel = AddRemoveControl.createAddRemoveRowControl(this);
 		
 		String[] line_arr = row_string.split(Pattern.quote("||"), 2);
 		if (line_arr.length == 2)
@@ -76,34 +75,6 @@ public class Row
 		for (int col = 0; col < cell_strings.length; col ++)
 			cells.add(new Cell(this, cell_strings[col], col) );
 		if (cell_strings.length > FileOperations.numberOfColumns) FileOperations.numberOfColumns = cell_strings.length;
-	}
-	
-	private JPanel getAddRemoveContentRowControl(boolean only_add)
-	{
-		JPanel control = new JPanel(new GridLayout(only_add ? 1 : 2, 2) );
-		Color color = MainGui.inEditMode ? ColorSettings.getTextColor() : ColorSettings.getBackgroundColor();
-		
-		JLabel add = new JLabel(" + ");
-		add.setForeground(color);
-		add.addMouseListener(MouseAdapters.getAddContentRowAdapter(this) );
-		
-		MainGui.labelsTextsHideWhenNotInEdit.add(add);
-		control.add(new JLabel());
-		control.add(add);
-		
-		if (! only_add)
-		{
-			JLabel remove = new JLabel(" - ");
-			remove.setForeground(color);
-			remove.addMouseListener(MouseAdapters.getRemoveContentRowAdapter(this) );
-			
-			MainGui.labelsTextsHideWhenNotInEdit.add(remove);
-			control.add(remove);
-			control.add(new JLabel());
-		}
-		
-		control.setOpaque(false);
-		return control;
 	}
 	
 	private JPanel getTodoControl(int current_row)

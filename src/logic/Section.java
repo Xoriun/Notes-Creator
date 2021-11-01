@@ -29,12 +29,6 @@ public class Section extends JPanel
 	public int getScrollLocation() { return scrollLocation; }
 	public ArrayList<Row> getRows() { return rows; }
 	
-	public Section()
-	{
-		rows = new ArrayList<Row>();
-		fillPanel();
-	}
-	
 	public Section(String header)
 	{
 		rows = new ArrayList<Row>();
@@ -48,6 +42,14 @@ public class Section extends JPanel
 		gbc.fill = GridBagConstraints.BOTH;
 		this.setAlignmentY(Component.LEFT_ALIGNMENT);
 		this.setOpaque(false);
+	}
+	
+	public static Section creatEmptySection()
+	{
+		Section section = new Section("title");
+		section.addEmptyRow();
+		section.fillPanel();
+		return section;
 	}
 	
 	public void addEmptyRow()

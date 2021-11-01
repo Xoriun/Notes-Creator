@@ -150,7 +150,7 @@ public class FileOperations
 	public static void readNotesFile()
 	{
 		PopupAlerts.creatMissingImagesMessage = true;
-		MainGui.sectionsList.clear();
+		MainGui.reset();
 		numberOfColumns = 0;
 		
 		BufferedReader reader = null;
@@ -185,6 +185,7 @@ public class FileOperations
 			while (line_string != null)
 			{
 				current_section = new Section(line_string);
+				MainGui.sectionsList.add(current_section);
 				
 				line_string = reader.readLine();
 				
@@ -196,7 +197,6 @@ public class FileOperations
 				
 				current_section.addEmptyRow();
 				current_section.fillPanel();
-				MainGui.sectionsList.add(current_section);
 			}
 		} catch (IOException e)
 		{
@@ -231,7 +231,7 @@ public class FileOperations
 	public static void createNewFile()
 	{
 		fileDirectoryNotes = fileNameNotes = null;
-		MainGui.sectionsList.clear();
+		MainGui.reset();
 		
 		Section section = new Section("section 1");
 		section.addRow("new;file");
@@ -592,30 +592,4 @@ public class FileOperations
 			throw new RuntimeException("Error while exporting file: writing!");
 		}
 	}
-	
-	/** public static void exportAsPdf()
-	{
-		int width  = MainGui.sectionPanelsList.get(0).getWidth();
-		int height = 0, current_height = 0;
-		for (JPanel panel : MainGui.sectionPanelsList)
-			height += panel.getHeight();
-		
-		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
-		JFrame buffer_window = new JFrame();
-		
-		//MainGui.scrollPane.printAll(image.getGraphics());
-		for (JPanel panel : MainGui.sectionPanelsList)
-		{
-			SwingUtilities.paintComponent(image.getGraphics(), panel, buffer_window.getContentPane(), 0, current_height, panel.getWidth(), panel.getHeight() );
-			current_height += panel.getHeight();
-		}
-		System.out.println("test");
-		
-		try {
-			ImageIO.write(image, "png", new File("test.png") );
-		} catch (IOException e) {
-			//Handle exception
-		}
-	}
-	*/
 }

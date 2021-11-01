@@ -52,7 +52,7 @@ public class MainGui {
 	
 	private static Dimension screensize;
 	
-	public static String currentVersionTag = "v2.2";
+	public static String currentVersionTag = "v2.3";
 	
 	public static void prepareGui()
 	{
@@ -72,7 +72,7 @@ public class MainGui {
 		window.setLayout(new BoxLayout(window.getContentPane(), BoxLayout.Y_AXIS) );
 		window.add(scrollPane);
 		window.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-		window.addWindowListener(MouseAdapters.getWindowOnCloseAdapter() );
+		window.addWindowListener(MouseAdapters.windowOnCloseAdapter);
 		window.setTitle("");
 		window.pack();
 		window.setMaximumSize(screensize);
@@ -223,5 +223,16 @@ public class MainGui {
 		}
 		for (JLabel label : MainGui.labelsIconsHideWhenNotInEdit) label.setVisible(MainGui.inEditMode);
 		MainGui.spaceColums();
+	}
+	
+	public static void reset()
+	{
+		sectionsList.clear();
+		sectionLabels.clear();
+		labelsText.clear();
+		labelsTextsHideWhenNotInEdit.clear();
+		labelsIconsHideWhenNotInEdit.clear();
+		
+		mainPanel.removeAll();
 	}
 }
