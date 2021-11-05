@@ -91,7 +91,7 @@ public class Row
 		JLabel icon = null;
 		if (!todoString.equals("") )
 		{
-			icon = new JLabel(GuiHelper.getScaledImageIcon("Todo") );
+			icon = new JLabel(GuiHelper.scaledTodoImageIcon);
 			todo_panel.add(icon);
 			icon.setVisible(MainGui.inEditMode);
 			MainGui.labelsIconsHideWhenNotInEdit.add(icon);

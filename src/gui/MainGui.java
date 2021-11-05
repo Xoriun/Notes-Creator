@@ -3,6 +3,9 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -11,6 +14,7 @@ import java.util.logging.Logger;
 
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -58,7 +62,6 @@ public class MainGui {
 	{
 		screensize = Toolkit.getDefaultToolkit().getScreenSize();
 		ColorSettings.selectColorSettings(1); // dark_mode
-		UIManager.put("Panel.opaque", Boolean.valueOf(false) );
 		
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new GridLayout() );
@@ -187,11 +190,39 @@ public class MainGui {
 					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName() );
 				} catch (Exception e) { }
 				
-				FileOperations.readSettingsFile();
-				prepareGui();
-				readAndDisplayNotes();
+				try {
+					FileOperations.readSettingsFile();
+					prepareGui();
+					readAndDisplayNotes();
+				} catch (Exception e) {
+					try
+					{
+						e.printStackTrace(new PrintStream(new File("log.txt") ) );
+					} catch (FileNotFoundException e1)
+					{
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
 			}
 		});
+	}
+	
+	public static void displayErrorAndExit(String error_text, boolean fatal)
+	{
+		JDialog dialog = new JDialog(window, fatal ? "A fatal" : "An" + " error occured", true);
+		
+		JPanel error_panel = new JPanel();
+		error_panel.setBorder(GuiHelper.getDialogBorder() );
+		error_panel.setOpaque(false);
+		error_panel.setBackground(ColorSettings.getBackgroundColor() );
+		dialog.add(error_panel);
+		
+		JLabel error_label = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(error_text);
+		error_panel.add(error_label);
+		
+		dialog.pack();
+		dialog.setVisible(true);
 	}
 
 	public static void readAndDisplayNotes()

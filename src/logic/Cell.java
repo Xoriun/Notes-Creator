@@ -210,7 +210,7 @@ public class Cell extends JPanel
 						PopupAlerts.missingImagesMessage += "\n" + new_message;
 				}
 				
-				icon = GuiHelper.getScaledLayeredImage(mainImageAbbr, layeredImageAbbr, horizontalAlignment, verticalAlignment);
+				icon = GuiHelper.getScaledLayeredImage(main_image_name, layered_image_name, horizontalAlignment, verticalAlignment);
 				this.setIcon(icon);
 			}
 			else
@@ -228,7 +228,7 @@ public class Cell extends JPanel
 					}
 				}
 				
-				icon = GuiHelper.getScaledImageIcon(mainImageAbbr);
+				icon = GuiHelper.getScaledImageIcon(main_image_name);
 				this.setIcon(icon);
 			}
 		}

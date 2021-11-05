@@ -13,7 +13,7 @@ public class EditLineBreak extends JLabel implements EditPanel
 	public EditLineBreak()
 	{
 		super();
-		this.setIcon(GuiHelper.getScaledImageIcon("Linebreak") );
+		this.setIcon(GuiHelper.scaledLinebreakImageIcon);
 	}
 	
 	@Override

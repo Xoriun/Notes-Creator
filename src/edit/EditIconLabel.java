@@ -21,7 +21,7 @@ public class EditIconLabel extends JLabel implements EditPanel
 	{
 		super();
 		this.mainImageAbbr = "Transport_belt";
-		this.icon = GuiHelper.getScaledImageIcon(mainImageAbbr);
+		this.icon = GuiHelper.getScaledImageIconFromAbbreviation(mainImageAbbr);
 		this.setIcon(icon);
 		this.setAlignmentX(0f);
 		this.setBackground(ColorSettings.getBackgroundColor() );
@@ -48,7 +48,7 @@ public class EditIconLabel extends JLabel implements EditPanel
 		this.layeredImageAbbr = layered_image_abbr;
 		this.layeredHorizontalAlignment = horizontal_alignment;
 		this.layeredVerticalAlignment = vertical_alignment;
-		this.icon = GuiHelper.getScaledLayeredImage(mainImageAbbr, layeredImageAbbr, layeredHorizontalAlignment, layeredVerticalAlignment);
+		this.icon = GuiHelper.getScaledLayeredImageFromAbbreviations(mainImageAbbr, layeredImageAbbr, layeredHorizontalAlignment, layeredVerticalAlignment);
 		this.setIcon(icon);
 	}
 	
@@ -56,7 +56,7 @@ public class EditIconLabel extends JLabel implements EditPanel
 	{
 		this.mainImageAbbr = main_image_abbr;
 		this.layeredImageAbbr = this.layeredHorizontalAlignment = this.layeredVerticalAlignment = "";
-		this.icon = GuiHelper.getScaledImageIcon(mainImageAbbr);
+		this.icon = GuiHelper.getScaledImageIconFromAbbreviation(mainImageAbbr);
 		this.setIcon(icon);
 	}
 	

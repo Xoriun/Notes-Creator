@@ -54,6 +54,7 @@ public class FileOperations
 	public static void readSettingsFile()
 	{
 		File settings = new File("settings.txt");
+		new File("Images\\").mkdir(); //  creates Images directory if it does not exist
 		
 		try {
 			// no settings file

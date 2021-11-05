@@ -213,7 +213,7 @@ public class MouseAdapters
 					
 					if (!string.isEmpty() && icon == null) // add new icon
 					{
-						JLabel new_icon = new JLabel(GuiHelper.getScaledImageIcon("Todo"));
+						JLabel new_icon = new JLabel(GuiHelper.scaledTodoImageIcon);
 						panel.add(new_icon);
 						new_icon.setVisible(MainGui.inEditMode);
 						MainGui.labelsIconsHideWhenNotInEdit.add(new_icon);

@@ -468,7 +468,7 @@ public class CellEditDialog
 					
 					//image
 					gbc.gridx ++;
-					main_image_label = new JLabel(GuiHelper.getScaledImageIcon(Abbreviations.getNameFromAbbreviation(main_image_abbr) ) );
+					main_image_label = new JLabel(GuiHelper.getScaledImageIconFromAbbreviation(main_image_abbr) );
 					content_panel.add(main_image_label, gbc);
 					
 					//edit panel
@@ -493,7 +493,7 @@ public class CellEditDialog
 								gbc.gridy = 0;
 								gbc.gridx = 1;
 								main_image_abbr = (String) abbr_list_main.getSelectedItem();
-								main_image_label = new JLabel(GuiHelper.getScaledImageIcon(Abbreviations.getNameFromAbbreviation(main_image_abbr) ) );
+								main_image_label = new JLabel(GuiHelper.getScaledImageIconFromAbbreviation(main_image_abbr) );
 								content_panel.add(main_image_label, gbc);
 								icon_dialog.pack();
 							}
@@ -529,7 +529,7 @@ public class CellEditDialog
 					
 					//image
 					gbc.gridx ++;
-					layered_image_label = layered_image_abbr.isEmpty() ? new JLabel() : new JLabel(GuiHelper.getScaledImageIcon(Abbreviations.getNameFromAbbreviation(layered_image_abbr) ) );
+					layered_image_label = layered_image_abbr.isEmpty() ? new JLabel() : new JLabel(GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr) );
 					content_panel.add(layered_image_label, gbc);
 					
 					//edit pane;
@@ -555,7 +555,7 @@ public class CellEditDialog
 								gbc.gridy = 2;
 								gbc.gridx = 1;
 								layered_image_abbr = (String) abbr_list_layerd.getSelectedItem();
-								layered_image_label = new JLabel(GuiHelper.getScaledImageIcon(Abbreviations.getNameFromAbbreviation(layered_image_abbr) ) );
+								layered_image_label = new JLabel(GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr) );
 								content_panel.add(layered_image_label, gbc);
 								icon_dialog.pack();
 							}
@@ -579,7 +579,7 @@ public class CellEditDialog
 								gbc.gridx = 1;
 								layered_image_abbr = Paths.get("Images\\").toAbsolutePath().relativize(new File(dialog.getDirectory() + dialog.getFile() ).toPath() ).toString().split(Pattern.quote(".") )[0];
 								System.out.println(layered_image_abbr);
-								layered_image_label = new JLabel(GuiHelper.getScaledImageIcon(Abbreviations.getNameFromAbbreviation(layered_image_abbr) ) );
+								layered_image_label = new JLabel(GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr) );
 								content_panel.add(layered_image_label, gbc);
 								icon_dialog.pack();
 							}

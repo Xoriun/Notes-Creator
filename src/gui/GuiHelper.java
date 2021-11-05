@@ -23,6 +23,11 @@ public class GuiHelper
 {
 	private final static int ImageSize = 30;
 	
+	public final static BufferedImage missingImageBuffered = loadMissingImageBufferedImage();
+	public final static BufferedImage layeredDotBuffered = loadLayeredDotImage();
+	public final static ImageIcon scaledTodoImageIcon = getScaledTodoImageIcon();
+	public final static ImageIcon scaledLinebreakImageIcon = getScaledLinebreakImageIcon();
+	
 	/**
 	 * Returns a TitledBorder with title as title and EtchedBorder as the underlying Border.
 	 * The title's font and color are set according to the current settings.
@@ -91,19 +96,37 @@ public class GuiHelper
 	}
 	
 	/**
-	 * Returns an ImageIcon of name of size GuiHelper.ImageSize by GuiHelper.ImageSize pixels.
+	 * Returns an ImageIcon (given by the abbreviation image_abbr) of size GuiHelper.ImageSize by GuiHelper.ImageSize pixels.
 	 * 
-	 * @param abbr Abbreviation (or name, including any path-structure within the Images folder) of the image.
+	 * @param image_abbr Abbreviation (or name, including any path-structure within the Images folder) of the image.
 	 * @return The ImageIcon object.
 	 */
-	public static ImageIcon getScaledImageIcon(String abbr)
+	public static ImageIcon getScaledImageIconFromAbbreviation(String image_abbr)
 	{
-		String name = "Images\\" + Abbreviations.getNameFromAbbreviation(abbr) + ".png";
-		return new ImageIcon(new ImageIcon(new File(name).exists() ? name : "Images\\Missing_image.png").getImage().getScaledInstance(ImageSize, ImageSize, Image.SCALE_DEFAULT) );
+		return getScaledImageIcon(image_abbr);
 	}
 	
 	/**
-	 * Returns an ImageIcon (given by the abbreviation main_image_abbr) as the main icon (GuiHelper.ImageSize by GuiHelper.ImageSize pixels) and a smaller icon (given by layered_image_abbr) (3/5 of the size of the main image) in front of it.
+	 * Returns an ImageIcon (given by the name image_name) of size GuiHelper.ImageSize by GuiHelper.ImageSize pixels.
+	 * 
+	 * @param iamge_name Name (including any path-structure within the Images folder) of the image.
+	 * @return The ImageIcon object.
+	 */
+	public static ImageIcon getScaledImageIcon(String iamge_name)
+	{
+		File file = new File("Images\\" + iamge_name + ".png");
+		try
+		{
+			ImageIcon icon = new ImageIcon(file.exists() ? ImageIO.read(file) : missingImageBuffered);
+		  return new ImageIcon(icon.getImage().getScaledInstance(ImageSize, ImageSize, Image.SCALE_DEFAULT) );
+		} catch (IOException e)
+		{
+			throw new RuntimeException("Error while laoding '" + iamge_name + ".png'");
+		}
+	}
+	
+	/**
+	 * Returns an ImageIcon (given by the abbreviation main_image_abbr) as the main icon (GuiHelper.ImageSize by GuiHelper.ImageSize pixels) and a smaller icon (given by the abbreviation layered_image_abbr) (3/5 of the size of the main image) in front of it.
 	 * The smaller image can be in 9 different locations, determined by horizontal_alignment and vertical_alignment.
 	 * 
 	 * @param main_image_abbr Abbreviation (or name, including any path-structure within the Images folder) of the main image.
@@ -112,14 +135,28 @@ public class GuiHelper
 	 * @param vertical_alignment Vertical alignment of the smaller image. Possible values: t, c, b
 	 * @return The ImageIcon object.
 	 */
-	public static ImageIcon getScaledLayeredImage(String main_image_abbr, String layered_image_abbr, String horizontal_alignment, String vertical_alignment)
+	public static ImageIcon getScaledLayeredImageFromAbbreviations(String main_image_abbr, String layered_image_abbr, String horizontal_alignment, String vertical_alignment)
+	{
+		return getScaledLayeredImage(Abbreviations.getNameFromAbbreviation(main_image_abbr), Abbreviations.getNameFromAbbreviation(layered_image_abbr), horizontal_alignment, vertical_alignment);
+	}
+	
+	/**
+	 * Returns an ImageIcon (given by the name main_image_name) as the main icon (GuiHelper.ImageSize by GuiHelper.ImageSize pixels) and a smaller icon (given by the name layered_image_name) (3/5 of the size of the main image) in front of it.
+	 * The smaller image can be in 9 different locations, determined by horizontal_alignment and vertical_alignment.
+	 * 
+	 * @param main_image_name Name (including any path-structure within the Images folder) of the main image.
+	 * @param layered_image_name Name (including any path-structure within the Images folder) of the layered image.
+	 * @param horizontal_alignment Horizontal alignment of the smaller image. Possible values: l, c, r
+	 * @param vertical_alignment Vertical alignment of the smaller image. Possible values: t, c, b
+	 * @return The ImageIcon object.
+	 */
+	public static ImageIcon getScaledLayeredImage(String main_image_name, String layered_image_name, String horizontal_alignment, String vertical_alignment)
 	{
 		try
 		{
 			// preparing Files
-			File file_bg = new File("Images\\" + Abbreviations.getNameFromAbbreviation(main_image_abbr) + ".png");
-			File file_fg = new File("Images\\" + Abbreviations.getNameFromAbbreviation(layered_image_abbr) + ".png");
-			File error = new File("Images\\Missing_image.png");
+			File file_bg = new File("Images\\" + main_image_name + ".png");
+			File file_fg = new File("Images\\" + layered_image_name + ".png");
 			
 			// preparing BufferedImages
 			final BufferedImage main_image;
@@ -128,14 +165,13 @@ public class GuiHelper
 			if (file_bg.exists() )
 				main_image = ImageIO.read(file_bg);
 			else
-				main_image = ImageIO.read(error);
+				main_image = missingImageBuffered;
 			
 			if (file_fg.exists() )
 				layered_image = ImageIO.read(file_fg);
 			else
-				layered_image = ImageIO.read(error);
+				layered_image = missingImageBuffered;
 			
-			final BufferedImage layer_dot = ImageIO.read(new File("Images\\Layer_dot.png")); // Black layer between images for better visibility
 			final BufferedImage scaled = new BufferedImage(ImageSize, ImageSize, BufferedImage.TYPE_INT_ARGB); // empty BufferedImage to draw on
 			Graphics g = scaled.getGraphics();
 			
@@ -146,9 +182,9 @@ public class GuiHelper
 			int y_dot = vertical_alignment  .equals("l") ? 0 : (ImageSize - dot_image_size  ) / (vertical_alignment  .equals("c") ? 2 : 1);
 			int x 	  = horizontal_alignment.equals("t") ? 0 : (ImageSize - small_image_size) / (horizontal_alignment.equals("c") ? 2 : 1);
 			int y 	  = vertical_alignment  .equals("l") ? 0 : (ImageSize - small_image_size) / (vertical_alignment  .equals("c") ? 2 : 1);
-			g.drawImage(main_image,    0,     0,     scaled.getWidth(), scaled.getHeight(), null);
-			g.drawImage(layer_dot,     x_dot, y_dot, dot_image_size,    dot_image_size,     null);
-			g.drawImage(layered_image, x,     y,     small_image_size,  small_image_size,   null);
+			g.drawImage(main_image,         0,     0,     scaled.getWidth(), scaled.getHeight(), null);
+			g.drawImage(layeredDotBuffered, x_dot, y_dot, dot_image_size,    dot_image_size,     null);
+			g.drawImage(layered_image,      x,     y,     small_image_size,  small_image_size,   null);
 			
 			return new ImageIcon(scaled);
 		} catch (IOException e)
@@ -183,5 +219,69 @@ public class GuiHelper
 		label.setForeground(ColorSettings.currentColorSetting.text);
 		label.setOpaque(false);
 		return label;
+	}
+
+	private static BufferedImage loadMissingImageBufferedImage()
+	{
+		try
+		{
+			return ImageIO.read(GuiHelper.class.getClassLoader().getResourceAsStream("Missing_image.png") );
+		} catch (IOException e)
+		{
+			MainGui.displayErrorAndExit("Error while loading 'Missing_Image.png'", false);
+			throw new RuntimeException("Error while loading 'Missing_Image.png'");
+		} catch (IllegalArgumentException e)
+		{
+			MainGui.displayErrorAndExit("Fatal error while loading 'Missing_Image.png', file doesn't exist!", true);
+			throw new RuntimeException("Fatal error while loading 'Missing_Image.png', file doesn't exist!");
+		}
+	}
+
+	private static BufferedImage loadLayeredDotImage()
+	{
+		try
+		{
+			return ImageIO.read(GuiHelper.class.getClassLoader().getResource("Layer_dot.png") );
+		} catch (IOException e)
+		{
+			MainGui.displayErrorAndExit("Error while loading 'Layere_dot.png'", false);
+			throw new RuntimeException("Error while loading 'Layere_dot.png'");
+		} catch (IllegalArgumentException e)
+		{
+			MainGui.displayErrorAndExit("Error while loading 'Layere_dot.png', file doesn't exist!", true);
+			throw new RuntimeException("Error while loading 'Layere_dot.png', file doesn't exist!");
+		}
+	}
+
+	private static ImageIcon getScaledTodoImageIcon()
+	{
+		try
+		{
+			return new ImageIcon(ImageIO.read(GuiHelper.class.getClassLoader().getResource("Todo.png") ).getScaledInstance(ImageSize, ImageSize, Image.SCALE_DEFAULT) );
+		} catch (IOException e)
+		{
+			MainGui.displayErrorAndExit("Error while loading 'Todo.png'", false);
+			throw new RuntimeException("Error while loading 'Todo.png'");
+		} catch (IllegalArgumentException e)
+		{
+			MainGui.displayErrorAndExit("Error while loading 'Todo.png', file doesn't exist!", true);
+			throw new RuntimeException("Error while loading 'Todo.png', file doesn't exist!");
+		}
+	}
+
+	private static ImageIcon getScaledLinebreakImageIcon()
+	{
+		try
+		{
+			return new ImageIcon(ImageIO.read(GuiHelper.class.getClassLoader().getResource("Linebreak.png") ).getScaledInstance(ImageSize, ImageSize, Image.SCALE_DEFAULT) );
+		} catch (IOException e)
+		{
+			MainGui.displayErrorAndExit("Error while loading 'Linebreak.png'", false);
+			throw new RuntimeException("Error while loading 'Linebreak.png'");
+		} catch (IllegalArgumentException e)
+		{
+			MainGui.displayErrorAndExit("Error while loading 'Linebreak.png', file doesn't exist!", true);
+			throw new RuntimeException("Error while loading 'Linebreak.png', file doesn't exist!");
+		}
 	}
 }
