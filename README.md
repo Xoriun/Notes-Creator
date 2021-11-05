@@ -65,5 +65,4 @@ Also, feel free to suggest any changes or new features.
 
 Planned additions:
  - Improvements on the hotkey feature.
- - Nicer edit window for cells.
  - Different color setting for each section.

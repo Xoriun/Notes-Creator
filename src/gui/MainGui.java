@@ -78,7 +78,6 @@ public class MainGui {
 		window.addWindowListener(MouseAdapters.windowOnCloseAdapter);
 		window.setTitle("");
 		window.pack();
-		window.setMaximumSize(screensize);
 		window.setVisible(true);
 
 		if (FileOperations.fileDirectoryNotes.equals("") || FileOperations.fileNameNotes.equals("") )
@@ -119,10 +118,20 @@ public class MainGui {
 		window.add(scrollPane);
 		window.pack();
 		window.setVisible(true);
-		window.repaint();
-		window.setMaximumSize(screensize);
+		resizeWindow();
+		window.pack();
 		
-		sectionsList.forEach(e -> e.setLocation() );
+		sectionsList.forEach(section -> section.setLocation() );
+	}
+	
+	private static void resizeWindow()
+	{
+		int height = (int) (screensize.height*0.9), width = (int) (screensize.width*0.9);
+		if (window.getHeight() < height)
+			height = window.getHeight();
+		if (window.getWidth() < width)
+			width = window.getWidth();
+		window.setPreferredSize(new Dimension(width + 100, height) );
 	}
 
 	public static void spaceColums()
