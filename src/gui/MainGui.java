@@ -29,6 +29,7 @@ import logic.Hotkeys;
 import logic.LiveSplitConnection;
 import logic.MouseAdapters;
 import logic.Section;
+import logic.Updates;
 
 public class MainGui {
 	public static Font font = new Font("Serif", Font.PLAIN, 20);
@@ -52,7 +53,7 @@ public class MainGui {
 	
 	private static Dimension screensize;
 	
-	public static String currentVersionTag = "v2.3";
+	public static String currentVersionTag = "v2.4";
 	
 	public static void prepareGui()
 	{
@@ -199,6 +200,7 @@ public class MainGui {
 						e1.printStackTrace();
 					}
 				}
+				Updates.checkForUpdates(false);
 			}
 		});
 	}
