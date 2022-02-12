@@ -24,8 +24,8 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import logic.FileOperations;
-import logic.Hotkeys;
 import logic.MouseAdapters;
+import logic.SpeedRunMode;
 
 public class MenuItems
 {
@@ -95,8 +95,8 @@ public class MenuItems
 			edit_abbr_edit  .addActionListener(e -> { Abbreviations.editAbbreviationSettings(); } );
 			
 			// Speedrun
-			speedrun_enabled .addActionListener(e -> { Hotkeys.isSpeedrunModeEnabled = speedrun_enabled.isSelected(); } );
-			speedrun_settings.addActionListener(e -> { Hotkeys.showHotkeySettingsWindow(); } );
+			speedrun_enabled .addActionListener(e -> { SpeedRunMode.updateSpeedRunMode(speedrun_enabled.isSelected() ); } );
+			speedrun_settings.addActionListener(e -> { SpeedRunMode.showSpeedrunSettingsWindow(); } );
 			
 			// Settings
 			settings_light_mode   .addActionListener(e -> { ColorSettings.selectColorSettings(0); ColorSettings.applyLightingMode(); } );

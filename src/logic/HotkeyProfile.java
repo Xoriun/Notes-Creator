@@ -96,7 +96,7 @@ class HotkeyProfile
 			return false;
 		}
 		
-		int mask = Hotkeys.workaround_box.isSelected() ? 253 : 255;
+		int mask = SpeedRunMode.workaround_box.isSelected() ? 253 : 255;
 		
 		int modifiers = event.getModifiers() & mask; // mask for alt, ctrl, shift
 		modifiers |= (modifiers << 4) & mask;        // add left to right

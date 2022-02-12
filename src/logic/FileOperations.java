@@ -114,7 +114,7 @@ public class FileOperations
 			// hotkey settings
 			String workaraound_activated = line;
 			if (workaraound_activated != null && !workaraound_activated.isEmpty() )
-				Hotkeys.workaround_box.setSelected(Boolean.parseBoolean(workaraound_activated.split(":")[1] ) );
+				SpeedRunMode.workaround_box.setSelected(Boolean.parseBoolean(workaraound_activated.split(":")[1] ) );
 			
 			String activeProfile = line = reader.readLine();
 			
@@ -218,7 +218,7 @@ public class FileOperations
 										color.border.getRed() +     ":" + color.border.getGreen() +     ":" + color.border.getBlue() + "\n" +
 										color.background.getRed() + ":" + color.background.getGreen() + ":" + color.background.getBlue()  + "\n");
 			}
-			writer.write("WorkaroundActivated:" + Hotkeys.workaround_box.isSelected() + "\n");
+			writer.write("WorkaroundActivated:" + SpeedRunMode.workaround_box.isSelected() + "\n");
 			writer.write(Hotkeys.activeProfile.name);
 			for (HotkeyProfile profile : Hotkeys.profiles)
 				writer.write("\n" + profile.getHotkeySettingsString() );

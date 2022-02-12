@@ -220,6 +220,14 @@ public class GuiHelper
 		label.setOpaque(false);
 		return label;
 	}
+	
+	public static JLabel getRightAlignedNonOpaqueJLabelWithCurrentTextColor(String text)
+	{
+		JLabel label = new JLabel(text, SwingConstants.RIGHT);
+		label.setForeground(ColorSettings.currentColorSetting.text);
+		label.setOpaque(false);
+		return label;
+	}
 
 	private static BufferedImage loadMissingImageBufferedImage()
 	{

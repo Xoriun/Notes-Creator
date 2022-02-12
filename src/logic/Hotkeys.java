@@ -1,129 +1,96 @@
 package logic;
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.FileDialog;
-import java.awt.Dialog.ModalityType;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.MouseInputAdapter;
-
+import org.jnativehook.GlobalScreen;
+import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
 
-import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
 import logic.HotkeyProfile;
 
 public class Hotkeys implements NativeKeyListener
 {
-	public static ArrayList<HotkeyProfile> profiles = new ArrayList<HotkeyProfile>();
-	public static HotkeyProfile activeProfile;
-	private static JLabel split = new JLabel();
-	private static JLabel reset = new JLabel();
-	private static JLabel undo  = new JLabel();
-	private static JLabel skip  = new JLabel();
-	public static JCheckBox workaround_box = new JCheckBox();;
+	protected static ArrayList<HotkeyProfile> profiles = new ArrayList<HotkeyProfile>();
+	protected static HotkeyProfile activeProfile;
 	
-	public static boolean isSpeedrunModeEnabled = false;
-	public static int currentSectionIndex = -1;
+	protected static final int HK_Split = 0;
+	protected static final int HK_Reset = 1;
+	protected static final int HK_Undo  = 2;
+	protected static final int HK_Skip  = 3;
+	protected static final int HK_Undefined = -1;
 	
-	public static final int HK_Split = 0;
-	public static final int HK_Reset = 1;
-	public static final int HK_Undo  = 2;
-	public static final int HK_Skip  = 3;
-	public static final int HK_Undefined = -1;
-	
-	private static final int SPLIT_SCROLL = 0;
-	private static final int SPLIT_HIDE   = 1;
-	
-	private static int splitType = SPLIT_SCROLL;
+	private static boolean listenForHotkeys = false;
 	
 	public Hotkeys()
 	{
-		profiles.add(new HotkeyProfile("Undefined") );
-		activeProfile = profiles.get(0);
 		
-		split.setOpaque(false);
-		reset.setOpaque(false);
-		undo.setOpaque(false);
-		skip.setOpaque(false);
+	}
+	
+	public static void initializeHotkeys()
+	{
+		Logger.getLogger(GlobalScreen.class.getPackage().getName() ).setLevel(Level.OFF);
+		try {
+			GlobalScreen.registerNativeHook();
+		}
+		catch (NativeHookException ex) {
+			System.err.println("There was a problem registering the native hook.");
+			System.err.println(ex.getMessage());
+		}
+		
+		GlobalScreen.addNativeKeyListener(new Hotkeys() );
+	}
+	
+	public static void shotDownHotkeys()
+	{
+		Logger.getLogger(GlobalScreen.class.getPackage().getName() ).setLevel(Level.OFF);
+		try {
+			GlobalScreen.unregisterNativeHook();
+		}
+		catch (NativeHookException ex) {
+			System.err.println("There was a problem registering the native hook.");
+			System.err.println(ex.getMessage());
+		}
+	}
+	
+	public static void startListeningForHotkeys()
+	{
+		listenForHotkeys = true;
+	}
+	
+	public static void stopListeningForHotkeys()
+	{
+		listenForHotkeys = false;
 	}
 	
 	@Override
  	public void nativeKeyPressed(NativeKeyEvent e)
 	{
-		if (isSpeedrunModeEnabled)
+		if (listenForHotkeys)
 		{
-			switch (activeProfile.getHotkeyMatch(e))
+			switch (activeProfile.getHotkeyMatch(e) )
 			{
 				case HK_Undefined: return;
 				case HK_Split:
+					SpeedRunMode.split();
+					break;
 				case HK_Skip:
-					currentSectionIndex ++;
-					if (currentSectionIndex < MainGui.sectionsList.size() )
-						if (splitType == SPLIT_SCROLL)
-							MainGui.scrollPane.getVerticalScrollBar().setValue(MainGui.sectionsList.get(currentSectionIndex).getScrollLocation() );
-						else
-						{
-							MainGui.mainPanel.removeAll();
-							MainGui.mainPanel.add(MainGui.sectionsList.get(currentSectionIndex) );
-						}
+					SpeedRunMode.skip();
 					break;
 				case HK_Reset:
-					currentSectionIndex = -1;
-					MainGui.scrollPane.getVerticalScrollBar().setValue(MainGui.sectionsList.get(0).getScrollLocation() );
-					if (splitType == SPLIT_HIDE)
-					{
-						MainGui.mainPanel.removeAll();
-						for (Section section : MainGui.sectionsList)
-							MainGui.mainPanel.add(section );
-					}
+					SpeedRunMode.reset();
 					break;
 				case HK_Undo:
-					if (currentSectionIndex >= 0)
-						currentSectionIndex --;
-					if (currentSectionIndex < 0)
-					{
-						if (splitType == SPLIT_SCROLL)
-							MainGui.scrollPane.getVerticalScrollBar().setValue(MainGui.sectionsList.get(0).getScrollLocation() );
-						else
-						{
-							MainGui.mainPanel.removeAll();
-							for (Section section : MainGui.sectionsList)
-								MainGui.mainPanel.add(section );
-						}
-					}
-					else
-						if (splitType == SPLIT_SCROLL)
-							MainGui.scrollPane.getVerticalScrollBar().setValue(MainGui.sectionsList.get(currentSectionIndex).getScrollLocation() );
-						else
-						{
-							MainGui.mainPanel.removeAll();
-							MainGui.mainPanel.add(MainGui.sectionsList.get(currentSectionIndex) );
-						}
+					SpeedRunMode.undoSplit();
 					break;
-			}
-			if (splitType == SPLIT_HIDE)
-			{
-				MainGui.keepGuiSize = false;
-				MainGui.window.pack();
 			}
 		}
 	}
@@ -138,165 +105,6 @@ public class Hotkeys implements NativeKeyListener
 	public void nativeKeyTyped(NativeKeyEvent e)
 	{
 		//System.out.println("Key Typed: " + NativeKeyEvent.getKeyText(e.getKeyCode() ) );
-	}
-	
-	@SuppressWarnings("unchecked")
-	public static void showHotkeySettingsWindow()
-	{
-		showHotkeySettingsWindow((ArrayList<HotkeyProfile>) Hotkeys.profiles.clone() );
-	}
-	
-	public static void showHotkeySettingsWindow(ArrayList<HotkeyProfile> profiles_copy)
-	{
-		JDialog dialog = new JDialog(MainGui.window);
-		dialog.setTitle("Hotkey settings");
-		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		dialog.setModalityType(ModalityType.APPLICATION_MODAL);
-		
-		// main panel
-			JPanel main_panel = new JPanel();
-			main_panel.setLayout(new BoxLayout(main_panel, BoxLayout.Y_AXIS) );
-			main_panel.setBorder(GuiHelper.getDialogBorder() );
-			main_panel.setBackground(ColorSettings.getBackgroundColor() );
-		
-		// settings panel
-			JPanel settings_panel = new JPanel();
-			settings_panel.setLayout(new BoxLayout(settings_panel, BoxLayout.Y_AXIS) );
-			settings_panel.setOpaque(false);
-			
-			// profile combobox
-			JPanel profile_panel = new JPanel();
-			profile_panel.setOpaque(false);
-			profile_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Active profile: ") );
-			JComboBox<HotkeyProfile> comboBox = new JComboBox<HotkeyProfile>( profiles_copy.toArray(new HotkeyProfile[profiles_copy.size() ] ) );
-			comboBox.setSelectedItem(activeProfile);
-			comboBox.addItemListener(new ItemListener() {
-				@Override
-				public void itemStateChanged(ItemEvent e)
-				{
-					HotkeyProfile profile = profiles_copy.get(comboBox.getSelectedIndex() );
-					split.setText(profile.getHotkeyDisplay("Split") );
-					reset.setText(profile.getHotkeyDisplay("Reset") );
-					undo .setText(profile.getHotkeyDisplay("Undo" ) );
-					skip .setText(profile.getHotkeyDisplay("Skip" ) );
-				}
-			});
-			profile_panel.add(comboBox);
-			settings_panel.add(profile_panel);
-			
-			// labels
-			HotkeyProfile profile = profiles_copy.get(comboBox.getSelectedIndex() );
-			if (profile != null)
-			{
-				split.setText(profile.getHotkeyDisplay("Split") );
-				split.setForeground(ColorSettings.getTextColor() );
-				reset.setText(profile.getHotkeyDisplay("Reset") );
-				reset.setForeground(ColorSettings.getTextColor() );
-				undo .setText(profile.getHotkeyDisplay("Undo" ) );
-				undo .setForeground(ColorSettings.getTextColor() );
-				skip .setText(profile.getHotkeyDisplay("Skip" ) );
-				skip .setForeground(ColorSettings.getTextColor() );
-			}
-			JPanel split_panel = new JPanel();
-			split_panel.setOpaque(false);
-			split_panel.add(new JLabel("Split: ") );
-			split_panel.add(split);
-			settings_panel.add(split_panel);
-			JPanel reset_panel = new JPanel();
-			reset_panel.setOpaque(false);
-			reset_panel.add(new JLabel("Reset: ") );
-			reset_panel.add(reset);
-			settings_panel.add(reset_panel);
-			JPanel undo_panel = new JPanel();
-			undo_panel.setOpaque(false);
-			undo_panel.add(new JLabel("Undo:  ") );
-			undo_panel.add(undo);
-			settings_panel.add(undo_panel);
-			JPanel skip_panel = new JPanel();
-			skip_panel.setOpaque(false);
-			skip_panel.add(new JLabel("Skip:  ") );
-			skip_panel.add(skip);
-			settings_panel.add(skip_panel);
-			
-			// load Button
-			JButton load = new JButton("Load hotkey profiles form LiveSplit");
-			load.setAlignmentX(Component.CENTER_ALIGNMENT);
-			load.addMouseListener(new MouseInputAdapter() {
-				@Override
-				public void mouseClicked(MouseEvent e)
-				{
-					selectLiveSplitFile(profiles_copy);
-					dialog.dispose();
-					showHotkeySettingsWindow(profiles_copy);
-				}
-			});
-			settings_panel.add(load);
-			
-			// CTRL workaraound
-			JPanel workaraound_panel = new JPanel();
-			workaraound_panel.setAlignmentX(Component.CENTER_ALIGNMENT);
-			workaraound_panel.setBorder(BorderFactory.createTitledBorder(
-					BorderFactory.createLineBorder(Color.RED, 2),
-					"Warnig",
-					TitledBorder.CENTER,
-					TitledBorder.DEFAULT_POSITION,
-					null,
-					Color.RED) );
-			workaraound_panel.setLayout(new BoxLayout(workaraound_panel, BoxLayout.Y_AXIS) );
-			workaraound_panel.setOpaque(false);
-			workaraound_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Currently, the 'Control' modifier doesn't work porperly!") );
-			workaround_box = new JCheckBox("Ignore the 'Control' Modifier entirely! (false by default)", workaround_box.isSelected() );
-			workaround_box.setOpaque(false);
-			workaround_box.setForeground(ColorSettings.getTextColor() );
-			workaraound_panel.add(workaround_box);
-			
-			settings_panel.add(workaraound_panel);
-			
-			/*
-			// split type
-			JPanel splittype_panel = new JPanel();
-			//split_panel.setLayout(new BoxLayout(splittype_panel, BoxLayout.Y_AXIS) );
-			splittype_panel.setBorder(BorderFactory.createTitledBorder("Split type") );
-			
-			JRadioButton scroll_radio = new JRadioButton("Scroll to to section");
-			scroll_radio.addActionListener(e -> { if (scroll_radio.isSelected() ) splitType = SPLIT_SCROLL; } );
-			JRadioButton hide_radio   = new JRadioButton("Hide other sections");
-			hide_radio.addActionListener(e -> { if (hide_radio.isSelected() ) splitType = SPLIT_HIDE; } );
-			
-			ButtonGroup type_group = new ButtonGroup();
-			type_group.add(scroll_radio);
-			type_group.add(hide_radio);
-			
-			splittype_panel.add(scroll_radio);
-			scroll_radio.setSelected(splitType == SPLIT_SCROLL);
-			splittype_panel.add(hide_radio);
-			hide_radio.setSelected(splitType == SPLIT_HIDE);
-			
-			settings_panel.add(splittype_panel);
-			*/
-		
-		// controls panel
-			JPanel controls_panel = new JPanel();
-			controls_panel.setOpaque(false);
-			
-			JButton confirm = new JButton("Confim");
-			confirm.addActionListener(e -> {
-				profiles = profiles_copy;
-				activeProfile = profiles_copy.get(comboBox.getSelectedIndex() );
-				dialog.dispose();
-			});
-			JButton cancel  = new JButton("Cancel");
-			cancel.addActionListener(e -> { dialog.dispose(); } );
-			
-			controls_panel.add(confirm);
-			controls_panel.add(cancel);
-		
-		main_panel.add(settings_panel);
-		main_panel.add(controls_panel);
-		dialog.add(main_panel);
-		dialog.pack();
-		GuiHelper.setLocationToCenter(dialog);
-		dialog.setVisible(true);
 	}
 	
 	public static void selectLiveSplitFile(ArrayList<HotkeyProfile> new_profiles)

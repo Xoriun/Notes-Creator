@@ -9,8 +9,6 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBoxMenuItem;
@@ -24,13 +22,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 
-import org.jnativehook.GlobalScreen;
-import org.jnativehook.NativeHookException;
-
 import edit.CellEditDialog;
 import edit.SectionManagerDialog;
 import logic.FileOperations;
 import logic.Hotkeys;
+import logic.LiveSplitConnection;
 import logic.MouseAdapters;
 import logic.Section;
 
@@ -102,6 +98,7 @@ public class MainGui {
 		if (inEditMode) SectionManagerDialog.updateSectionManagerDialog();
 		
 		window.remove(scrollPane);
+		window.setPreferredSize(null);
 		
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS) );
@@ -176,24 +173,13 @@ public class MainGui {
 	
 	public static void main(String[] args)
 	{
-		Logger.getLogger(GlobalScreen.class.getPackage().getName() ).setLevel(Level.OFF);
-		
-		try {
-			GlobalScreen.registerNativeHook();
-		}
-		catch (NativeHookException ex) {
-			System.err.println("There was a problem registering the native hook.");
-			System.err.println(ex.getMessage());
-	
-			System.exit(1);
-		}
-		
-		GlobalScreen.addNativeKeyListener(new Hotkeys() );
-		
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run()
 			{
+				LiveSplitConnection.initializeLiveSplitconnection();
+				Hotkeys.initializeHotkeys();
+				
 				try
 				{
 					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName() );
@@ -244,6 +230,8 @@ public class MainGui {
 	public static void exit()
 	{
 		FileOperations.writeSettingsFile();
+		LiveSplitConnection.shotDownAPI();
+		while(!LiveSplitConnection.readyToExit() );
 		System.exit(0);
 	}
 
