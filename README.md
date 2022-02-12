@@ -34,15 +34,16 @@ The exported file will also include the current abbreviations file.\
 When importing, you will be asked for saving locations for the notes-file and the abbreviations-file, in this order.
 
 ## NotesCreatorAPI and Hotkeys:
-During a speedrun, you can switch between the different sections of your notes without having to focus the Notes tool.
-When speedrunning mode is activated, each split/skip/undo action will jump to the next/previous section.
-For this to work properly, your sections and splits should coincide.\
+During a speedrun, you can switch between the different sections of your notes without having to focus NotesCreator.
+If used in combination with LiveSplit (or a similar program), your sections and splits should coincide for this to work.\
 There are two methods for switching between your sections during a speedrun:
+
 ### NotesCreatorAPI
 This is the recommended and default option.\
 You can connect LiveSplit and NotesCreator via my LiveSplit component NotesCreatorAPI.
-The newest version and how to use can be found at https://github.com/Xoriun/NotesCreatorAPI.
+The newest version and how to use it can be found at https://github.com/Xoriun/NotesCreatorAPI.
 This (should) also work with autosplitters that automatically split LiveSplit. 
+
 ### Hotkeys
 The other method is to use separate hotkeys within NotesCreator.
 You can import your hotkey profiles from LiveSplit.\
