@@ -14,7 +14,7 @@ To display an image, put the image (.png format!) into the image folder and use 
 All images will be scaled to a scale of 30x30 pixels.
 
 It is strongly advised to have a consistent naming convention for the images between users in order for Export/Import to work smoothly.\
-For Factorio, I recommend the official wiki: https://wiki.factorio.com/index.php?title=Category:Game_images&filefrom=Signal-A.png#mw-category-media.\
+For Factorio, I recommend the official wiki: https://wiki.factorio.com/index.php?title=Category:Game_images&filefrom=Signal-A.png#mw-category-media. \
 If an image was not found, an error image will be displayed instead.
 
 For layering images on top of each other (similar to Alt-Mode in Factorio), use #Background_image:Foreground_image:vertical_alignment:horizontal_alignment#.\
@@ -33,10 +33,20 @@ You can export and import notes to easily share them between users.
 The exported file will also include the current abbreviations file.\
 When importing, you will be asked for saving locations for the notes-file and the abbreviations-file, in this order.
 
-## Hotkeys:
-You can import your hotkey profiles from LiveSplit.
+## NotesCreatorAPI and Hotkeys:
+During a speedrun, you can switch between the different sections of your notes without having to focus the Notes tool.
 When speedrunning mode is activated, each split/skip/undo action will jump to the next/previous section.
-For this to work properly, your sections and splits should coincide.
+For this to work properly, your sections and splits should coincide.\
+There are two methods for switching between your sections during a speedrun:
+### NotesCreatorAPI
+This is the recommended and default option.\
+You can connect LiveSplit and NotesCreator via my LiveSplit component NotesCreatorAPI.
+The newest version and how to use can be found at https://github.com/Xoriun/NotesCreatorAPI.
+This (should) also work with autosplitters that automatically split LiveSplit. 
+### Hotkeys
+The other method is to use separate hotkeys within NotesCreator.
+You can import your hotkey profiles from LiveSplit.\
+Since this option is far more complicated to perfectly combine with LiveSplit, there will most likely be no further development here but I don't plan to completely remove it.
 
 ## Actions:
 To perform an action when clicking on a cell, use the following syntax:\

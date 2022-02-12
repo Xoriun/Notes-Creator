@@ -252,12 +252,12 @@ public class GuiHelper
 			return ImageIO.read(GuiHelper.class.getClassLoader().getResource("Layer_dot.png") );
 		} catch (IOException e)
 		{
-			MainGui.displayErrorAndExit("Error while loading 'Layere_dot.png'", false);
-			throw new RuntimeException("Error while loading 'Layere_dot.png'");
+			MainGui.displayErrorAndExit("Error while loading 'Layer_dot.png'", false);
+			throw new RuntimeException("Error while loading 'Layer_dot.png'");
 		} catch (IllegalArgumentException e)
 		{
-			MainGui.displayErrorAndExit("Error while loading 'Layere_dot.png', file doesn't exist!", true);
-			throw new RuntimeException("Error while loading 'Layere_dot.png', file doesn't exist!");
+			MainGui.displayErrorAndExit("Error while loading 'Layer_dot.png', file doesn't exist!", true);
+			throw new RuntimeException("Error while loading 'Layer_dot.png', file doesn't exist!");
 		}
 	}
 
