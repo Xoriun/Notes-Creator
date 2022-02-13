@@ -503,6 +503,25 @@ public class CellEditDialog
 					
 					gbc_main.gridy ++;
 					JButton button_change_main = new JButton("Select from file");
+					button_change_main.addActionListener(e ->
+					{
+						FileDialog dialog = new FileDialog(MainGui.window, "Select image");
+						dialog.setMode(FileDialog.LOAD);
+						GuiHelper.setLocationToCenter(dialog);
+						dialog.setVisible(true);
+						
+						if (dialog.getDirectory() != null)
+						{
+							content_panel.remove(main_image_label);
+							gbc.gridy = 0;
+							gbc.gridx = 1;
+							main_image_abbr = Paths.get("Images\\").toAbsolutePath().relativize(new File(dialog.getDirectory() + dialog.getFile() ).toPath() ).toString().split(Pattern.quote(".") )[0];
+							System.out.println(main_image_abbr);
+							main_image_label = new JLabel(GuiHelper.getScaledImageIconFromAbbreviation(main_image_abbr) );
+							content_panel.add(main_image_label, gbc);
+							icon_dialog.pack();
+						}
+					});
 					main_image_edit_panel.add(button_change_main, gbc_main);
 					content_panel.add(main_image_edit_panel, gbc);
 				
