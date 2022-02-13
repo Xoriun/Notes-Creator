@@ -199,7 +199,7 @@ public class Abbreviations
 				abbreviations_dialog.dispose();
 				FileOperations.unsavedChanges = true;
 				PopupAlerts.creatMissingImagesMessage = true;
-				Abbreviations.abbreviationsList = getAbbreviationsListFromTextfiles(textfield_list);
+				setAbbreviationsList(getAbbreviationsListFromTextfiles(textfield_list) );
 				FileOperations.fileAbbreviations = abbr_location_copy;
 				FileOperations.saveAbbereviationsFile();
 				MainGui.arrangeContent();
@@ -223,7 +223,7 @@ public class Abbreviations
 	
 	public static void setAbbreviationsList(ArrayList<String[]> abbreviations_list)
 	{
-		abbreviationsList = abbreviations_list;
+		abbreviationsList = abbreviations_list.stream().sorted( (a,b) -> {return a[0].compareTo(b[0] ); } ).collect(Collectors.toCollection(ArrayList::new) );
 	}
 	
 	public static ArrayList<String[]> getAbbreviationsListFromTextfiles(ArrayList<JTextField[]> textfields)
