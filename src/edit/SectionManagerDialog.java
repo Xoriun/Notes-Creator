@@ -66,8 +66,8 @@ public class SectionManagerDialog
 		sectionManagerDialog.add(sectionManagerPanel);
 
 		sectionManagerDialog.pack();
-		if (sectionManagerDialog.getHeight() > MainGui.window.getHeight() - 150)
-			sectionManagerDialog.setPreferredSize(new Dimension(sectionManagerDialog.getWidth() + 20, MainGui.window.getHeight() - 150) );
+		if (sectionManagerDialog.getHeight() > MainGui.screensize.height - 150)
+			sectionManagerDialog.setPreferredSize(new Dimension(sectionManagerDialog.getWidth() + 20, MainGui.screensize.height - 150) );
 		sectionManagerDialog.pack();
 		sectionManagerDialog.setVisible(true);
 	}

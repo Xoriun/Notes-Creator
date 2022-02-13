@@ -51,9 +51,9 @@ public class MainGui {
 	
 	public static ArrayList<Section> sectionsList = new ArrayList<Section>();
 	
-	private static Dimension screensize;
+	public static Dimension screensize;
 	
-	public static String currentVersionTag = "v2.6";
+	public static String currentVersionTag = "v2.7";
 	
 	public static void prepareGui()
 	{
