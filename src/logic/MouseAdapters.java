@@ -259,7 +259,7 @@ public class MouseAdapters
 			@Override
 			public void mouseClicked(MouseEvent e)
 			{
-				if (!MainGui.inEditMode)
+				if (SpeedRunMode.speedrunModeEnabled)
 					Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(textToWrite), null);
 			}
 		};
@@ -271,7 +271,7 @@ public class MouseAdapters
 			@Override
 			public void mouseClicked(MouseEvent me)
 			{
-				if (MainGui.inEditMode)
+				if (!SpeedRunMode.speedrunModeEnabled)
 					return;
 				
 				String output = "";

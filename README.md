@@ -3,22 +3,20 @@
 Create notes for a speedrun.
 
 ## Setup
-Go to release (on the right side) and download the latest version. Extract the .zip file and run 'Notes-Creator_x.x.jar'.
+Go to release (on the right side) and download the latest version and run 'Notes-Creator_x.y.jar'.
 
 ## Edit Mode
 Enabling edit mode will allow you to edit, add and remove rows, columns and sections.\
-To start a new line within a cell, type \n.
+The SectionManager will open in a separate window.
+While edit mode is enabled, clicking on a cell will open the CellEditDialog where you can add/remove/switch the text and icon contents of the cell as well as edit the actions of the cell.
 
 ## Images:
-To display an image, put the image (.png format!) into the image folder and use #image_name# within the notes. (#image1# will load the image "image1.png").
+To display an image, put the image (.png format!) into the image folder and add an icon via the CellEditDialog.
 All images will be scaled to a scale of 30x30 pixels.
 
 It is strongly advised to have a consistent naming convention for the images between users in order for Export/Import to work smoothly.\
 For Factorio, I recommend the official wiki: https://wiki.factorio.com/index.php?title=Category:Game_images&filefrom=Signal-A.png#mw-category-media. \
 If an image was not found, an error image will be displayed instead.
-
-For layering images on top of each other (similar to Alt-Mode in Factorio), use #Background_image:Foreground_image:vertical_alignment:horizontal_alignment#.\
-vertical_alignment can be t/c/b (top/center/bottom), horizontal_alignment can be l/c/r (left/center/right).
 
 ## Abbreviations:
 Since most of the images will have long and tedious to type names, you can set up abbreviations via the Edit-Menu.\
@@ -50,18 +48,16 @@ You can import your hotkey profiles from LiveSplit.\
 Since this option is far more complicated to perfectly combine with LiveSplit, there will most likely be no further development here but I don't plan to completely remove it.
 
 ## Actions:
-To perform an action when clicking on a cell, use the following syntax:\
-&emsp;&emsp;cell_content>>action_command:action_parameter#action_command:action_parameter\
-and so on.
-This action will only be performed when not in Edit Mode.\
+Within the CellEditDialog can assign actions to a cell which then get executed when clicking on them while speedrunning mode is active.
 Currently the following commands are supported:\
-&emsp;&emsp;- text_to_clipboard: writes the action_parameter as String to the System clipboard.
-\&emsp;&emsp;- file_to_clipboard: writes the content of a file located at the action_parameter as String to the System clipboard.\
+ - text_to_clipboard: writes the action_parameter as String to the System clipboard.
+ - file_to_clipboard: writes the content of a file located at the action_parameter as String to the System clipboard. !! Be aware that the file location will be visible in plain text when exporting. !!
+
 Feel free to suggest new actions!!
 
 ## TODO
 For each row, you can add TODO-Tasks by clicking on the '+' button on the right.\
-They are meant for when you are doing an attempt and realize you have to change something, so you can note it down quickly and adapt your notes/strategy later.\
+They are meant for when you are currently in a speedrun and realize you have to change something, so you can note it down quickly and adapt your notes/strategy later.\
 Non-empty TODO-Task are highlighted while in Edit-Mode.
 
 ## Example
@@ -75,5 +71,8 @@ When encountering any bug, please let me know.
 Also, feel free to suggest any changes or new features.
 
 Planned additions:
- - Improvements on the hotkey feature.
+ - Improvements on the CellEditDialog: copy past of TextBlocks/Icons/whole cells.
+ - Actions for section that get automatically executed when entering/exiting a section.
+ - Action to start an other program.
+ - Discrete handling of file locations for exporting files.
  - Different color setting for each section.
