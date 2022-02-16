@@ -82,7 +82,7 @@ public class MenuItems
 			
 			// Edit
 			edit_enabled    .addActionListener(e -> { MainGui.updateEditMode(edit_enabled); } );
-			edit_abbr_edit  .addActionListener(e -> { Abbreviations.editAbbreviationSettings(); } );
+			edit_abbr_edit  .addActionListener(e -> { Abbreviations.showAbbreviationSettingsDialog(); } );
 			
 			// Speedrun
 			speedrun_enabled .addActionListener(e -> { SpeedRunMode.updateSpeedRunMode(speedrun_enabled.isSelected() ); } );

@@ -44,6 +44,17 @@ public class GuiHelper
 	}
 	
 	/**
+	 * Returns a MatteBorder with the provided width and color as the background.
+	 * 
+	 * @param width How much space should be added by the border.
+	 * @return The MatteBorder object.
+	 */
+	public static MatteBorder getSpacingBorder(int width)
+	{
+		return BorderFactory.createMatteBorder(width, width, width, width, ColorSettings.getBackgroundColor() );
+	}
+	
+	/**
 	 * Returns a MatteBorder with width 2 and color as the text.
 	 * 
 	 * @return The MatteBorder object.
@@ -196,10 +207,10 @@ public class GuiHelper
 	
 	public static void setLocationToCenter(Container container)
 	{
-		setLocationToCenter(container, 1000);
+		resizeAndCenterRelativeToMainWindow(container, 1000, 0);
 	}
 	
-	public static void setLocationToCenter(Container container, int max_height_rel_to_window)
+	public static void resizeAndCenterRelativeToMainWindow(Container container, int max_height_rel_to_window, int min_height)
 	{
 		Dimension dim_container  = container.getSize();
 		Dimension dim_window = MainGui.window.getSize();
@@ -209,8 +220,18 @@ public class GuiHelper
 			dim_container.height = dim_window.height + max_height_rel_to_window;
 			container.setPreferredSize(dim_container);
 		}
+		if (dim_container.height < min_height)
+		{
+			dim_container.height = min_height;
+			container.setPreferredSize(dim_container);
+		}
 		
-		container.setLocation(MainGui.window.getLocation().x + (dim_window.width - dim_container.width)/2, MainGui.window.getLocation().y + (dim_window.height - dim_container.height)/2);
+		int location_x = MainGui.window.getLocation().x + (dim_window.width - dim_container.width)/2;
+		int location_y = MainGui.window.getLocation().y + (dim_window.height - dim_container.height)/2;
+		if (location_y < 0)
+			location_y = 0;
+		
+		container.setLocation(location_x, location_y);
 	}
 	
 	public static JLabel getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(String text)

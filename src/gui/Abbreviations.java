@@ -27,12 +27,12 @@ public class Abbreviations
 	private static ArrayList<String[]> abbreviationsList = new ArrayList<String[]>();
 	
 	@SuppressWarnings("unchecked")
-	public static void editAbbreviationSettings()
+	public static void showAbbreviationSettingsDialog()
 	{
-		getAbbreviationSettings(FileOperations.fileAbbreviations, (ArrayList<String[]>) abbreviationsList.clone() );
+		showAbbreviationSettingsDialog(FileOperations.fileAbbreviations, (ArrayList<String[]>) abbreviationsList.clone() );
 	}
 
-	private static void getAbbreviationSettings(String abbr_location_copy, ArrayList<String[]> abbr_list_copy)
+	private static void showAbbreviationSettingsDialog(String abbr_location_copy, ArrayList<String[]> abbr_list_copy)
 	{
 		JDialog abbreviations_dialog = new JDialog(MainGui.window);
 		abbreviations_dialog.setModal(true);
@@ -47,11 +47,13 @@ public class Abbreviations
 		JPanel settings_panel = new JPanel();
 		settings_panel.setLayout(new BoxLayout(settings_panel, BoxLayout.Y_AXIS) );
 		settings_panel.setOpaque(false);
+		settings_panel.setBorder(GuiHelper.getSpacingBorder(5) );
 		
 	  // file panel
 			JPanel file_panel = new JPanel();
 			file_panel.setLayout(new BoxLayout(file_panel, BoxLayout.Y_AXIS) );
 			file_panel.setOpaque(false);
+			file_panel.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor("Abbreviations file") );
 			
 			// file location
 			JPanel current_file_panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -71,15 +73,15 @@ public class Abbreviations
 				abbreviations_dialog.dispose();
 				ArrayList<String[]> new_abbr_list = FileOperations.readAbbriviationsFile(new_abbr_loaction);
 				if (!new_abbr_list.isEmpty() )
-					getAbbreviationSettings(new_abbr_loaction, new_abbr_list);
+					showAbbreviationSettingsDialog(new_abbr_loaction, new_abbr_list);
 			} );
 			file_new.addActionListener(e -> {
 				abbreviations_dialog.dispose();
-				getAbbreviationSettings(FileOperations.newAbbreviationsFile(abbr_list_copy), abbr_list_copy);
+				showAbbreviationSettingsDialog(FileOperations.newAbbreviationsFile(abbr_list_copy), abbr_list_copy);
 			} );
 			file_remove.addActionListener(e -> {
 				abbreviations_dialog.dispose();
-				getAbbreviationSettings("", new ArrayList<String[]>() );
+				showAbbreviationSettingsDialog("", new ArrayList<String[]>() );
 			} );
 			file_actions_panel.add(file_select);
 			file_actions_panel.add(file_new);
@@ -95,6 +97,7 @@ public class Abbreviations
 			JPanel abbr_panel = new JPanel();
 			abbr_panel.setLayout(new BoxLayout(abbr_panel, BoxLayout.Y_AXIS) );
 			abbr_panel.setOpaque(false);
+			abbr_panel.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor("Abbreviations") );
 			JButton abbr_add_button = new JButton("Add abbreviation");
 			
 			// abbreviationsList list panel
@@ -130,7 +133,7 @@ public class Abbreviations
 						abbreviations_dialog.dispose();
 						textfield_list.remove(row);
 						abbr_list_copy.remove(abbr);
-						getAbbreviationSettings(abbr_location_copy, getAbbreviationsListFromTextfiles(textfield_list) );
+						showAbbreviationSettingsDialog(abbr_location_copy, getAbbreviationsListFromTextfiles(textfield_list) );
 					}
 				} );
 				gbc.gridx = 3;
@@ -167,7 +170,7 @@ public class Abbreviations
 						abbreviations_dialog.dispose();
 						textfield_list.remove(new_row);
 						abbr_list_copy.remove(new_abbr);
-						getAbbreviationSettings(abbr_location_copy, getAbbreviationsListFromTextfiles(textfield_list) );
+						showAbbreviationSettingsDialog(abbr_location_copy, getAbbreviationsListFromTextfiles(textfield_list) );
 					}
 				} );
 				gbc.gridx = 3;
@@ -215,7 +218,7 @@ public class Abbreviations
 		outer_panel.add(settings_panel);
 		abbreviations_dialog.add(outer_panel);
 		abbreviations_dialog.pack();
-		GuiHelper.setLocationToCenter(abbreviations_dialog, -200);
+		GuiHelper.resizeAndCenterRelativeToMainWindow(abbreviations_dialog, -200, abbreviations_dialog.getHeight() - (abbr_scroll_pane.getHeight() / 2) );
 		abbreviations_dialog.pack();
 		abbreviations_dialog.setVisible(true);
 		abbreviations_dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
