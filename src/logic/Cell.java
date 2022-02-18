@@ -2,7 +2,6 @@ package logic;
 
 import java.awt.Component;
 import java.awt.event.MouseListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
@@ -18,7 +17,6 @@ import gui.Abbreviations;
 import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
-import gui.PopupAlerts;
 
 public class Cell extends JPanel
 {
@@ -89,6 +87,11 @@ public class Cell extends JPanel
 		this.setBorder(GuiHelper.getDefaultBorder(topBorder, leftBorder) );
 	}
 	
+	public void relaodImages()
+	{
+		for (CellLabel icon_label : cellLabels) icon_label.reloadImage();
+	}
+	
 	public void setSelectedBorder()
 	{
 		this.setBorder(GuiHelper.getSelectedBorder() );
@@ -147,6 +150,7 @@ public class Cell extends JPanel
 		public abstract EditPanel getEditPanel();
 		
 		public int getIndex() { return index; }
+		public abstract void reloadImage();
 	}
 	
 	private class TextLabel extends CellLabel
@@ -166,6 +170,8 @@ public class Cell extends JPanel
 		{
 			return new EditTextField(this.getText() );
 		}
+		
+		public void reloadImage() {}
 	}
 	
 	private class IconLabel extends CellLabel
@@ -193,41 +199,32 @@ public class Cell extends JPanel
 				layeredImageAbbr    = images[1];
 				horizontalAlignment = images[2];
 				verticalAlignment   = images[3];
-				
+			}
+			else
+			{
+				mainImageAbbr = str;
+				layeredImageAbbr = horizontalAlignment = verticalAlignment = "";
+			}
+			loadImage();
+		}
+		
+		public void reloadImage()
+		{
+			loadImage();
+		}
+		
+		private void loadImage()
+		{
+			if ( !layeredImageAbbr.isEmpty() )
+			{
 				String main_image_name    = Abbreviations.getNameFromAbbreviation(mainImageAbbr);
 				String layered_image_name = Abbreviations.getNameFromAbbreviation(layeredImageAbbr);
-				
-				if ( PopupAlerts.creatMissingImagesMessage && ! new File("Images\\" + main_image_name + ".png").exists() )
-				{
-					String new_message = main_image_name + ".png" + (mainImageAbbr.equals(main_image_name) ? "" : " (" + mainImageAbbr + ")");
-					if (!PopupAlerts.missingImagesMessage.contains(new_message) )
-						PopupAlerts.missingImagesMessage += "\n" + new_message;
-				}
-				if ( PopupAlerts.creatMissingImagesMessage && ! new File("Images\\" + layered_image_name + ".png").exists() )
-				{
-					String new_message = layered_image_name + ".png" + (layeredImageAbbr.equals(layered_image_name) ? "" : " (" + layeredImageAbbr + ")");
-					if (!PopupAlerts.missingImagesMessage.contains(new_message) )
-						PopupAlerts.missingImagesMessage += "\n" + new_message;
-				}
-				
 				icon = GuiHelper.getScaledLayeredImage(main_image_name, layered_image_name, horizontalAlignment, verticalAlignment);
 				this.setIcon(icon);
 			}
 			else
 			{
-				mainImageAbbr = str;
 				String main_image_name = Abbreviations.getNameFromAbbreviation(mainImageAbbr);
-				
-				if ( ! new File("Images\\" + main_image_name + ".png").exists() )
-				{
-					if (PopupAlerts.creatMissingImagesMessage)
-					{
-						String new_message = main_image_name + ".png" + (mainImageAbbr.equals(main_image_name) ? "" : " (" + mainImageAbbr + ")");
-						if (!PopupAlerts.missingImagesMessage.contains(new_message) )
-							PopupAlerts.missingImagesMessage += "\n" + new_message;
-					}
-				}
-				
 				icon = GuiHelper.getScaledImageIcon(main_image_name);
 				this.setIcon(icon);
 			}

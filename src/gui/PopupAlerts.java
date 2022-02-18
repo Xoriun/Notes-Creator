@@ -7,6 +7,8 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -22,15 +24,32 @@ import logic.FileOperations;
 
 public class PopupAlerts
 {
-	public static String missingImagesMessage = "";
-	public static boolean creatMissingImagesMessage = false;
+	//private static ArrayList<String> missingImagesSet = new ArrayList<String>(100);
+	private static SortedSet<String> missingImagesSet = new TreeSet<String>();
+	public static boolean createMissingImagesMessage = false;
+	
+	public static void showMissingImagesMessageIfNonEmpty()
+	{
+		if ( !missingImagesSet.isEmpty() )
+			showMissingImagesMessage();
+	}
+	
+	public static void resetMissingImagesMessage()
+	{
+		missingImagesSet.clear();
+	}
+	
+	public static void addMessageForMissingImage(String image_name)
+	{
+		if (createMissingImagesMessage && !missingImagesSet.contains(image_name) )
+			missingImagesSet.add(image_name);
+	}
 	
 	public static void showMissingImagesMessage()
 	{
 		JDialog missing_dialog = new JDialog(MainGui.window);
 		missing_dialog.setModal(true);
 		missing_dialog.setTitle("Missing images");
-		//missing_dialog.setUndecorated(true);
 		
 		// main panel
 		JPanel missing_panel = new JPanel();
@@ -46,11 +65,14 @@ public class PopupAlerts
 			missing_panel.add(title);
 		
 		// message panel
-			JTextArea message = new JTextArea("The following images are missing in your 'Images' folder:" + missingImagesMessage);
-			message.setBackground(ColorSettings.getBackgroundColor() );
-			message.setForeground(ColorSettings.getTextColor() );
-			message.setEditable(false);
-			JScrollPane scroll_pane = new JScrollPane(message,
+			String text = "The following images are missing in your 'Images' folder:";
+			for (String message : missingImagesSet)
+				text += '\n' + message + ".pmg";
+			JTextArea text_area = new JTextArea(text);
+			text_area.setBackground(ColorSettings.getBackgroundColor() );
+			text_area.setForeground(ColorSettings.getTextColor() );
+			text_area.setEditable(false);
+			JScrollPane scroll_pane = new JScrollPane(text_area,
 					ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			scroll_pane.setBackground(ColorSettings.getBackgroundColor() );
 			scroll_pane.setBorder(GuiHelper.getEmptyBorder() );
@@ -64,7 +86,7 @@ public class PopupAlerts
 			open_folder.addActionListener(e -> {
 					try
 					{
-						Desktop.getDesktop().open(new File("Images\\"));
+						Desktop.getDesktop().open(new File(FileOperations.imagesDirectory) );
 					} catch (IOException e1)
 					{
 						System.out.println("Error while opening 'Images' directory!");
@@ -84,7 +106,7 @@ public class PopupAlerts
 		if (missing_dialog.getHeight() > MainGui.window.getHeight() - 150)
 			missing_dialog.setPreferredSize(new Dimension(missing_dialog.getWidth() + 20, MainGui.window.getHeight() - 150) );
 		missing_dialog.pack();
-		GuiHelper.setLocationToCenter(missing_dialog);
+		GuiHelper.resizeAndCenterRelativeToMainWindow(missing_dialog);
 		missing_dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		missing_dialog.setVisible(true);
 	}

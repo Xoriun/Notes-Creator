@@ -215,7 +215,7 @@ public class ColorSettings
 		
 		options.setPreferredSize(new Dimension(50 + options.getSize().width, options.getSize().height) );
 		options.pack();
-		GuiHelper.setLocationToCenter(options);
+		GuiHelper.resizeAndCenterRelativeToMainWindow(options);
 		options.setVisible(true);
 		options.repaint();
 	}

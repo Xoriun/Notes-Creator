@@ -110,7 +110,7 @@ public class Hotkeys implements NativeKeyListener
 	public static void selectLiveSplitFile(ArrayList<HotkeyProfile> new_profiles)
 	{
 		FileDialog dialog = new FileDialog(MainGui.window, "Select 'LiceSplit.exe'", FileDialog.LOAD);
-		GuiHelper.setLocationToCenter(dialog);
+		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 		String dir = dialog.getDirectory();
 		

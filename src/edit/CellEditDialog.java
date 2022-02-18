@@ -507,7 +507,7 @@ public class CellEditDialog
 					{
 						FileDialog dialog = new FileDialog(MainGui.window, "Select image");
 						dialog.setMode(FileDialog.LOAD);
-						GuiHelper.setLocationToCenter(dialog);
+						GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 						dialog.setVisible(true);
 						
 						if (dialog.getDirectory() != null)
@@ -588,7 +588,7 @@ public class CellEditDialog
 						{
 							FileDialog dialog = new FileDialog(MainGui.window, "Select image");
 							dialog.setMode(FileDialog.LOAD);
-							GuiHelper.setLocationToCenter(dialog);
+							GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 							dialog.setVisible(true);
 							
 							if (dialog.getDirectory() != null)

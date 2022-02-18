@@ -72,7 +72,7 @@ public class Updates
 				
 				dialog.add(panel);
 				dialog.pack();
-				GuiHelper.setLocationToCenter(dialog);
+				GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 				dialog.setVisible(true);
 			}
 		});

@@ -77,10 +77,10 @@ public class MainGui {
 		window.pack();
 		window.setVisible(true);
 
-		if (FileOperations.fileDirectoryNotes.equals("") || FileOperations.fileNameNotes.equals("") )
+		if (FileOperations.fileNotesDirectory.equals("") || FileOperations.fileNotesName.equals("") )
 			FileOperations.selectNotesFile();
 		else
-			window.setTitle(FileOperations.fileNameNotes.replace('_', ' ') );
+			window.setTitle(FileOperations.fileNotesName.replace('_', ' ') );
 		
 		SectionManagerDialog.initializeSectionDialog();
 		CellEditDialog.initializeCellEditDialog();
@@ -90,7 +90,7 @@ public class MainGui {
 	{
 		MenuItems.getAddRemoveColumnsMenuItems();
 		
-		PopupAlerts.missingImagesMessage = "";
+		PopupAlerts.resetMissingImagesMessage();
 		
 		height = scrollPane.getHeight();
 		scrollValue = scrollPane.getVerticalScrollBar().getValue();
@@ -120,6 +120,18 @@ public class MainGui {
 		window.pack();
 		
 		sectionsList.forEach(section -> section.setLocation() );
+	}
+	
+	public static void reloadImages()
+	{
+		PopupAlerts.createMissingImagesMessage = true;
+		PopupAlerts.resetMissingImagesMessage();
+		
+		for (Section section : sectionsList)
+			section.reloadImages();
+		
+		PopupAlerts.showMissingImagesMessageIfNonEmpty();
+		PopupAlerts.createMissingImagesMessage = false;
 	}
 	
 	private static void resizeWindow()
@@ -166,10 +178,9 @@ public class MainGui {
 		keepGuiSize = true;
 		contentRearraged = false;
 		
-		if (!PopupAlerts.missingImagesMessage.equals("") )
-			PopupAlerts.showMissingImagesMessage();
-		PopupAlerts.missingImagesMessage = "";
-		PopupAlerts.creatMissingImagesMessage = false;
+		PopupAlerts.showMissingImagesMessageIfNonEmpty();
+		PopupAlerts.resetMissingImagesMessage();
+		PopupAlerts.createMissingImagesMessage = false;
 	}
 	
 	public static void main(String[] args)

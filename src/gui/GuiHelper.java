@@ -19,6 +19,8 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.border.TitledBorder;
 
+import logic.FileOperations;
+
 public class GuiHelper
 {
 	private final static int ImageSize = 30;
@@ -120,19 +122,26 @@ public class GuiHelper
 	/**
 	 * Returns an ImageIcon (given by the name image_name) of size GuiHelper.ImageSize by GuiHelper.ImageSize pixels.
 	 * 
-	 * @param iamge_name Name (including any path-structure within the Images folder) of the image.
+	 * @param image_name Name (including any path-structure within the Images folder) of the image.
 	 * @return The ImageIcon object.
 	 */
-	public static ImageIcon getScaledImageIcon(String iamge_name)
+	public static ImageIcon getScaledImageIcon(String image_name)
 	{
-		File file = new File("Images\\" + iamge_name + ".png");
+		File file = new File(FileOperations.imagesDirectory + "\\" + image_name + ".png");
 		try
 		{
-			ImageIcon icon = new ImageIcon(file.exists() ? ImageIO.read(file) : missingImageBuffered);
-		  return new ImageIcon(icon.getImage().getScaledInstance(ImageSize, ImageSize, Image.SCALE_DEFAULT) );
+			final BufferedImage buffered_image;
+			if (file.exists() )
+				buffered_image = ImageIO.read(file);
+			else
+			{
+				buffered_image = missingImageBuffered;
+				PopupAlerts.addMessageForMissingImage(image_name);
+			}
+		  return new ImageIcon(new ImageIcon(buffered_image).getImage().getScaledInstance(ImageSize, ImageSize, Image.SCALE_DEFAULT) );
 		} catch (IOException e)
 		{
-			throw new RuntimeException("Error while laoding '" + iamge_name + ".png'");
+			throw new RuntimeException("Error while laoding '" + image_name + ".png'");
 		}
 	}
 	
@@ -166,8 +175,8 @@ public class GuiHelper
 		try
 		{
 			// preparing Files
-			File file_bg = new File("Images\\" + main_image_name + ".png");
-			File file_fg = new File("Images\\" + layered_image_name + ".png");
+			File file_bg = new File(FileOperations.imagesDirectory + "\\" + main_image_name + ".png");
+			File file_fg = new File(FileOperations.imagesDirectory + "\\" + layered_image_name + ".png");
 			
 			// preparing BufferedImages
 			final BufferedImage main_image;
@@ -176,12 +185,18 @@ public class GuiHelper
 			if (file_bg.exists() )
 				main_image = ImageIO.read(file_bg);
 			else
+			{
 				main_image = missingImageBuffered;
+				PopupAlerts.addMessageForMissingImage(main_image_name);
+			}
 			
 			if (file_fg.exists() )
 				layered_image = ImageIO.read(file_fg);
 			else
+			{
 				layered_image = missingImageBuffered;
+				PopupAlerts.addMessageForMissingImage(layered_image_name);
+			}
 			
 			final BufferedImage scaled = new BufferedImage(ImageSize, ImageSize, BufferedImage.TYPE_INT_ARGB); // empty BufferedImage to draw on
 			Graphics g = scaled.getGraphics();
@@ -205,7 +220,7 @@ public class GuiHelper
 		}
 	}
 	
-	public static void setLocationToCenter(Container container)
+	public static void resizeAndCenterRelativeToMainWindow(Container container)
 	{
 		resizeAndCenterRelativeToMainWindow(container, 1000, 0);
 	}

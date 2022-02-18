@@ -62,6 +62,11 @@ public class Section extends JPanel
 		rows.add(new Row(this, row_string, rows.size() ) );
 	}
 	
+	public void reloadImages()
+	{
+		for (Row row : rows) row.reloadImages();
+	}
+	
 	public void fillPanel()
 	{
 		this.removeAll();

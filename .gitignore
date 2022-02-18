@@ -1,8 +1,6 @@
 /bin/
 /builds/
-settings.txt
 Layer_dot.psd
-.gitignore.txt
 /src/test.java
 /Images/*
 /releases/

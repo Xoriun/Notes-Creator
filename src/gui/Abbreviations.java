@@ -29,10 +29,10 @@ public class Abbreviations
 	@SuppressWarnings("unchecked")
 	public static void showAbbreviationSettingsDialog()
 	{
-		showAbbreviationSettingsDialog(FileOperations.fileAbbreviations, (ArrayList<String[]>) abbreviationsList.clone() );
+		showAbbreviationSettingsDialog(FileOperations.fileAbbreviations, FileOperations.imagesDirectory, (ArrayList<String[]>) abbreviationsList.clone() );
 	}
 
-	private static void showAbbreviationSettingsDialog(String abbr_location_copy, ArrayList<String[]> abbr_list_copy)
+	private static void showAbbreviationSettingsDialog(final String abbr_location, final String images_dir, ArrayList<String[]> abbr_list_copy)
 	{
 		JDialog abbreviations_dialog = new JDialog(MainGui.window);
 		abbreviations_dialog.setModal(true);
@@ -49,6 +49,36 @@ public class Abbreviations
 		settings_panel.setOpaque(false);
 		settings_panel.setBorder(GuiHelper.getSpacingBorder(5) );
 		
+	  // image_dir panel
+			JPanel image_dir_panel = new JPanel();
+			image_dir_panel.setLayout(new BoxLayout(image_dir_panel, BoxLayout.X_AXIS) );
+			image_dir_panel.setOpaque(false);
+			image_dir_panel.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor("Image directory") );
+			
+			// image_dir location
+			JPanel current_image_dir_panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+			current_image_dir_panel.setOpaque(false);
+			JLabel current_image_dir = new JLabel("Selected image directory: " + images_dir);
+			current_image_dir.setForeground(ColorSettings.getTextColor() );
+			current_image_dir_panel.add(current_image_dir);
+			
+			// image_dir file
+			JPanel image_dir_actions_panel = new JPanel();
+			image_dir_actions_panel.setOpaque(false);
+			JButton image_dir_select = new JButton("Select image directory");
+			image_dir_select.addActionListener(e -> {
+				String new_images_dir  = FileOperations.selectImageDirectory();
+				abbreviations_dialog.dispose();
+				showAbbreviationSettingsDialog(abbr_location, new_images_dir, abbr_list_copy);
+			} );
+			image_dir_actions_panel.add(image_dir_select);
+	    
+			// fill cells
+			image_dir_panel.add(current_image_dir_panel);
+			image_dir_panel.add(image_dir_actions_panel);
+			
+			settings_panel.add(image_dir_panel);
+		
 	  // file panel
 			JPanel file_panel = new JPanel();
 			file_panel.setLayout(new BoxLayout(file_panel, BoxLayout.Y_AXIS) );
@@ -58,7 +88,7 @@ public class Abbreviations
 			// file location
 			JPanel current_file_panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			current_file_panel.setOpaque(false);
-			JLabel current_file = new JLabel("Selected abbreviations file: " + abbr_location_copy);
+			JLabel current_file = new JLabel("Selected abbreviations file: " + abbr_location);
 			current_file.setForeground(ColorSettings.getTextColor() );
 			current_file_panel.add(current_file);
 			
@@ -71,17 +101,15 @@ public class Abbreviations
 			file_select.addActionListener(e -> {
 				String new_abbr_loaction = FileOperations.selectAbbreviationsFile();
 				abbreviations_dialog.dispose();
-				ArrayList<String[]> new_abbr_list = FileOperations.readAbbriviationsFile(new_abbr_loaction);
-				if (!new_abbr_list.isEmpty() )
-					showAbbreviationSettingsDialog(new_abbr_loaction, new_abbr_list);
+				showAbbreviationSettingsDialog(new_abbr_loaction, images_dir, FileOperations.readAbbriviationsFile(new_abbr_loaction) );
 			} );
 			file_new.addActionListener(e -> {
 				abbreviations_dialog.dispose();
-				showAbbreviationSettingsDialog(FileOperations.newAbbreviationsFile(abbr_list_copy), abbr_list_copy);
+				showAbbreviationSettingsDialog(FileOperations.newAbbreviationsFile(abbr_list_copy), images_dir, abbr_list_copy);
 			} );
 			file_remove.addActionListener(e -> {
 				abbreviations_dialog.dispose();
-				showAbbreviationSettingsDialog("", new ArrayList<String[]>() );
+				showAbbreviationSettingsDialog("", images_dir, new ArrayList<String[]>() );
 			} );
 			file_actions_panel.add(file_select);
 			file_actions_panel.add(file_new);
@@ -133,7 +161,7 @@ public class Abbreviations
 						abbreviations_dialog.dispose();
 						textfield_list.remove(row);
 						abbr_list_copy.remove(abbr);
-						showAbbreviationSettingsDialog(abbr_location_copy, getAbbreviationsListFromTextfiles(textfield_list) );
+						showAbbreviationSettingsDialog(abbr_location, images_dir, getAbbreviationsListFromTextfiles(textfield_list) );
 					}
 				} );
 				gbc.gridx = 3;
@@ -170,7 +198,7 @@ public class Abbreviations
 						abbreviations_dialog.dispose();
 						textfield_list.remove(new_row);
 						abbr_list_copy.remove(new_abbr);
-						showAbbreviationSettingsDialog(abbr_location_copy, getAbbreviationsListFromTextfiles(textfield_list) );
+						showAbbreviationSettingsDialog(abbr_location, images_dir, getAbbreviationsListFromTextfiles(textfield_list) );
 					}
 				} );
 				gbc.gridx = 3;
@@ -201,12 +229,12 @@ public class Abbreviations
 			confirm.addActionListener(e -> {
 				abbreviations_dialog.dispose();
 				FileOperations.unsavedChanges = true;
-				PopupAlerts.creatMissingImagesMessage = true;
+				PopupAlerts.createMissingImagesMessage = true;
 				setAbbreviationsList(getAbbreviationsListFromTextfiles(textfield_list) );
-				FileOperations.fileAbbreviations = abbr_location_copy;
+				FileOperations.imagesDirectory = images_dir;
+				FileOperations.fileAbbreviations = abbr_location;
 				FileOperations.saveAbbereviationsFile();
-				MainGui.arrangeContent();
-				MainGui.spaceColums();
+				MainGui.reloadImages();
 			} );
 			cancel .addActionListener(e -> { abbreviations_dialog.dispose(); } );
 		

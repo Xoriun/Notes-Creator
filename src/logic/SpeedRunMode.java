@@ -331,7 +331,7 @@ public class SpeedRunMode
 		main_panel.add(controls_panel);
 		dialog.add(main_panel);
 		dialog.pack();
-		GuiHelper.setLocationToCenter(dialog);
+		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 	}
 	

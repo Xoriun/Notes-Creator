@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import javax.swing.JFileChooser;
+
 import gui.Abbreviations;
 import gui.ColorSettingProfile;
 import gui.ColorSettings;
@@ -19,16 +21,12 @@ import gui.GuiHelper;
 import gui.MainGui;
 import gui.PopupAlerts;
 
-//import javax.imageio.ImageIO;
-//import javax.swing.JFrame;
-//import javax.swing.JPanel;
-//import javax.swing.SwingUtilities;
-
 public class FileOperations
 {
-	public static String fileDirectoryNotes = "";
-	public static String fileNameNotes = "";
+	public static String fileNotesDirectory = "";
+	public static String fileNotesName = "";
 	public static String fileAbbreviations = "";
+	public static String imagesDirectory = "";
 	
 	public static int numberOfColumns;
 	public static boolean unsavedChanges = false;
@@ -37,16 +35,16 @@ public class FileOperations
 	{
 		FileDialog dialog = new FileDialog(MainGui.window, "Select File to Open");
 		dialog.setMode(FileDialog.LOAD);
-		GuiHelper.setLocationToCenter(dialog);
+		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
 			return;
 		
-		fileDirectoryNotes = dialog.getDirectory();
-		fileNameNotes = dialog.getFile();
+		fileNotesDirectory = dialog.getDirectory();
+		fileNotesName = dialog.getFile();
 		
-		String new_title = fileNameNotes.replace('_', ' ');
+		String new_title = fileNotesName.replace('_', ' ');
 		MainGui.keepGuiSize = false;
 		MainGui.window.setTitle(new_title);
 	}
@@ -87,8 +85,8 @@ public class FileOperations
 			if (null != (line = reader.readLine() ) ) // last notes-file
 			{
 				int split = line.lastIndexOf('\\');
-				fileDirectoryNotes = line.substring(0, split + 1);
-				fileNameNotes = line.substring(split + 1);
+				fileNotesDirectory = line.substring(0, split + 1);
+				fileNotesName = line.substring(split + 1);
 			}
 			
 			// color settings
@@ -150,7 +148,7 @@ public class FileOperations
 	
 	public static void readNotesFile()
 	{
-		PopupAlerts.creatMissingImagesMessage = true;
+		PopupAlerts.createMissingImagesMessage = true;
 		MainGui.reset();
 		numberOfColumns = 0;
 		
@@ -158,7 +156,7 @@ public class FileOperations
 		while (reader == null)
 		{
 			try {
-				reader = new BufferedReader(new FileReader(fileDirectoryNotes + fileNameNotes) );
+				reader = new BufferedReader(new FileReader(fileNotesDirectory + fileNotesName) );
 			} catch (FileNotFoundException e) {
 				selectNotesFile();
 			}
@@ -168,6 +166,17 @@ public class FileOperations
 		try {
 			line_string = reader.readLine();
 			
+			// Checking for abbreviations file
+			if (line_string.startsWith("***image_directory;") )
+			{
+				imagesDirectory = line_string.split(";")[1];
+				line_string = reader.readLine();
+			}
+		} catch (Exception e) {
+			throw new RuntimeException("Error while reading header!");
+		}
+		
+		try {
 			// Checking for abbreviations file
 			if (line_string.startsWith("***abbreviations_file;") )
 			{
@@ -210,7 +219,7 @@ public class FileOperations
 		try
 		{
 			FileWriter writer = new FileWriter(new File("settings.txt"), false);
-			writer.write(fileDirectoryNotes + fileNameNotes + '\n');
+			writer.write(fileNotesDirectory + fileNotesName + '\n');
 			for (ColorSettingProfile color : ColorSettings.colorSettingProfiles)
 			{
 				writer.write(color.name + "\n" +
@@ -231,7 +240,7 @@ public class FileOperations
 	
 	public static void createNewFile()
 	{
-		fileDirectoryNotes = fileNameNotes = null;
+		fileNotesDirectory = fileNotesName = null;
 		MainGui.reset();
 		
 		Section section = new Section("section 1");
@@ -252,7 +261,7 @@ public class FileOperations
 		FileDialog dialog = new FileDialog(MainGui.window, "Select locations for new abbreviation file");
 		dialog.setFile("\\abbreviation_new.txt");
 		dialog.setMode(FileDialog.SAVE);
-		GuiHelper.setLocationToCenter(dialog);
+		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
@@ -262,13 +271,29 @@ public class FileOperations
 		return dialog.getDirectory() + dialog.getFile();
 	}
 	
+	public static String selectImageDirectory()
+	{
+		saveAbbereviationsFile();
+
+    JFileChooser chooser = new JFileChooser();
+    chooser.setCurrentDirectory(new java.io.File("."));
+    chooser.setDialogTitle("choosertitle");
+    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+    chooser.setAcceptAllFileFilterUsed(false);
+		
+		if (chooser.showOpenDialog(MainGui.window) != JFileChooser.APPROVE_OPTION)
+			return null;
+		
+		return chooser.getSelectedFile().toString();
+	}
+	
 	public static String selectAbbreviationsFile()
 	{
 		saveAbbereviationsFile();
 		
 		FileDialog dialog = new FileDialog(MainGui.window, "Select abbreviation file to load");
 		dialog.setMode(FileDialog.LOAD);
-		GuiHelper.setLocationToCenter(dialog);
+		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
@@ -354,15 +379,15 @@ public class FileOperations
 	{
 		FileDialog dialog = new FileDialog(MainGui.window, "Save as", FileDialog.SAVE);
 		dialog.setFile(".txt");
-		GuiHelper.setLocationToCenter(dialog);
+		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
 			return;
-		fileDirectoryNotes = dialog.getDirectory();
-		fileNameNotes = dialog.getFile();
+		fileNotesDirectory = dialog.getDirectory();
+		fileNotesName = dialog.getFile();
 		
-		String new_title = fileNameNotes.replace('_', ' ');
+		String new_title = fileNotesName.replace('_', ' ');
 		MainGui.window.setTitle(new_title);
 		
 		saveFile();
@@ -372,12 +397,14 @@ public class FileOperations
 	{
 		saveAbbereviationsFile();
 		
-		if (fileDirectoryNotes == null || fileNameNotes == null)
+		if (fileNotesDirectory == null || fileNotesName == null)
 			saveAsFile();
 		else
 		{
-			try (PrintWriter out = new PrintWriter(fileDirectoryNotes + fileNameNotes) )
+			try (PrintWriter out = new PrintWriter(fileNotesDirectory + fileNotesName) )
 			{
+				if (imagesDirectory != null)
+					out.println("***image_directory;" + imagesDirectory);
 				if (fileAbbreviations != null)
 					out.println("***abbreviations_file;" + fileAbbreviations);
 				for (Section section : MainGui.sectionsList)
@@ -396,7 +423,7 @@ public class FileOperations
 		// selecting which file to import
 		FileDialog dialog = new FileDialog(MainGui.window, "Select File to Import");
 		dialog.setMode(FileDialog.LOAD);
-		GuiHelper.setLocationToCenter(dialog);
+		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getDirectory() == null)
@@ -423,7 +450,7 @@ public class FileOperations
 		dialog = new FileDialog(MainGui.window, "Save notes file", FileDialog.SAVE);
 		dialog.setDirectory(import_dir);
 		dialog.setFile(file_name_split[0] + "_import." + file_name_split[1]);
-		GuiHelper.setLocationToCenter(dialog);
+		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getFile() == null)
@@ -434,8 +461,8 @@ public class FileOperations
 		
 		file = dialog.getFile();
 
-		fileDirectoryNotes = dialog.getDirectory();
-		fileNameNotes = dialog.getFile();
+		fileNotesDirectory = dialog.getDirectory();
+		fileNotesName = dialog.getFile();
 		
 		// creating reading notes file
 		String line;
@@ -462,7 +489,7 @@ public class FileOperations
 			dialog = new FileDialog(MainGui.window, "Save abbreviations file", FileDialog.SAVE);
 			dialog.setDirectory(import_dir);
 			dialog.setFile(import_name_abbr);
-			GuiHelper.setLocationToCenter(dialog);
+			GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 			dialog.setVisible(true);
 			file = dialog.getFile();
 			if (file == null)
@@ -504,7 +531,7 @@ public class FileOperations
 		PrintWriter writer_notes;
 		try
 		{
-			writer_notes = new PrintWriter(new File(fileDirectoryNotes + fileNameNotes) );
+			writer_notes = new PrintWriter(new File(fileNotesDirectory + fileNotesName) );
 			for (String content_line : content)
 				writer_notes.println(content_line);
 			writer_notes.close();
@@ -525,10 +552,10 @@ public class FileOperations
 		BufferedReader reader_notes;
 		try
 		{
-			reader_notes = new BufferedReader(new FileReader(fileDirectoryNotes + fileNameNotes) );
+			reader_notes = new BufferedReader(new FileReader(fileNotesDirectory + fileNotesName) );
 		} catch (FileNotFoundException e)
 		{
-			throw new RuntimeException("Error while exporting file: Notes file at '" + fileDirectoryNotes + fileNameNotes + "' was not found!");
+			throw new RuntimeException("Error while exporting file: Notes file at '" + fileNotesDirectory + fileNotesName + "' was not found!");
 		}
 		
 		// creating abbreviations reader
@@ -545,12 +572,12 @@ public class FileOperations
 		
 		// creating writer
 		PrintWriter writer;
-		String[] file_name_split = fileNameNotes.split(Pattern.quote(".") );
+		String[] file_name_split = fileNotesName.split(Pattern.quote(".") );
 		
 		FileDialog dialog = new FileDialog(MainGui.window, "Save notes file", FileDialog.SAVE);
-		dialog.setDirectory(fileDirectoryNotes);
+		dialog.setDirectory(fileNotesDirectory);
 		dialog.setFile(file_name_split[0] + "_export." + file_name_split[1]);
-		GuiHelper.setLocationToCenter(dialog);
+		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getFile() == null)

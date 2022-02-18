@@ -77,6 +77,11 @@ public class Row
 		if (cell_strings.length > FileOperations.numberOfColumns) FileOperations.numberOfColumns = cell_strings.length;
 	}
 	
+	public void reloadImages()
+	{
+		for (Cell cell : cells) cell.relaodImages();
+	}
+	
 	private JPanel getTodoControl(int current_row)
 	{
 		JPanel todo_panel = new JPanel();
