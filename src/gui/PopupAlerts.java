@@ -111,19 +111,53 @@ public class PopupAlerts
 		missing_dialog.setVisible(true);
 	}
 	
+	public static void errorDialog(String error)
+	{
+		JDialog error_dialog = new JDialog(MainGui.window);
+		error_dialog.setModal(true);
+		error_dialog.setTitle("Warning");
+		
+		JPanel main_panel = new JPanel();
+		main_panel.setBorder(GuiHelper.getDialogBorder() );
+		main_panel.setBackground(ColorSettings.getBackgroundColor() );
+		
+		JPanel inner_panel = new JPanel();
+		inner_panel.setBorder(GuiHelper.getSpacingBorder(5) );
+		inner_panel.setOpaque(false);
+		inner_panel.setLayout(new BoxLayout(inner_panel, BoxLayout.Y_AXIS) );
+		
+		JButton save_button = new JButton("OK");
+		save_button.setAlignmentX(Component.CENTER_ALIGNMENT);
+		save_button.addActionListener(e -> error_dialog.dispose() );
+		
+		inner_panel.add(GuiHelper.getCenteredNonOpaqueJLabelWithCurrentTextColor("An error occured: " + error) );
+		inner_panel.add(save_button);
+		
+		main_panel.add(inner_panel);
+		
+		error_dialog.add(main_panel);
+		error_dialog.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		error_dialog.setTitle("Warning");
+		error_dialog.pack();
+		error_dialog.setLocationRelativeTo(MainGui.window);
+		error_dialog.setVisible(true);
+	}
+	
 	public static void unsavedChangesDialog()
 	{
 		JDialog save_dialog = new JDialog(MainGui.window);
 		save_dialog.setModal(true);
 		save_dialog.setTitle("Warning");
-		//save_dialog.setBackground(currentColorSetting.background);
+		save_dialog.setBackground(ColorSettings.getBackgroundColor() );
 		
-		save_dialog.setLayout(new BoxLayout(save_dialog.getContentPane(), BoxLayout.Y_AXIS) );
-		JLabel label = new JLabel("There are unsaved changes!");
-		label.setAlignmentX(1);
-		//label.setBackground(currentColorSetting.background);
-		//label.setForeground(currentColorSetting.text);
-		save_dialog.add(label);
+		JPanel main_panel = new JPanel();
+		main_panel.setBorder(GuiHelper.getDialogBorder() );
+		main_panel.setBackground(ColorSettings.getBackgroundColor() );
+		
+		JPanel inner_panel = new JPanel();
+		inner_panel.setBorder(GuiHelper.getSpacingBorder(5) );
+		inner_panel.setOpaque(false);
+		inner_panel.setLayout(new BoxLayout(inner_panel, BoxLayout.Y_AXIS) );
 		
 		JButton save_Button = new JButton("Save and close");
 		JButton discard_button = new JButton("Discard changes");
@@ -133,13 +167,18 @@ public class PopupAlerts
 		discard_button.addActionListener(e -> { save_dialog.dispose(); MainGui.exit(); } );
 		cancel_button.addActionListener(e -> { save_dialog.dispose(); } );
 		
-		JPanel save_panel = new JPanel(new FlowLayout() );
-		save_panel.add(save_Button);
-		save_panel.add(discard_button);
-		save_panel.add(cancel_button);
-		//save_panel.setBackground(currentColorSetting.background);
+		JPanel controls_panel = new JPanel(new FlowLayout() );
+		controls_panel.setOpaque(false);
+		controls_panel.add(save_Button);
+		controls_panel.add(discard_button);
+		controls_panel.add(cancel_button);
 		
-		save_dialog.add(save_panel);
+		inner_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("There are unsaved changes!") );
+		inner_panel.add(controls_panel);
+		
+		main_panel.add(inner_panel);
+		
+		save_dialog.add(main_panel);
 		save_dialog.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		save_dialog.setTitle("Warning");
 		save_dialog.pack();

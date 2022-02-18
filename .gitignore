@@ -2,6 +2,8 @@
 /builds/
 Layer_dot.psd
 /src/test.java
+settings*.txt
+log*.txt
 /Images/*
 /releases/
 /tests/

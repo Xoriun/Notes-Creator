@@ -25,6 +25,7 @@ import javax.swing.event.MouseInputAdapter;
 import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
+import gui.PopupAlerts;
 
 public class SpeedRunMode
 {
@@ -232,14 +233,30 @@ public class SpeedRunMode
 			settings_panel.add(profile_panel);
 			
 			// labels
-			HotkeyProfile profile = profiles_copy.get(comboBox.getSelectedIndex() );
-			if (profile != null)
+			HotkeyProfile profile;
+			try
 			{
-				split = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(profile.getHotkeyDisplay("Split") );
-				reset = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(profile.getHotkeyDisplay("Reset") );
-				undo = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(profile.getHotkeyDisplay("Undo") );
-				skip = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(profile.getHotkeyDisplay("Skip") );
+				profile = profiles_copy.get(comboBox.getSelectedIndex() );
+			} catch (Exception e)
+			{
+				profile = null;
 			}
+			String hotkey_string_split, hotkey_string_reset, hotkey_string_undo, hotkey_string_skip;
+			if (profile == null)
+				hotkey_string_split = hotkey_string_reset = hotkey_string_undo = hotkey_string_skip = "<not set>";
+			else
+			{
+				hotkey_string_split = profile.getHotkeyDisplay("Split");
+				hotkey_string_reset = profile.getHotkeyDisplay("Reset");
+				hotkey_string_undo = profile.getHotkeyDisplay("Undo");
+				hotkey_string_skip = profile.getHotkeyDisplay("Skip");
+			}
+			
+			split = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(hotkey_string_split);
+			reset = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(hotkey_string_reset);
+			undo = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(hotkey_string_undo);
+			skip = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(hotkey_string_skip);
+				
 			JPanel split_display_panel = new JPanel(new GridLayout(4, 2) );
 			split_display_panel.setOpaque(false);
 			split_display_panel.add(GuiHelper.getRightAlignedNonOpaqueJLabelWithCurrentTextColor("Split:  ") );
@@ -315,9 +332,17 @@ public class SpeedRunMode
 			
 			JButton confirm = new JButton("Confim");
 			confirm.addActionListener(e -> {
-				Hotkeys.profiles = profiles_copy;
-				Hotkeys.activeProfile = profiles_copy.get(comboBox.getSelectedIndex() );
 				useLiveSplitAPI = live_radio_button.isSelected();
+				Hotkeys.profiles = profiles_copy;
+				if ( !useLiveSplitAPI)
+				{
+					if (comboBox.getSelectedIndex() < 0)
+					{
+						PopupAlerts.errorDialog("You cannot use hotkeys when no hotkey profile is selected");
+						return;
+					}
+					Hotkeys.activeProfile = profiles_copy.get(comboBox.getSelectedIndex() );
+				}
 				updateSpeedRunMode();
 				dialog.dispose();
 			});

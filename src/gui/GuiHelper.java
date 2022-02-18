@@ -1,6 +1,7 @@
 package gui;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -252,6 +253,16 @@ public class GuiHelper
 	public static JLabel getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(String text)
 	{
 		JLabel label = new JLabel(text, SwingConstants.LEFT);
+		label.setAlignmentX(Component.LEFT_ALIGNMENT);
+		label.setForeground(ColorSettings.currentColorSetting.text);
+		label.setOpaque(false);
+		return label;
+	}
+	
+	public static JLabel getCenteredNonOpaqueJLabelWithCurrentTextColor(String text)
+	{
+		JLabel label = new JLabel(text, SwingConstants.CENTER);
+		label.setAlignmentX(Component.CENTER_ALIGNMENT);
 		label.setForeground(ColorSettings.currentColorSetting.text);
 		label.setOpaque(false);
 		return label;
@@ -260,6 +271,7 @@ public class GuiHelper
 	public static JLabel getRightAlignedNonOpaqueJLabelWithCurrentTextColor(String text)
 	{
 		JLabel label = new JLabel(text, SwingConstants.RIGHT);
+		label.setAlignmentX(Component.RIGHT_ALIGNMENT);
 		label.setForeground(ColorSettings.currentColorSetting.text);
 		label.setOpaque(false);
 		return label;

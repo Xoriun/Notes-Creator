@@ -1,12 +1,13 @@
-package gui;
+package logic;
 
 import java.awt.GridLayout;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import logic.MouseAdapters;
-import logic.Row;
+import gui.ColorSettings;
+import gui.GuiHelper;
+import gui.MainGui;
 
 public class AddRemoveControl extends JPanel
 {
@@ -22,8 +23,8 @@ public class AddRemoveControl extends JPanel
 		this.row = row;
 		this.sectionIndex = section_index;
 		
-		JLabel add = new JLabel(" + ");
-		add.setForeground(ColorSettings.getTextColor() );
+		JLabel add = GuiHelper.getCenteredNonOpaqueJLabelWithCurrentTextColor(" + ");
+		add.setForeground(ColorSettings.getBackgroundColor() );
 		add.addMouseListener(row == null ? MouseAdapters.addSectionAdapter : MouseAdapters.addRowAdapter);
 		
 		MainGui.labelsTextsHideWhenNotInEdit.add(add);
@@ -32,8 +33,8 @@ public class AddRemoveControl extends JPanel
 		
 		if (! only_add)
 		{
-			JLabel remove = new JLabel(" - ");
-			remove.setForeground(ColorSettings.getTextColor() );
+			JLabel remove = GuiHelper.getCenteredNonOpaqueJLabelWithCurrentTextColor(" - ");
+			remove.setForeground(ColorSettings.getBackgroundColor() );
 			remove.addMouseListener(row == null ? MouseAdapters.removeSectionAdapter : MouseAdapters.removeRowAdapter);
 			
 			MainGui.labelsTextsHideWhenNotInEdit.add(remove);

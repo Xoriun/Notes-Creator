@@ -19,7 +19,6 @@ import javax.swing.JPanel;
 import javax.swing.event.MouseInputAdapter;
 
 import edit.CellEditDialog;
-import gui.AddRemoveControl;
 import gui.GuiHelper;
 import gui.MainGui;
 import gui.PopupAlerts;

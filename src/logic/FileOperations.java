@@ -30,7 +30,7 @@ public class FileOperations
 	
 	public static int numberOfColumns;
 	public static boolean unsavedChanges = false;
-
+	
 	public static void selectNotesFile()
 	{
 		FileDialog dialog = new FileDialog(MainGui.window, "Select File to Open");
@@ -48,101 +48,105 @@ public class FileOperations
 		MainGui.keepGuiSize = false;
 		MainGui.window.setTitle(new_title);
 	}
-
+	
+	private static void setDefaulSettings()
+	{
+		ColorSettings.colorSettingProfiles = new ColorSettingProfile[] {
+				new ColorSettingProfile("Light" , Color.BLACK, Color.BLACK, Color.WHITE),
+				new ColorSettingProfile("Dark"  , Color.LIGHT_GRAY, Color.DARK_GRAY, Color.BLACK),
+				new ColorSettingProfile("Custom", Color.WHITE, Color.WHITE, Color.WHITE)
+		};
+		SpeedRunMode.workaround_box.setSelected(true);
+		Hotkeys.profiles.clear();
+		Hotkeys.activeProfile = null;
+	}
+	
 	public static void readSettingsFile()
 	{
+		setDefaulSettings();
+		
 		File settings = new File("settings.txt");
 		new File("Images\\").mkdir(); //  creates Images directory if it does not exist
 		
 		try {
 			// no settings file
-			if (settings.createNewFile() )
+			if ( !settings.createNewFile() )
 			{
-				ColorSettingProfile[] res = new ColorSettingProfile[] { new ColorSettingProfile("Light" , Color.BLACK, Color.BLACK, Color.WHITE),
-																									new ColorSettingProfile("Dark"  , Color.LIGHT_GRAY, Color.DARK_GRAY, Color.BLACK),
-																									new ColorSettingProfile("Custom", Color.WHITE, Color.WHITE, Color.WHITE)
-																									};
-				ColorSettings.colorSettingProfiles = res;
-				writeSettingsFile();
+				BufferedReader reader;
+				try {
+					reader = new BufferedReader(new FileReader(settings) );
+				} catch (FileNotFoundException e) {
+					throw new RuntimeException("Settings File not found!");
+				}
+				
+				String line;
+				int[][] colors = new int[3][3];
+				
+				// last used notes-file
+				if (null != (line = reader.readLine() ) ) // last notes-file
+				{
+					int split = line.lastIndexOf('\\');
+					fileNotesDirectory = line.substring(0, split + 1);
+					fileNotesName = line.substring(split + 1);
+				}
+				
+				// color settings
+				ArrayList<ColorSettingProfile> colors_list = new ArrayList<ColorSettingProfile>();
+				while ( (line = reader.readLine() ) != null)
+				{
+					String color_setting_name = line;
+					if ( !line.equals("Light") && !line.equals("Dark") && !line.equals("Custom") ) // All color settings are read
+						break;
+					
+					for (int i = 0; i < 3 && (line = reader.readLine() ) != null; i ++)
+					{
+						colors[i] = Stream.of(line.split(":") ).mapToInt(Integer::parseInt).toArray();
+						
+						if (i == 2)
+							colors_list.add(new ColorSettingProfile(color_setting_name,	new Color(colors[0][0], colors[0][1], colors[0][2] ),
+									new Color(colors[1][0], colors[1][1], colors[1][2] ),
+									new Color(colors[2][0], colors[2][1], colors[2][2] )
+									) );
+					}
+				}
+				if (colors_list.size() > 0)
+					ColorSettings.colorSettingProfiles = colors_list.toArray(new ColorSettingProfile[colors_list.size() ] );
+				
+				// hotkey settings
+				String workaraound_activated = line;
+				if (workaraound_activated != null && !workaraound_activated.isEmpty() )
+					SpeedRunMode.workaround_box.setSelected(Boolean.parseBoolean(workaraound_activated.split(":")[1] ) );
+				
+				String activeProfile = line = reader.readLine();
+				
+				if (activeProfile != null)
+				{
+					Hotkeys.profiles.clear();
+					
+					// reading
+					while (null != (line = reader.readLine() ) )
+					{				
+						HotkeyProfile profile = new HotkeyProfile(line);
+						
+						for (int i = 0; i < 4; i ++)
+							if (null != (line = reader.readLine() ) && !line.isEmpty() )
+								Hotkeys.readHotkeySetting(line.split(":"), profile);
+						
+						Hotkeys.profiles.add(profile);
+					}
+					
+					// setting active profile
+					for (HotkeyProfile profile : Hotkeys.profiles)
+						if (profile.name.equals(activeProfile) )
+						{
+							Hotkeys.activeProfile = profile;
+							break;
+						}
+				}
+				reader.close();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-		
-		BufferedReader reader;
-		try {
-			reader = new BufferedReader(new FileReader(settings) );
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException("Settings File not found!");
-		}
-		
-		ArrayList<ColorSettingProfile> colors_list = new ArrayList<ColorSettingProfile>();
-		String line, name = "";
-		int[][] colors = new int[3][3];
-		try
-		{
-			// last used notes-file
-			if (null != (line = reader.readLine() ) ) // last notes-file
-			{
-				int split = line.lastIndexOf('\\');
-				fileNotesDirectory = line.substring(0, split + 1);
-				fileNotesName = line.substring(split + 1);
-			}
-			
-			// color settings
-			while ( (line = reader.readLine() ) != null)
-			{
-				name = line;
-				if ( !line.equals("Light") && !line.equals("Dark") && !line.equals("Custom") ) // All color settings are read
-					break;
-				
-				for (int i = 0; i < 3 && (line = reader.readLine() ) != null; i ++)
-				{
-					colors[i] = Stream.of(line.split(":") ).mapToInt(Integer::parseInt).toArray();
-					
-					if (i == 2)
-						colors_list.add(new ColorSettingProfile(name,	new Color(colors[0][0], colors[0][1], colors[0][2] ),
-																										new Color(colors[1][0], colors[1][1], colors[1][2] ),
-																										new Color(colors[2][0], colors[2][1], colors[2][2] )
-																										) );
-				}
-			}
-			ColorSettings.colorSettingProfiles = colors_list.toArray(new ColorSettingProfile[colors_list.size() ] );
-			
-			// hotkey settings
-			String workaraound_activated = line;
-			if (workaraound_activated != null && !workaraound_activated.isEmpty() )
-				SpeedRunMode.workaround_box.setSelected(Boolean.parseBoolean(workaraound_activated.split(":")[1] ) );
-			
-			String activeProfile = line = reader.readLine();
-			
-			if (activeProfile != null)
-			{
-				Hotkeys.profiles.clear();
-				
-				// reading
-				while (null != (line = reader.readLine() ) )
-				{				
-					HotkeyProfile profile = new HotkeyProfile(line);
-					
-					for (int i = 0; i < 4; i ++)
-						if (null != (line = reader.readLine() ) && !line.isEmpty() )
-							Hotkeys.readHotkeySetting(line.split(":"), profile);
-					
-					Hotkeys.profiles.add(profile);
-				}
-				
-				// setting active profile
-				for (HotkeyProfile profile : Hotkeys.profiles)
-					if (profile.name.equals(activeProfile) )
-					{
-						Hotkeys.activeProfile = profile;
-						break;
-					}
-			}
-			reader.close();
-		} catch (IOException e) {
-			throw new RuntimeException("Error while reading settings file!");
 		}
 	}
 	
@@ -223,14 +227,18 @@ public class FileOperations
 			for (ColorSettingProfile color : ColorSettings.colorSettingProfiles)
 			{
 				writer.write(color.name + "\n" +
-										color.text.getRed() +       ":" + color.text.getGreen() +       ":" + color.text.getBlue() + "\n" +
-										color.border.getRed() +     ":" + color.border.getGreen() +     ":" + color.border.getBlue() + "\n" +
-										color.background.getRed() + ":" + color.background.getGreen() + ":" + color.background.getBlue()  + "\n");
+						color.text.getRed() +       ":" + color.text.getGreen() +       ":" + color.text.getBlue() + "\n" +
+						color.border.getRed() +     ":" + color.border.getGreen() +     ":" + color.border.getBlue() + "\n" +
+						color.background.getRed() + ":" + color.background.getGreen() + ":" + color.background.getBlue()  + "\n");
 			}
 			writer.write("WorkaroundActivated:" + SpeedRunMode.workaround_box.isSelected() + "\n");
-			writer.write(Hotkeys.activeProfile.name);
-			for (HotkeyProfile profile : Hotkeys.profiles)
-				writer.write("\n" + profile.getHotkeySettingsString() );
+			if (Hotkeys.profiles.size() > 0)
+			{
+				if (Hotkeys.activeProfile != null)
+					writer.write(Hotkeys.activeProfile.name);
+				for (HotkeyProfile profile : Hotkeys.profiles)
+					writer.write("\n" + profile.getHotkeySettingsString() );
+			}
 			writer.close();
 		} catch (IOException e)
 		{
@@ -274,12 +282,12 @@ public class FileOperations
 	public static String selectImageDirectory()
 	{
 		saveAbbereviationsFile();
-
-    JFileChooser chooser = new JFileChooser();
-    chooser.setCurrentDirectory(new java.io.File("."));
-    chooser.setDialogTitle("choosertitle");
-    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-    chooser.setAcceptAllFileFilterUsed(false);
+		
+		JFileChooser chooser = new JFileChooser();
+		chooser.setCurrentDirectory(new java.io.File("."));
+		chooser.setDialogTitle("choosertitle");
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		chooser.setAcceptAllFileFilterUsed(false);
 		
 		if (chooser.showOpenDialog(MainGui.window) != JFileChooser.APPROVE_OPTION)
 			return null;
@@ -355,7 +363,7 @@ public class FileOperations
 		}
 		
 		try { reader.close(); } catch (IOException e) {	}
-
+		
 		return abbreviations_list;
 	}
 	
@@ -445,7 +453,7 @@ public class FileOperations
 		// selecting where to save the notes file
 		import_name = import_name.replace("_export", "");
 		String[] file_name_split = import_name.split(Pattern.quote(".") );
-			
+		
 		String file = null;
 		dialog = new FileDialog(MainGui.window, "Save notes file", FileDialog.SAVE);
 		dialog.setDirectory(import_dir);
@@ -460,7 +468,7 @@ public class FileOperations
 		}
 		
 		file = dialog.getFile();
-
+		
 		fileNotesDirectory = dialog.getDirectory();
 		fileNotesName = dialog.getFile();
 		
@@ -527,7 +535,7 @@ public class FileOperations
 			Abbreviations.setAbbreviationsList(readAbbriviationsFile(import_dir_abbr + import_name_abbr) );
 		}
 		
-
+		
 		PrintWriter writer_notes;
 		try
 		{
@@ -562,13 +570,13 @@ public class FileOperations
 		BufferedReader reader_abbreviations = null;
 		if (fileAbbreviations != null && !fileAbbreviations.isEmpty() )
 			try
-			{
+		{
 				reader_abbreviations = new BufferedReader(new FileReader(fileAbbreviations) );
-			} catch (FileNotFoundException e)
-			{
-				try { reader_notes.close(); } catch (IOException e1) { }
-				throw new RuntimeException("Error while exporting file: Notes file at '" + fileAbbreviations + "' was not found!");
-			}
+		} catch (FileNotFoundException e)
+		{
+			try { reader_notes.close(); } catch (IOException e1) { }
+			throw new RuntimeException("Error while exporting file: Notes file at '" + fileAbbreviations + "' was not found!");
+		}
 		
 		// creating writer
 		PrintWriter writer;

@@ -9,10 +9,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import gui.AddRemoveControl;
 import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
+import logic.AddRemoveControl;
 import logic.MouseAdapters;
 
 public class SectionManagerDialog

@@ -7,7 +7,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import gui.AddRemoveControl;
 import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
