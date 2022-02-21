@@ -107,7 +107,8 @@ public class MouseAdapters
 		}
 	};
 
-	public final static MouseInputAdapter removeRowAdapter = new MouseInputAdapter() {
+	public final static MouseInputAdapter removeRowAdapter = new MouseInputAdapter()
+	{
 		@Override
 		public void mouseClicked(MouseEvent e)
 		{
@@ -128,6 +129,50 @@ public class MouseAdapters
 				// redrawing GUI
 				MainGui.arrangeContent();
 				MainGui.spaceColums();
+			}
+		}
+	};
+	
+	public final static MouseInputAdapter actionsAdapter = new MouseInputAdapter()
+	{
+		@Override
+		public void mouseClicked(MouseEvent e)
+		{
+			if ( !SpeedRunMode.speedrunModeEnabled)
+				return;
+			
+			for (String[] action : ( (Cell) e.getComponent() ).getActionsArray() )
+			{
+				switch (action[0] )
+				{
+					case "text_to_clipboard":
+						Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(action[1] ), null);
+						break;
+					
+					case "file_to_clipboard":
+						String output = "";
+						try
+						{
+							BufferedReader reader = new BufferedReader(new FileReader(new File(action[1] ) ) );
+							String line = "";
+							while ((line = reader.readLine()) != null)
+								output += line + "\n";
+							reader.close();
+						} catch (FileNotFoundException ex)
+						{
+							// TODO Auto-generated catch block
+							ex.printStackTrace();
+						} catch (IOException ex)
+						{
+							// TODO Auto-generated catch block
+							ex.printStackTrace();
+						}
+						
+						if (output.length() > 0)
+							output = output.substring(0, output.length() - 1);
+						Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(output), null);
+						break;
+				}
 			}
 		}
 	};
@@ -223,77 +268,6 @@ public class MouseAdapters
 				
 				MainGui.arrangeContent();
 				MainGui.spaceColums();
-			}
-		};
-	}
-	
-	public static MouseInputAdapter getCellActionAdapter(String action_str)
-	{
-		String action_command = "", action_param = "";
-		try
-		{
-			String[] temp = action_str.split(":");
-			action_command = temp[0];
-			action_param = temp[1];
-		} catch (Exception e)
-		{
-			throw new RuntimeException("Each action has to follow the syntax 'action_command':'action_parameter'!");
-		}
-		
-		switch (action_command)
-		{
-			case "write_to_clipboard": // legacy
-			case "text_to_clipboard":
-				return getActionTextToClpiboardAdapter(action_param);
-			case "file_to_clipboard":
-				return getActionFileToClipboardAdapter(action_param);
-			default:
-				return null;
-		}
-	}
-	
-	public static MouseInputAdapter getActionTextToClpiboardAdapter(String textToWrite)
-	{
-		return new MouseInputAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e)
-			{
-				if (SpeedRunMode.speedrunModeEnabled)
-					Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(textToWrite), null);
-			}
-		};
-	}
-	
-	public static MouseInputAdapter getActionFileToClipboardAdapter(String file_location)
-	{
-		return new MouseInputAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent me)
-			{
-				if (!SpeedRunMode.speedrunModeEnabled)
-					return;
-				
-				String output = "";
-				try
-				{
-					BufferedReader reader = new BufferedReader(new FileReader(new File(file_location)));
-					String line = "";
-					while ((line = reader.readLine()) != null)
-						output += line + "\n";
-					reader.close();
-				} catch (FileNotFoundException e)
-				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e)
-				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-				if (output.length() > 0)
-					output = output.substring(0, output.length() - 1);
-				Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(output), null);
 			}
 		};
 	}

@@ -27,7 +27,7 @@ public class Cell extends JPanel
 	private int col;
 	private boolean topBorder, leftBorder;
 	private String contentString;
-	private String actionsString;
+	private String[][] actionsArray;
 	private ArrayList<CellLabel> cellLabels;
 	
 	public Cell(Row row, String cell_str, int col)
@@ -38,6 +38,7 @@ public class Cell extends JPanel
 		this.leftBorder = (col == 0);
 		this.setOpaque(false);
 		cellLabels = new ArrayList<CellLabel>();
+		this.addMouseListener(MouseAdapters.actionsAdapter);
 		
 		updateCell(cell_str);
 	}
@@ -50,18 +51,19 @@ public class Cell extends JPanel
 		{
 			String[] temp = cell_str.split(">>", 2);
 			contentString = temp[0];
-			actionsString = temp[1].replaceAll("write_to_clipboard", "text_to_clipboard"); // legacy
+			String[] actions = temp[1].replaceAll("write_to_clipboard", "text_to_clipboard").split(Pattern.quote("#") );
+			actionsArray = new String[actions.length][];
+			for (int i = 0; i < actions.length; i ++)
+				actionsArray[i] = actions[i].split(":");
 		}
 		else
 		{
 			contentString = cell_str;
-			actionsString = "";
+			actionsArray = new String[0][];
 		}
 
 		this.addMouseListener(MouseAdapters.editCellAdapter);
-		if (!actionsString.isEmpty() )
-			for (String action : actionsString.split(Pattern.quote("#") ) )
-				this.addMouseListener(MouseAdapters.getCellActionAdapter(action) );
+		this.addMouseListener(MouseAdapters.actionsAdapter);
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS) );
 		fillCellPanel();
 		setDefaultBorder();
@@ -78,9 +80,16 @@ public class Cell extends JPanel
 	public void increaseCol() { col ++; }
 	public void decreaseCol() { col --; }
 	public int getRow() { return row.getRowIndex(); }
-	public String getCellString() { return contentString + (actionsString.isEmpty() ? "" : ">>" + actionsString); }
+	public String getCellString() { return contentString + (actionsArray.length == 0 ? "" : ">>" + getActionString() ); }
 	public String getContentString() { return contentString; }
-	public String getActionString() { return actionsString; }
+	public String getActionString()
+	{
+		String res = "";
+		for (String[] action : actionsArray)
+			res += "#" + action[0] + ":" + action[1];
+		return res.substring(1);
+	}
+	public String[][] getActionsArray() { return actionsArray; }
 	
 	public void setDefaultBorder()
 	{

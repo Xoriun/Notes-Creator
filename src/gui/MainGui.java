@@ -53,7 +53,7 @@ public class MainGui {
 	
 	public static Dimension screensize;
 	
-	public static String currentVersionTag = "v2.9";
+	public static String currentVersionTag = "v2.10";
 	
 	public static void prepareGui()
 	{
@@ -226,7 +226,7 @@ public class MainGui {
 		error_panel.setBackground(ColorSettings.getBackgroundColor() );
 		dialog.add(error_panel);
 		
-		JLabel error_label = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(error_text);
+		JLabel error_label = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(error_text, GuiHelper.LEFT);
 		error_panel.add(error_label);
 		
 		dialog.pack();

@@ -5,6 +5,7 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.io.File;
 import java.io.IOException;
 import java.util.SortedSet;
@@ -130,7 +131,7 @@ public class PopupAlerts
 		save_button.setAlignmentX(Component.CENTER_ALIGNMENT);
 		save_button.addActionListener(e -> error_dialog.dispose() );
 		
-		inner_panel.add(GuiHelper.getCenteredNonOpaqueJLabelWithCurrentTextColor("An error occured: " + error) );
+		inner_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("An error occured: " + error, GuiHelper.CENTER) );
 		inner_panel.add(save_button);
 		
 		main_panel.add(inner_panel);
@@ -157,7 +158,8 @@ public class PopupAlerts
 		JPanel inner_panel = new JPanel();
 		inner_panel.setBorder(GuiHelper.getSpacingBorder(5) );
 		inner_panel.setOpaque(false);
-		inner_panel.setLayout(new BoxLayout(inner_panel, BoxLayout.Y_AXIS) );
+		inner_panel.setLayout(new GridLayout(2, 1, 5, 5) );
+		inner_panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		
 		JButton save_Button = new JButton("Save and close");
 		JButton discard_button = new JButton("Discard changes");

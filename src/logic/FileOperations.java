@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -47,6 +48,17 @@ public class FileOperations
 		String new_title = fileNotesName.replace('_', ' ');
 		MainGui.keepGuiSize = false;
 		MainGui.window.setTitle(new_title);
+	}
+	
+	public static String[] getNamesOfImagesInImagesDirectory()
+	{
+		return Stream.concat(Stream.of(""), Stream.of(new File(imagesDirectory).list(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name)
+			{
+				return name.toLowerCase().endsWith(".png");
+			}
+		}) ).sorted( (e,f) -> e.compareTo(f) ).map(e -> e.substring(0, e.length() - 4) ) ).toArray(String[]::new);
 	}
 	
 	private static void setDefaulSettings()

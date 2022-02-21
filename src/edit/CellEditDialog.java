@@ -3,10 +3,10 @@ package edit;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -15,8 +15,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
@@ -65,6 +63,8 @@ public class CellEditDialog
 	private static ArrayList<JTextField> actionTextfieldList = new ArrayList<JTextField>();
 	
 	private static String[] possibleActionsArray = new String[] {"", "text_to_clipboard", "file_to_clipboard"}; 
+	
+	private static boolean selectedByUser = true;
 	
 	public static void initializeCellEditDialog()
 	{
@@ -292,15 +292,11 @@ public class CellEditDialog
 		actionsEditPanel.removeAll();
 		actionComboboxList.clear();
 		actionTextfieldList.clear();
-		for (String action : cell.getActionString().split("#") )
+		for (String[] action : cell.getActionsArray() )
 		{
-			String[] action_arr = action.split(":", 2);
-			if (action_arr.length < 2)
-				continue;
-			
 			JComboBox<String> comboBox = new JComboBox<String>(possibleActionsArray);
-			comboBox.setSelectedItem(action_arr[0] );
-			JTextField textField = new JTextField(action_arr[1], 15);
+			comboBox.setSelectedItem(action[0] );
+			JTextField textField = new JTextField(action[1], 15);
 			
 			actionComboboxList.add(comboBox);
 			actionTextfieldList.add(textField);
@@ -316,7 +312,6 @@ public class CellEditDialog
 		cellEditDialog.pack();
 		cellEditDialog.setVisible(true);
 	}
-	
 	
 	private static void updateActionsEdit()
 	{
@@ -399,7 +394,6 @@ public class CellEditDialog
 		cellEditDialog.pack();
 	}
 	
-	
 	private static ActionListener getSplitAtCurserListener()
 	{
 		return new ActionListener() {
@@ -431,7 +425,6 @@ public class CellEditDialog
 		};
 	}
 	
-	
 	private static ActionListener getIconEditListener()
 	{
 		return new ActionListener() {
@@ -448,23 +441,30 @@ public class CellEditDialog
 				main_image_abbr    = ( (EditIconLabel) selectedCellPanel).getMainImageAbbr();
 				layered_image_abbr = ( (EditIconLabel) selectedCellPanel).getLayeredImageAbbr();
 				
-				JDialog icon_dialog = new JDialog(CellEditDialog.cellEditDialog);
+				JDialog icon_dialog = new JDialog(CellEditDialog.cellEditDialog, "Edit cell icon");
 				
-				JPanel main_panel = new JPanel(new BorderLayout() );
+				JPanel main_panel = new JPanel();
 				main_panel.setBackground(ColorSettings.getBackgroundColor() );
 				main_panel.setBorder(GuiHelper.getDialogBorder() );
 				icon_dialog.add(main_panel);
 				
+				JPanel inner_panel = new JPanel(new BorderLayout() );
+				inner_panel.setOpaque(false);
+				inner_panel.setBorder(GuiHelper.getSpacingBorder(5) );
+				main_panel.add(inner_panel);
+				
 				JPanel content_panel = new JPanel(new GridBagLayout() );
 				content_panel.setOpaque(false);
-				main_panel.add(content_panel, BorderLayout.CENTER);
+				inner_panel.add(content_panel, BorderLayout.CENTER);
 				GridBagConstraints gbc = new GridBagConstraints();
+				gbc.insets = new Insets(0, 0, 2, 2);
+				gbc.fill = GridBagConstraints.BOTH;
 				
 				// main image
 					
 					//label
 					gbc.gridy = gbc.gridx = 0;
-					content_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Main image"), gbc);
+					content_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Main image", GuiHelper.LEFT), gbc);
 					
 					//image
 					gbc.gridx ++;
@@ -477,52 +477,56 @@ public class CellEditDialog
 					main_image_edit_panel.setLayout(new GridBagLayout() );
 					main_image_edit_panel.setOpaque(false);
 					GridBagConstraints gbc_main = new GridBagConstraints();
+					gbc_main.insets = new Insets(2, 2, 2, 2);
+					gbc_main.fill = GridBagConstraints.HORIZONTAL;
 					gbc_main.gridx = gbc_main.gridy = 0;
 					
-					main_image_edit_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Select from abbreviations:"), gbc_main);
+					main_image_edit_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Abbreviations:", GuiHelper.LEFT), gbc_main);
 					
 					gbc_main.gridx ++;
 					JComboBox<String> abbr_list_main = new JComboBox<String>(Abbreviations.getArrayOfAbbreviations() );
 					abbr_list_main.setSelectedItem(main_image_abbr);
+					main_image_edit_panel.add(abbr_list_main, gbc_main);
+
+					gbc_main.gridy ++;
+					gbc_main.gridx = 0;
+					main_image_edit_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Images:", GuiHelper.LEFT), gbc_main);
+					
+					gbc_main.gridx ++;
+					JComboBox<String> images_list_main = new JComboBox<String>(FileOperations.getNamesOfImagesInImagesDirectory() );
+					images_list_main.setSelectedItem(main_image_abbr);
+					main_image_edit_panel.add(images_list_main, gbc_main);
+					
 					abbr_list_main.addItemListener(new ItemListener() {
 						@Override
 						public void itemStateChanged(ItemEvent e) {
-							if(e.getStateChange() == ItemEvent.SELECTED)
+							if(selectedByUser && e.getStateChange() == ItemEvent.SELECTED)
 							{
-								content_panel.remove(main_image_label);
-								gbc.gridy = 0;
-								gbc.gridx = 1;
+								selectedByUser = false;
+								images_list_main.setSelectedIndex(0);
+								selectedByUser = true;
 								main_image_abbr = (String) abbr_list_main.getSelectedItem();
-								main_image_label = new JLabel(GuiHelper.getScaledImageIconFromAbbreviation(main_image_abbr) );
-								content_panel.add(main_image_label, gbc);
+								main_image_label.setIcon(GuiHelper.getScaledImageIconFromAbbreviation(main_image_abbr) );
 								icon_dialog.pack();
 							}
 				    }
 					});
-					main_image_edit_panel.add(abbr_list_main, gbc_main);
-					
-					gbc_main.gridy ++;
-					JButton button_change_main = new JButton("Select from file");
-					button_change_main.addActionListener(e ->
-					{
-						FileDialog dialog = new FileDialog(MainGui.window, "Select image");
-						dialog.setMode(FileDialog.LOAD);
-						GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
-						dialog.setVisible(true);
-						
-						if (dialog.getDirectory() != null)
-						{
-							content_panel.remove(main_image_label);
-							gbc.gridy = 0;
-							gbc.gridx = 1;
-							main_image_abbr = Paths.get("Images\\").toAbsolutePath().relativize(new File(dialog.getDirectory() + dialog.getFile() ).toPath() ).toString().split(Pattern.quote(".") )[0];
-							System.out.println(main_image_abbr);
-							main_image_label = new JLabel(GuiHelper.getScaledImageIconFromAbbreviation(main_image_abbr) );
-							content_panel.add(main_image_label, gbc);
-							icon_dialog.pack();
-						}
+					images_list_main.addItemListener(new ItemListener() {
+						@Override
+						public void itemStateChanged(ItemEvent e) {
+							if(selectedByUser && e.getStateChange() == ItemEvent.SELECTED)
+							{
+								selectedByUser = false;
+								abbr_list_main.setSelectedIndex(0);
+								selectedByUser = true;
+								main_image_abbr = (String) images_list_main.getSelectedItem();
+								main_image_label.setIcon(GuiHelper.getScaledImageIconFromAbbreviation(main_image_abbr) );
+								icon_dialog.pack();
+							}
+				    }
 					});
-					main_image_edit_panel.add(button_change_main, gbc_main);
+					
+					
 					content_panel.add(main_image_edit_panel, gbc);
 				
 				// layered?
@@ -530,13 +534,13 @@ public class CellEditDialog
 					//label
 					gbc.gridy ++;
 					gbc.gridx = 0;
-					content_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Layered image"), gbc);
+					content_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Layered image", GuiHelper.LEFT), gbc);
 					
 					//check box
 					gbc.gridx ++;
 					JCheckBox checkbox_layered = new JCheckBox();
 					checkbox_layered.setSelected( ! layered_image_abbr.equals("") );
-					checkbox_layered.setBackground(ColorSettings.getBackgroundColor() );
+					checkbox_layered.setOpaque(false);
 					content_panel.add(checkbox_layered, gbc);
 				
 				// layered image
@@ -544,7 +548,7 @@ public class CellEditDialog
 					//label
 					gbc.gridy ++;
 					gbc.gridx = 0;
-					content_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Layered image"), gbc);
+					content_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Layered image", GuiHelper.LEFT), gbc);
 					
 					//image
 					gbc.gridx ++;
@@ -558,78 +562,86 @@ public class CellEditDialog
 					layered_image_edit_panel.setLayout(new GridBagLayout() );
 					layered_image_edit_panel.setOpaque(false);
 					GridBagConstraints gbc_layered = new GridBagConstraints();
+					gbc_layered.insets = new Insets(2, 2, 2, 2);
+					gbc_layered.fill = GridBagConstraints.HORIZONTAL;
 					gbc_layered.gridx = gbc_layered.gridy = 0;
 					
-					layered_image_edit_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Select from abbreviations:"), gbc_layered);
+					layered_image_edit_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Abbreviations:", GuiHelper.LEFT), gbc_layered);
 					
 					gbc_layered.gridx ++;
-					JComboBox<String> abbr_list_layerd = new JComboBox<String>(Abbreviations.getArrayOfAbbreviations() );
-					abbr_list_layerd.setSelectedItem(layered_image_abbr);
-					abbr_list_layerd.addItemListener(new ItemListener() {
+					JComboBox<String> abbr_list_layered = new JComboBox<String>(Abbreviations.getArrayOfAbbreviations() );
+					abbr_list_layered.setSelectedItem(layered_image_abbr);
+					layered_image_edit_panel.add(abbr_list_layered, gbc_layered);
+					
+					gbc_layered.gridx = 0;
+					gbc_layered.gridy ++;
+					layered_image_edit_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Images:", GuiHelper.LEFT), gbc_layered);
+					
+					gbc_layered.gridx ++;
+					JComboBox<String> images_list_layered = new JComboBox<String>(FileOperations.getNamesOfImagesInImagesDirectory() );
+					images_list_layered.setSelectedItem(layered_image_abbr);
+					layered_image_edit_panel.add(images_list_layered, gbc_layered);
+					
+					content_panel.add(layered_image_edit_panel, gbc);
+					
+					
+					abbr_list_layered.addItemListener(new ItemListener() {
 						@Override
 						public void itemStateChanged(ItemEvent e) {
-							if(e.getStateChange() == ItemEvent.SELECTED)
+							if(selectedByUser && e.getStateChange() == ItemEvent.SELECTED)
 							{
-								content_panel.remove(layered_image_label);
-								gbc.gridy = 2;
-								gbc.gridx = 1;
-								layered_image_abbr = (String) abbr_list_layerd.getSelectedItem();
-								layered_image_label = new JLabel(GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr) );
-								content_panel.add(layered_image_label, gbc);
+								selectedByUser = false;
+								images_list_layered.setSelectedIndex(0);
+								selectedByUser = true;
+								layered_image_abbr = (String) abbr_list_layered.getSelectedItem();
+								layered_image_label.setIcon(GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr) );
 								icon_dialog.pack();
 							}
 				    }
 					});
-					layered_image_edit_panel.add(abbr_list_layerd, gbc_layered);
-					
-					gbc_layered.gridy ++;
-					JButton button_change_layered = new JButton("Select from file");
-					button_change_layered.addActionListener(e ->
-						{
-							FileDialog dialog = new FileDialog(MainGui.window, "Select image");
-							dialog.setMode(FileDialog.LOAD);
-							GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
-							dialog.setVisible(true);
-							
-							if (dialog.getDirectory() != null)
+					images_list_layered.addItemListener(new ItemListener() {
+						@Override
+						public void itemStateChanged(ItemEvent e) {
+							if(selectedByUser && e.getStateChange() == ItemEvent.SELECTED)
 							{
-								content_panel.remove(layered_image_label);
-								gbc.gridy = 2;
-								gbc.gridx = 1;
-								layered_image_abbr = Paths.get("Images\\").toAbsolutePath().relativize(new File(dialog.getDirectory() + dialog.getFile() ).toPath() ).toString().split(Pattern.quote(".") )[0];
-								System.out.println(layered_image_abbr);
-								layered_image_label = new JLabel(GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr) );
-								content_panel.add(layered_image_label, gbc);
+								selectedByUser = false;
+								abbr_list_layered.setSelectedIndex(0);
+								selectedByUser = true;
+								layered_image_abbr = (String) images_list_layered.getSelectedItem();
+								layered_image_label.setIcon(GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr) );
 								icon_dialog.pack();
 							}
-						});
-					layered_image_edit_panel.add(button_change_layered, gbc_layered);
-					content_panel.add(layered_image_edit_panel, gbc);
+				    }
+					});
 				
 				// horizontal alignment
 				gbc.gridy ++;
 				gbc.gridx = 0;
-				content_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("  Horizontal alignment  "), gbc);
+				content_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Horizontal alignment", GuiHelper.LEFT), gbc);
 				
 				gbc.gridx ++;
-				JComboBox<String> dropdown_horizontal = new JComboBox<String>(new String[] {"l", "c", "r"} );
+				JComboBox<String> dropdown_horizontal = new JComboBox<String>(new String[] {"left", "center", "right"} );
 				dropdown_horizontal.setSelectedItem( ( (EditIconLabel) selectedCellPanel).getLayeredHorizontalAlignment() );
+				gbc.fill = GridBagConstraints.HORIZONTAL;
 				content_panel.add(dropdown_horizontal, gbc);
+				gbc.fill = GridBagConstraints.BOTH;
 				
 				// vertical alignment
 				gbc.gridy ++;
 				gbc.gridx = 0;
-				content_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Vertical alignment"), gbc);
+				content_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Vertical alignment", GuiHelper.LEFT), gbc);
 				
 				gbc.gridx ++;
-				JComboBox<String> dropdown_vertical = new JComboBox<String>(new String[] {"t", "c", "b"} );
+				JComboBox<String> dropdown_vertical = new JComboBox<String>(new String[] {"top", "center", "bottom"} );
 				dropdown_vertical.setSelectedItem( ( (EditIconLabel) selectedCellPanel).getLayeredVerticalAlignment() );
+				gbc.fill = GridBagConstraints.HORIZONTAL;
 				content_panel.add(dropdown_vertical, gbc);
+				gbc.fill = GridBagConstraints.BOTH;
 				
 				// controls
 				JPanel control_panel = new JPanel();
 				control_panel.setOpaque(false);
-				main_panel.add(control_panel, BorderLayout.PAGE_END);
+				inner_panel.add(control_panel, BorderLayout.PAGE_END);
 				
 				JButton button_confirm = new JButton("Confirm");
 				control_panel.add(button_confirm);
@@ -651,7 +663,6 @@ public class CellEditDialog
 			}
 		};
 	}
-	
 	
 	private static ActionListener getRemoveEditPanelListener()
 	{
@@ -677,7 +688,6 @@ public class CellEditDialog
 		};
 	}
 	
-	
 	private static ActionListener getAddAboveListener()
 	{
 		return new ActionListener() {
@@ -697,7 +707,6 @@ public class CellEditDialog
 			}
 		};
 	}
-	
 	
 	private static ActionListener getAddBelowPanelListener()
 	{

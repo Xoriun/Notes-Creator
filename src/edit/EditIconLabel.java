@@ -46,8 +46,8 @@ public class EditIconLabel extends JLabel implements EditPanel
 	{
 		this.mainImageAbbr = main_image_abbr;
 		this.layeredImageAbbr = layered_image_abbr;
-		this.layeredHorizontalAlignment = horizontal_alignment;
-		this.layeredVerticalAlignment = vertical_alignment;
+		this.layeredHorizontalAlignment = horizontal_alignment.substring(0, 1);
+		this.layeredVerticalAlignment = vertical_alignment.substring(0, 1);
 		this.icon = GuiHelper.getScaledLayeredImageFromAbbreviations(mainImageAbbr, layeredImageAbbr, layeredHorizontalAlignment, layeredVerticalAlignment);
 		this.setIcon(icon);
 	}

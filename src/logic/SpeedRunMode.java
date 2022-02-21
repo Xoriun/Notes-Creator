@@ -197,7 +197,7 @@ public class SpeedRunMode
 			// hotkeys or LiveSplitAPI
 			JPanel live_panel = new JPanel();
 			live_panel.setOpaque(false);
-			live_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Use LiveSplitAPI or separate hotkeys?") );
+			live_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Use LiveSplitAPI or separate hotkeys?", GuiHelper.LEFT) );
 			JRadioButton live_radio_button = new JRadioButton("LiveSplit", useLiveSplitAPI);
 			live_radio_button.setOpaque(false);
 			live_radio_button.setForeground(ColorSettings.getTextColor() );
@@ -215,7 +215,7 @@ public class SpeedRunMode
 			// profile combobox
 			JPanel profile_panel = new JPanel();
 			profile_panel.setOpaque(false);
-			profile_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Active profile: ") );
+			profile_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Active profile: ", GuiHelper.LEFT) );
 			JComboBox<HotkeyProfile> comboBox = new JComboBox<HotkeyProfile>( profiles_copy.toArray(new HotkeyProfile[profiles_copy.size() ] ) );
 			comboBox.setSelectedItem(Hotkeys.activeProfile);
 			comboBox.addItemListener(new ItemListener() {
@@ -252,20 +252,20 @@ public class SpeedRunMode
 				hotkey_string_skip = profile.getHotkeyDisplay("Skip");
 			}
 			
-			split = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(hotkey_string_split);
-			reset = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(hotkey_string_reset);
-			undo = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(hotkey_string_undo);
-			skip = GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(hotkey_string_skip);
+			split = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(hotkey_string_split, GuiHelper.LEFT);
+			reset = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(hotkey_string_reset, GuiHelper.LEFT);
+			undo = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(hotkey_string_undo, GuiHelper.LEFT);
+			skip = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(hotkey_string_skip, GuiHelper.LEFT);
 				
 			JPanel split_display_panel = new JPanel(new GridLayout(4, 2) );
 			split_display_panel.setOpaque(false);
-			split_display_panel.add(GuiHelper.getRightAlignedNonOpaqueJLabelWithCurrentTextColor("Split:  ") );
+			split_display_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Split:  ", GuiHelper.RIGHT) );
 			split_display_panel.add(split);
-			split_display_panel.add(GuiHelper.getRightAlignedNonOpaqueJLabelWithCurrentTextColor("Reset:  ") );
+			split_display_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Reset:  ", GuiHelper.RIGHT) );
 			split_display_panel.add(reset);
-			split_display_panel.add(GuiHelper.getRightAlignedNonOpaqueJLabelWithCurrentTextColor("Undo:  ") );
+			split_display_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Undo:  ", GuiHelper.RIGHT) );
 			split_display_panel.add(undo);
-			split_display_panel.add(GuiHelper.getRightAlignedNonOpaqueJLabelWithCurrentTextColor("Skip:  ") );
+			split_display_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Skip:  ", GuiHelper.RIGHT) );
 			split_display_panel.add(skip);
 			settings_panel.add(split_display_panel);
 			
@@ -295,7 +295,7 @@ public class SpeedRunMode
 					Color.RED) );
 			workaraound_panel.setLayout(new BoxLayout(workaraound_panel, BoxLayout.Y_AXIS) );
 			workaraound_panel.setOpaque(false);
-			workaraound_panel.add(GuiHelper.getLeftAlignedNonOpaqueJLabelWithCurrentTextColor("Currently, the 'Control' modifier doesn't work porperly!") );
+			workaraound_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Currently, the 'Control' modifier doesn't work porperly!", GuiHelper.LEFT) );
 			workaround_box = new JCheckBox("Ignore the 'Control' Modifier entirely! (false by default)", workaround_box.isSelected() );
 			workaround_box.setOpaque(false);
 			workaround_box.setForeground(ColorSettings.getTextColor() );

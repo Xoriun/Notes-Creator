@@ -23,7 +23,7 @@ public class AddRemoveControl extends JPanel
 		this.row = row;
 		this.sectionIndex = section_index;
 		
-		JLabel add = GuiHelper.getCenteredNonOpaqueJLabelWithCurrentTextColor(" + ");
+		JLabel add = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(" + ", GuiHelper.CENTER);
 		add.setForeground(ColorSettings.getBackgroundColor() );
 		add.addMouseListener(row == null ? MouseAdapters.addSectionAdapter : MouseAdapters.addRowAdapter);
 		
@@ -33,7 +33,7 @@ public class AddRemoveControl extends JPanel
 		
 		if (! only_add)
 		{
-			JLabel remove = GuiHelper.getCenteredNonOpaqueJLabelWithCurrentTextColor(" - ");
+			JLabel remove = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(" - ", GuiHelper.CENTER);
 			remove.setForeground(ColorSettings.getBackgroundColor() );
 			remove.addMouseListener(row == null ? MouseAdapters.removeSectionAdapter : MouseAdapters.removeRowAdapter);
 			
