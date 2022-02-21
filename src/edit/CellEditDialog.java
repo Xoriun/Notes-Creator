@@ -64,6 +64,7 @@ public class CellEditDialog
 	
 	private static String[] possibleActionsArray = new String[] {"", "text_to_clipboard", "file_to_clipboard"}; 
 	
+	public static boolean iconEditEditorOpen = false;
 	private static boolean selectedByUser = true;
 	
 	public static void initializeCellEditDialog()
@@ -255,6 +256,9 @@ public class CellEditDialog
 	
 	public static void processCell(Cell cell)
 	{
+		if (iconEditEditorOpen)
+			return;
+		
 		// cell
 		if (selectedCell != null)
 			selectedCell.setDefaultBorder();
@@ -374,6 +378,9 @@ public class CellEditDialog
 	
 	private static void processEditPanel(EditPanel edit_panel)
 	{
+		if (iconEditEditorOpen)
+			return;
+		
 		if (selectedCellPanel != null)
 			selectedCellPanel.setDefaultBorder();
 		selectedCellPanel = edit_panel;
@@ -435,13 +442,23 @@ public class CellEditDialog
 			JLabel main_image_label;
 			JLabel layered_image_label;
 			
+			private void closeDialog(JDialog dialog)
+			{
+				iconEditEditorOpen = false;
+				dialog.dispose();
+			}
+			
 			@Override
 			public void actionPerformed(ActionEvent ae)
 			{
+				iconEditEditorOpen = true;
+				
 				main_image_abbr    = ( (EditIconLabel) selectedCellPanel).getMainImageAbbr();
 				layered_image_abbr = ( (EditIconLabel) selectedCellPanel).getLayeredImageAbbr();
 				
 				JDialog icon_dialog = new JDialog(CellEditDialog.cellEditDialog, "Edit cell icon");
+				icon_dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+				icon_dialog.addWindowListener(new WindowAdapter() { @Override public void windowClosing(WindowEvent e) { closeDialog(icon_dialog); } } );
 				
 				JPanel main_panel = new JPanel();
 				main_panel.setBackground(ColorSettings.getBackgroundColor() );
@@ -651,12 +668,12 @@ public class CellEditDialog
 					else
 						( (EditIconLabel) selectedCellPanel).updateIcon(main_image_abbr);
 					CellEditDialog.cellEditDialog.pack();
-					icon_dialog.dispose();
+					closeDialog(icon_dialog);
 				});
 				
 				JButton button_cancel = new JButton("Cancel");
 				control_panel.add(button_cancel);
-				button_cancel.addActionListener(e -> { icon_dialog.dispose(); } );
+				button_cancel.addActionListener(e -> closeDialog(icon_dialog) );
 				
 				icon_dialog.pack();
 				icon_dialog.setVisible(true);
