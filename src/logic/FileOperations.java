@@ -50,15 +50,15 @@ public class FileOperations
 		MainGui.window.setTitle(new_title);
 	}
 	
-	public static String[] getNamesOfImagesInImagesDirectory()
+	public static Stream<String> getStreamOfNamesOfImagesInImagesDirectory()
 	{
-		return Stream.concat(Stream.of(""), Stream.of(new File(imagesDirectory).list(new FilenameFilter() {
+		return Stream.of(new File(imagesDirectory).list(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name)
 			{
 				return name.toLowerCase().endsWith(".png");
 			}
-		}) ).sorted( (e,f) -> e.compareTo(f) ).map(e -> e.substring(0, e.length() - 4) ) ).toArray(String[]::new);
+		}) ).map(e -> e.substring(0, e.length() - 4) );
 	}
 	
 	private static void setDefaulSettings()

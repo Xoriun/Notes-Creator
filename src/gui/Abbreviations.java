@@ -262,9 +262,14 @@ public class Abbreviations
 		return textfields.stream().map(row -> new String[] {row[0].getText(), row[1].getText() } ).collect(Collectors.toCollection(ArrayList::new) );
 	}
 	
-	public static String[] getArrayOfAbbreviations()
+	public static Stream<String> getStreamOfAbbreviations()
 	{
-		return Stream.concat(Stream.of(""), abbreviationsList.stream().map(e -> e[0] ) ).toArray(String[]::new);
+		return abbreviationsList.stream().map(e -> e[0] );
+	}
+	
+	public static Stream<String> getStreamOfCompleteNames()
+	{
+		return abbreviationsList.stream().map(e -> e[1] );
 	}
 	
 	public static String getNameFromAbbreviation(String str)

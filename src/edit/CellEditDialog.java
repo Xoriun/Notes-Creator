@@ -9,16 +9,17 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.BoxLayout;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -28,6 +29,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.MouseInputAdapter;
 
 import gui.Abbreviations;
@@ -65,7 +68,8 @@ public class CellEditDialog
 	private static String[] possibleActionsArray = new String[] {"", "text_to_clipboard", "file_to_clipboard"}; 
 	
 	public static boolean iconEditEditorOpen = false;
-	private static boolean selectedByUser = true;
+	
+	private static String[] abbreviationsAndFileNamesList;
 	
 	public static void initializeCellEditDialog()
 	{
@@ -442,6 +446,8 @@ public class CellEditDialog
 			JLabel main_image_label;
 			JLabel layered_image_label;
 			
+			Dimension combobox_main_dim, combobox_layered_dim;
+			
 			private void closeDialog(JDialog dialog)
 			{
 				iconEditEditorOpen = false;
@@ -451,6 +457,8 @@ public class CellEditDialog
 			@Override
 			public void actionPerformed(ActionEvent ae)
 			{
+				updateAbbreviationsAndFileNamesList();
+				
 				iconEditEditorOpen = true;
 				
 				main_image_abbr    = ( (EditIconLabel) selectedCellPanel).getMainImageAbbr();
@@ -498,51 +506,41 @@ public class CellEditDialog
 					gbc_main.fill = GridBagConstraints.HORIZONTAL;
 					gbc_main.gridx = gbc_main.gridy = 0;
 					
-					main_image_edit_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Abbreviations:", GuiHelper.LEFT), gbc_main);
+					main_image_edit_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("List:", GuiHelper.LEFT), gbc_main);
 					
 					gbc_main.gridx ++;
-					JComboBox<String> abbr_list_main = new JComboBox<String>(Abbreviations.getArrayOfAbbreviations() );
-					abbr_list_main.setSelectedItem(main_image_abbr);
-					main_image_edit_panel.add(abbr_list_main, gbc_main);
+					JComboBox<String> combobox_main = new JComboBox<String>(abbreviationsAndFileNamesList);
+					combobox_main.setSelectedItem(getLowercaseStringWithFirstCharCapitablized(main_image_abbr) );
+					main_image_edit_panel.add(combobox_main, gbc_main);
 
 					gbc_main.gridy ++;
 					gbc_main.gridx = 0;
-					main_image_edit_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Images:", GuiHelper.LEFT), gbc_main);
+					main_image_edit_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Filter:", GuiHelper.LEFT), gbc_main);
 					
 					gbc_main.gridx ++;
-					JComboBox<String> images_list_main = new JComboBox<String>(FileOperations.getNamesOfImagesInImagesDirectory() );
-					images_list_main.setSelectedItem(main_image_abbr);
-					main_image_edit_panel.add(images_list_main, gbc_main);
+					JTextField filter_textFiled_main = new JTextField(); 
+					main_image_edit_panel.add(filter_textFiled_main, gbc_main);
 					
-					abbr_list_main.addItemListener(new ItemListener() {
+					combobox_main.addActionListener(new ActionListener() {
 						@Override
-						public void itemStateChanged(ItemEvent e) {
-							if(selectedByUser && e.getStateChange() == ItemEvent.SELECTED)
-							{
-								selectedByUser = false;
-								images_list_main.setSelectedIndex(0);
-								selectedByUser = true;
-								main_image_abbr = (String) abbr_list_main.getSelectedItem();
-								main_image_label.setIcon(GuiHelper.getScaledImageIconFromAbbreviation(main_image_abbr) );
-								icon_dialog.pack();
-							}
+						public void actionPerformed(ActionEvent e)
+						{
+							main_image_abbr = (String) combobox_main.getSelectedItem();
+							main_image_label.setIcon(GuiHelper.getScaledImageIconFromAbbreviation(main_image_abbr) );
+							icon_dialog.pack();
 				    }
 					});
-					images_list_main.addItemListener(new ItemListener() {
-						@Override
-						public void itemStateChanged(ItemEvent e) {
-							if(selectedByUser && e.getStateChange() == ItemEvent.SELECTED)
-							{
-								selectedByUser = false;
-								abbr_list_main.setSelectedIndex(0);
-								selectedByUser = true;
-								main_image_abbr = (String) images_list_main.getSelectedItem();
-								main_image_label.setIcon(GuiHelper.getScaledImageIconFromAbbreviation(main_image_abbr) );
-								icon_dialog.pack();
-							}
-				    }
+					filter_textFiled_main.getDocument().addDocumentListener(new DocumentListener() {
+						@Override public void removeUpdate(DocumentEvent e) { update(); }
+						@Override public void insertUpdate(DocumentEvent e) { update(); }
+						@Override public void changedUpdate(DocumentEvent e) { update(); }
+						
+						private void update()
+						{
+							combobox_main.setModel(new DefaultComboBoxModel<>(getFilteredAbbreviationsAndFileNamesList(filter_textFiled_main.getText() ) ) );
+							combobox_main.setPreferredSize(combobox_main_dim);
+						}
 					});
-					
 					
 					content_panel.add(main_image_edit_panel, gbc);
 				
@@ -583,52 +581,46 @@ public class CellEditDialog
 					gbc_layered.fill = GridBagConstraints.HORIZONTAL;
 					gbc_layered.gridx = gbc_layered.gridy = 0;
 					
-					layered_image_edit_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Abbreviations:", GuiHelper.LEFT), gbc_layered);
+					layered_image_edit_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("List:", GuiHelper.LEFT), gbc_layered);
 					
 					gbc_layered.gridx ++;
-					JComboBox<String> abbr_list_layered = new JComboBox<String>(Abbreviations.getArrayOfAbbreviations() );
-					abbr_list_layered.setSelectedItem(layered_image_abbr);
-					layered_image_edit_panel.add(abbr_list_layered, gbc_layered);
+					JComboBox<String> combobox_layered = new JComboBox<String>(abbreviationsAndFileNamesList);
+					combobox_layered.setSelectedItem(getLowercaseStringWithFirstCharCapitablized(layered_image_abbr) );
+					layered_image_edit_panel.add(combobox_layered, gbc_layered);
 					
 					gbc_layered.gridx = 0;
 					gbc_layered.gridy ++;
-					layered_image_edit_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Images:", GuiHelper.LEFT), gbc_layered);
+					layered_image_edit_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("Filter:", GuiHelper.LEFT), gbc_layered);
 					
 					gbc_layered.gridx ++;
-					JComboBox<String> images_list_layered = new JComboBox<String>(FileOperations.getNamesOfImagesInImagesDirectory() );
-					images_list_layered.setSelectedItem(layered_image_abbr);
-					layered_image_edit_panel.add(images_list_layered, gbc_layered);
+					JTextField filter_textFiled_layered = new JTextField();
+					layered_image_edit_panel.add(filter_textFiled_layered, gbc_layered);
 					
 					content_panel.add(layered_image_edit_panel, gbc);
 					
-					
-					abbr_list_layered.addItemListener(new ItemListener() {
+					combobox_layered.addActionListener(new ActionListener() {
 						@Override
-						public void itemStateChanged(ItemEvent e) {
-							if(selectedByUser && e.getStateChange() == ItemEvent.SELECTED)
-							{
-								selectedByUser = false;
-								images_list_layered.setSelectedIndex(0);
-								selectedByUser = true;
-								layered_image_abbr = (String) abbr_list_layered.getSelectedItem();
-								layered_image_label.setIcon(GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr) );
-								icon_dialog.pack();
-							}
-				    }
+						public void actionPerformed(ActionEvent e)
+						{
+							layered_image_abbr = (String) combobox_layered.getSelectedItem();
+							content_panel.remove(layered_image_label);
+							layered_image_label = new JLabel(GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr) );
+							gbc.gridx = 1;
+							gbc.gridy = 2;
+							content_panel.add(layered_image_label, gbc);
+							icon_dialog.pack();
+						}
 					});
-					images_list_layered.addItemListener(new ItemListener() {
-						@Override
-						public void itemStateChanged(ItemEvent e) {
-							if(selectedByUser && e.getStateChange() == ItemEvent.SELECTED)
-							{
-								selectedByUser = false;
-								abbr_list_layered.setSelectedIndex(0);
-								selectedByUser = true;
-								layered_image_abbr = (String) images_list_layered.getSelectedItem();
-								layered_image_label.setIcon(GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr) );
-								icon_dialog.pack();
-							}
-				    }
+					filter_textFiled_layered.getDocument().addDocumentListener(new DocumentListener() {
+						@Override public void removeUpdate(DocumentEvent e) { update(); }
+						@Override public void insertUpdate(DocumentEvent e) { update(); }
+						@Override public void changedUpdate(DocumentEvent e) { update(); }
+						
+						private void update()
+						{
+							combobox_layered.setModel(new DefaultComboBoxModel<>(getFilteredAbbreviationsAndFileNamesList(filter_textFiled_layered.getText() ) ) );
+							combobox_layered.setPreferredSize(combobox_layered_dim);
+						}
 					});
 				
 				// horizontal alignment
@@ -677,6 +669,9 @@ public class CellEditDialog
 				
 				icon_dialog.pack();
 				icon_dialog.setVisible(true);
+				
+				combobox_main_dim    = combobox_main.getSize();
+				combobox_layered_dim = combobox_layered.getSize();
 			}
 		};
 	}
@@ -763,5 +758,40 @@ public class CellEditDialog
 				updateEditPanels();
 			}
 		};
+	}
+	
+	public static String getLowercaseStringWithFirstCharCapitablized(String str)
+	{
+		return str.length() == 0 ? str : str.length() == 1 ? str.toUpperCase() : Character.toUpperCase(str.charAt(0) ) + str.substring(1).toLowerCase();
+	}
+	
+	private static void updateAbbreviationsAndFileNamesList()
+	{
+		ArrayList<String> completeNames = Abbreviations.getStreamOfCompleteNames().collect(Collectors.toCollection(ArrayList::new) );
+		abbreviationsAndFileNamesList = Stream.concat(
+					Stream.concat(Stream.of(""), Abbreviations.getStreamOfAbbreviations() ), 
+					FileOperations.getStreamOfNamesOfImagesInImagesDirectory()
+							.filter(e -> ! completeNames.contains(e) )
+							.map(e -> getLowercaseStringWithFirstCharCapitablized(e) )
+				)
+				.map(e -> getLowercaseStringWithFirstCharCapitablized(e) )
+				.sorted( (e,f) -> e.compareTo(f) )
+				.toArray(String[]::new);
+	}
+	
+	private static String[] getFilteredAbbreviationsAndFileNamesList(String filter)
+	{
+		return Stream.of(abbreviationsAndFileNamesList)
+				.map(e -> e.toLowerCase() )
+				.filter(e -> e.contains(filter.toLowerCase() ) ).
+				sorted( (String e, String f) -> {
+					boolean eStartsWith = e.startsWith(filter);
+					boolean fStartsWith = f.startsWith(filter);
+					if (eStartsWith && !fStartsWith) return -1;
+					else if ( !eStartsWith && fStartsWith) return 1;
+					else return e.compareTo(f);
+				} )
+				.map(e -> getLowercaseStringWithFirstCharCapitablized(e) )
+				.toArray(String[]::new);
 	}
 }
