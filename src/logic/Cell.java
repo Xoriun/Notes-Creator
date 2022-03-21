@@ -27,7 +27,7 @@ public class Cell extends JPanel
 	private int col;
 	private boolean topBorder, leftBorder;
 	private String contentString;
-	private String[][] actionsArray;
+	private String[][] actionsArray = new String[0][0];
 	private ArrayList<CellLabel> cellLabels;
 	
 	public Cell(Row row, String cell_str, int col)
@@ -45,6 +45,8 @@ public class Cell extends JPanel
 	
 	public void updateCell(String cell_str)
 	{
+		if (cell_str.equals(getCellString() ) ) return;
+		
 		clearContentAndListeners();
 		
 		if (cell_str.contains(">>") )
@@ -67,6 +69,8 @@ public class Cell extends JPanel
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS) );
 		fillCellPanel();
 		setDefaultBorder();
+		
+		FileOperations.unsavedChanges = true;
 	}
 	
 	public String getInfo()
@@ -136,6 +140,21 @@ public class Cell extends JPanel
 			horizontal_panel.setOpaque(false);
 			this.add(horizontal_panel);
 		}
+	}
+	
+	/**
+	 * Returns an array of its neighbours in all 4 cardinal directions, ordered as top, bottom, left right.
+	 * If this lies at an edge, null is returned for the non-existing neighbours.
+	 * @return
+	 */
+	public Cell[] getNeighbours()
+	{
+		Cell[] res = new Cell[4];
+		res[0] = row.getRowIndex() == 0                                     ? null : row.getSection().getRows().get(row.getRowIndex() - 1).getCells().get(col);
+		res[1] = row.getRowIndex() == row.getSection().getRows().size() - 1 ? null : row.getSection().getRows().get(row.getRowIndex() + 1).getCells().get(col);
+		res[2] = col               == 0                         ? null : row.getCells().get(col - 1);
+		res[3] = col               == row.getCells().size() - 1 ? null : row.getCells().get(col + 1);
+		return res;
 	}
 	
 	public abstract class CellLabel extends JLabel

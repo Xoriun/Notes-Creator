@@ -269,7 +269,7 @@ public class CellEditDialog
 		selectedCell = cell;
 		selectedCell.setSelectedBorder();
 		
-		// EditLabels
+		// EditLabels (clear and refill)
 		selectedCellPanel = null;
 		buttonSplitAtCursor.setEnabled(false);
 		buttonEditIcon.setEnabled(false);
@@ -284,19 +284,20 @@ public class CellEditDialog
 			editPanels.add(edit_panel);
 		}
 		
-		int index = 0;
+		// Add lineBreaks
+		int index = 0; // position in 'editPanles' where a linebreak has to be added
 		String[] lines = cell.getCellString().split(Pattern.quote("\\n") );
 		for (int i = 0; i < lines.length - 1; i ++) // skip last line, no linebreak needed there
 		{
 			String line = lines[i];
-			index += line.split("#").length;
+			index += line.split("#").length; // amount of cellLabels in current line
 			EditLineBreak lb = new EditLineBreak();
 			addMosueLisetenerToEditPanel(lb);
 			editPanels.add(index, lb);
-			index ++;
+			index ++; // accounting for the added lineBreak
 		}
 		
-		// Actions
+		// Actions (clear and refill)
 		actionsEditPanel.removeAll();
 		actionComboboxList.clear();
 		actionTextfieldList.clear();

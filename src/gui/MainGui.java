@@ -238,6 +238,7 @@ public class MainGui {
 		FileOperations.readNotesFile();
 		arrangeContent();
 		spaceColums();
+		FileOperations.unsavedChanges = false;
 	}
 
 	public static void exit()

@@ -30,8 +30,16 @@ public class MouseAdapters
 		@Override
 		public void mouseClicked(MouseEvent e)
 		{
-			if (MainGui.inEditMode)
+			if ( !MainGui.inEditMode) return;
+			
+			int buttonPressed = e.getButton();
+			
+			if (buttonPressed == 1 || buttonPressed == 3)
+			{
 				CellEditDialog.processCell( (Cell) e.getComponent() );
+				if (buttonPressed == 3)
+					PopupMenues.processCellRightClick(e);
+			}
 		}
 	};
 	
