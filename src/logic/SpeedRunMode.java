@@ -33,13 +33,13 @@ public class SpeedRunMode
 	 * Determines whether of not the program is in speedrun mode or not.
 	 * This enables splits as well as actions.
 	 */
-	public static boolean speedrunModeEnabled = false;
+	static boolean speedrunModeEnabled = false;
 	
 	/**
 	 * Whether or not to use Events from the LiveSplitAPI Component instead of separate hotkeys.
 	 * Default is true. 
 	 */
-	public static boolean useLiveSplitAPI = true;
+	private static boolean useLiveSplitAPI = true;
 	
 	/**
 	 * The index of the currently selected Section. Negative values indicate that the run was reset or has been started.
@@ -51,11 +51,11 @@ public class SpeedRunMode
 	
 	private static int splitType = SPLIT_SCROLL;
 	
-	static JLabel split;
-	static JLabel reset;
-	static JLabel undo;
-	static JLabel skip;
-	public static JCheckBox workaround_box = new JCheckBox();
+	private static JLabel split;
+	private static JLabel reset;
+	private static JLabel undo;
+	private static JLabel skip;
+	static JCheckBox workaround_box = new JCheckBox();
 	
 	public static void updateSpeedRunMode(boolean speedrun_mode_enabled)
 	{
@@ -63,7 +63,7 @@ public class SpeedRunMode
 		updateSpeedRunMode();
 	}
 	
-	public static void updateSpeedRunMode()
+	private static void updateSpeedRunMode()
 	{
 		if (useLiveSplitAPI)
 		{
@@ -83,7 +83,7 @@ public class SpeedRunMode
 		}
 	}
 	
-	public static void startOrSplit()
+	static void startOrSplit()
 	{
 		if (currentSectionIndex >= 0)
 			split();
@@ -91,7 +91,7 @@ public class SpeedRunMode
 			start();
 	}
 	
-	public static void start()
+	static void start()
 	{
 		currentSectionIndex = 0;
 			if (splitType == SPLIT_SCROLL)
@@ -103,7 +103,7 @@ public class SpeedRunMode
 			}
 	}
 	
-	public static void split()
+	static void split()
 	{
 		currentSectionIndex ++;
 		if (currentSectionIndex < MainGui.sectionsList.size() )
@@ -116,7 +116,7 @@ public class SpeedRunMode
 			}
 	}
 	
-	public static void skip()
+	static void skip()
 	{
 		if (currentSectionIndex < 0)
 			return;
@@ -131,7 +131,7 @@ public class SpeedRunMode
 			}
 	}
 	
-	public static void reset()
+	static void reset()
 	{
 		currentSectionIndex = -1;
 		MainGui.scrollPane.getVerticalScrollBar().setValue(MainGui.sectionsList.get(0).getScrollLocation() );
@@ -143,7 +143,7 @@ public class SpeedRunMode
 		}
 	}
 	
-	public static void undoSplit()
+	static void undoSplit()
 	{
 		// undoSplit does nothing when the first split is currently running or the run hasn't started yet
 		if (currentSectionIndex <= 0)
@@ -176,7 +176,7 @@ public class SpeedRunMode
 		showSpeedrunSettingsWindow((ArrayList<HotkeyProfile>) Hotkeys.profiles.clone() );
 	}
 
-	public static void showSpeedrunSettingsWindow(ArrayList<HotkeyProfile> profiles_copy)
+	private static void showSpeedrunSettingsWindow(ArrayList<HotkeyProfile> profiles_copy)
 	{
 		JDialog dialog = new JDialog(MainGui.window);
 		dialog.setTitle("Hotkey settings");

@@ -29,24 +29,24 @@ public class PopupAlerts
 	private static SortedSet<String> missingImagesSet = new TreeSet<String>();
 	public static boolean createMissingImagesMessage = false;
 	
-	public static void showMissingImagesMessageIfNonEmpty()
+	static void showMissingImagesMessageIfNonEmpty()
 	{
 		if ( !missingImagesSet.isEmpty() )
 			showMissingImagesMessage();
 	}
 	
-	public static void resetMissingImagesMessage()
+	static void resetMissingImagesMessage()
 	{
 		missingImagesSet.clear();
 	}
 	
-	public static void addMessageForMissingImage(String image_name)
+	static void addMessageForMissingImage(String image_name)
 	{
 		if (createMissingImagesMessage && !missingImagesSet.contains(image_name) )
 			missingImagesSet.add(image_name);
 	}
 	
-	public static void showMissingImagesMessage()
+	private static void showMissingImagesMessage()
 	{
 		JDialog missing_dialog = new JDialog(MainGui.window);
 		missing_dialog.setModal(true);

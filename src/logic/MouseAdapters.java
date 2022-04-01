@@ -25,7 +25,7 @@ import gui.PopupAlerts;
 
 public class MouseAdapters
 {
-	public final static MouseInputAdapter editCellAdapter = new MouseInputAdapter()
+	final static MouseInputAdapter editCellAdapter = new MouseInputAdapter()
 	{
 		@Override
 		public void mouseClicked(MouseEvent e)
@@ -55,7 +55,7 @@ public class MouseAdapters
 		}
 	};
 	
-	public final static MouseInputAdapter addSectionAdapter = new MouseInputAdapter()
+	final static MouseInputAdapter addSectionAdapter = new MouseInputAdapter()
 	{
 		@Override
 		public void mouseClicked(MouseEvent e)
@@ -72,7 +72,7 @@ public class MouseAdapters
 		}
 	};
 
-	public final static MouseInputAdapter removeSectionAdapter = new MouseInputAdapter()
+	final static MouseInputAdapter removeSectionAdapter = new MouseInputAdapter()
 	{
 		@Override
 		public void mouseClicked(MouseEvent e)
@@ -89,7 +89,7 @@ public class MouseAdapters
 		}
 	};
 
-	public final static MouseInputAdapter addRowAdapter = new MouseInputAdapter()
+	final static MouseInputAdapter addRowAdapter = new MouseInputAdapter()
 	{
 		@Override
 		public void mouseClicked(MouseEvent e)
@@ -115,7 +115,7 @@ public class MouseAdapters
 		}
 	};
 
-	public final static MouseInputAdapter removeRowAdapter = new MouseInputAdapter()
+	final static MouseInputAdapter removeRowAdapter = new MouseInputAdapter()
 	{
 		@Override
 		public void mouseClicked(MouseEvent e)
@@ -141,7 +141,7 @@ public class MouseAdapters
 		}
 	};
 	
-	public final static MouseInputAdapter actionsAdapter = new MouseInputAdapter()
+	final static MouseInputAdapter actionsAdapter = new MouseInputAdapter()
 	{
 		@Override
 		public void mouseClicked(MouseEvent e)
@@ -243,7 +243,7 @@ public class MouseAdapters
 		};
 	}
 	
-	public static MouseInputAdapter getEditTodoAdapter(int current_row, Row row, JPanel panel, JLabel label, JLabel icon)
+	static MouseInputAdapter getEditTodoAdapter(Row row, JPanel panel, JLabel label, JLabel icon)
 	{
 		return new MouseInputAdapter() {
 			@Override
@@ -260,7 +260,7 @@ public class MouseAdapters
 						panel.remove(icon);
 						MainGui.labelsIconsHideWhenNotInEdit.remove(icon);
 						label.removeMouseListener(this);
-						label.addMouseListener(getEditTodoAdapter(current_row, row, panel, label, null));
+						label.addMouseListener(getEditTodoAdapter(row, panel, label, null));
 					}
 					
 					if (!string.isEmpty() && icon == null) // add new icon
@@ -270,7 +270,7 @@ public class MouseAdapters
 						new_icon.setVisible(MainGui.inEditMode);
 						MainGui.labelsIconsHideWhenNotInEdit.add(new_icon);
 						label.removeMouseListener(this);
-						label.addMouseListener(getEditTodoAdapter(current_row, row, panel, label, new_icon));
+						label.addMouseListener(getEditTodoAdapter(row, panel, label, new_icon));
 					}
 				}
 				

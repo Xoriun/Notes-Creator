@@ -19,6 +19,9 @@ import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.MouseInputAdapter;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import gui.MainGui;
 import logic.FileOperations;
 
@@ -27,7 +30,7 @@ public class Abbreviations
 	private static ArrayList<String[]> abbreviationsList = new ArrayList<String[]>();
 	
 	@SuppressWarnings("unchecked")
-	public static void showAbbreviationSettingsDialog()
+	static void showAbbreviationSettingsDialog()
 	{
 		showAbbreviationSettingsDialog(FileOperations.fileAbbreviations, FileOperations.imagesDirectory, (ArrayList<String[]>) abbreviationsList.clone() );
 	}
@@ -257,7 +260,7 @@ public class Abbreviations
 		abbreviationsList = abbreviations_list.stream().sorted( (a,b) -> {return a[0].compareTo(b[0] ); } ).collect(Collectors.toCollection(ArrayList::new) );
 	}
 	
-	public static ArrayList<String[]> getAbbreviationsListFromTextfiles(ArrayList<JTextField[]> textfields)
+	private static ArrayList<String[]> getAbbreviationsListFromTextfiles(ArrayList<JTextField[]> textfields)
 	{
 		return textfields.stream().map(row -> new String[] {row[0].getText(), row[1].getText() } ).collect(Collectors.toCollection(ArrayList::new) );
 	}
@@ -287,5 +290,31 @@ public class Abbreviations
 		for (String[] abbr : abbreviationsList)
 			res += abbr[0] + ":" + abbr[1] + "\n";
 		return res;
+	}
+	
+	public static Element getAbbreviationsElement(Document doc)
+	{
+		Element abbreviations_element = doc.createElement("abbreviations");
+		
+		for (String[] abbr : abbreviationsList)
+		{
+			Element abbr_element = doc.createElement("abbreviation");
+			abbreviations_element.appendChild(abbr_element);
+			
+			Element abbr_short_element = doc.createElement("abbr-short");
+			abbr_short_element.setTextContent(abbr[0] );
+			abbr_element.appendChild(abbr_short_element);
+			
+			Element abbr_long_element = doc.createElement("abbr-long");
+			abbr_long_element.setTextContent(abbr[1] );
+			abbr_element.appendChild(abbr_long_element);
+		}
+		
+		return abbreviations_element;
+	}
+	
+	public static void parseAbbreviationselement(Element abbreviaitons_element)
+	{
+		
 	}
 }

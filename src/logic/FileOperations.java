@@ -4,8 +4,8 @@ import java.awt.FileDialog;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,6 +14,22 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import javax.swing.JFileChooser;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import gui.Abbreviations;
 import gui.ColorSettingProfile;
@@ -61,19 +77,78 @@ public class FileOperations
 		}) ).map(e -> e.substring(0, e.length() - 4) );
 	}
 	
-	private static void setDefaulSettings()
+	public static void setDefaulSettings()
 	{
 		ColorSettings.colorSettingProfiles = new ColorSettingProfile[] {
 				new ColorSettingProfile("Light" , Color.BLACK, Color.BLACK, Color.WHITE),
 				new ColorSettingProfile("Dark"  , Color.LIGHT_GRAY, Color.DARK_GRAY, Color.BLACK),
-				new ColorSettingProfile("Custom", Color.WHITE, Color.WHITE, Color.WHITE)
+				new ColorSettingProfile("Custom", Color.BLACK, Color.WHITE, Color.WHITE)
 		};
+		ColorSettings.currentColorSetting = ColorSettings.colorSettingProfiles[1];
 		SpeedRunMode.workaround_box.setSelected(true);
 		Hotkeys.profiles.clear();
 		Hotkeys.activeProfile = null;
 	}
 	
 	public static void readSettingsFile()
+	{
+		setDefaulSettings();
+		
+		try
+		{
+			DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+			Document doc = documentBuilder.parse(new File("settings.xml") );
+			
+			Element settings = (Element) doc.getChildNodes().item(0);
+			
+			String last_notes_file = settings.getElementsByTagName("last-notes-file").item(0).getTextContent();
+			int split = last_notes_file.lastIndexOf('\\');
+			fileNotesDirectory = last_notes_file.substring(0, split + 1);
+			fileNotesName = last_notes_file.substring(split + 1);
+			
+			// color settings
+			Element color_settings_element = (Element) settings.getElementsByTagName("color-settings").item(0);
+			String current_color_profile = color_settings_element.getAttribute("current");
+			
+			NodeList color_profile_elements_list = color_settings_element.getElementsByTagName("color-profile");
+			ArrayList<ColorSettingProfile> color_profiles_list = new ArrayList<ColorSettingProfile>();
+			for (int i = 0; i < color_profile_elements_list.getLength(); i ++)
+				color_profiles_list.add(new ColorSettingProfile( (Element) color_profile_elements_list.item(i), current_color_profile) );
+			ColorSettings.colorSettingProfiles = color_profiles_list.toArray(new ColorSettingProfile[color_profiles_list.size() ] );
+			
+			// hotkey settings
+			Element hotkey_settings_element = (Element) settings.getElementsByTagName("hotkey-settings").item(0);
+			SpeedRunMode.workaround_box.setSelected(Boolean.parseBoolean(hotkey_settings_element.getAttribute("ctrl-workaround") ) );
+			String current_hotlkey_profile = hotkey_settings_element.getAttribute("current");
+			
+			NodeList hotkey_profile_elements_list = hotkey_settings_element.getElementsByTagName("hotkey-profile");
+			Hotkeys.profiles.clear();
+			for (int i = 0; i < hotkey_profile_elements_list.getLength(); i ++)
+				Hotkeys.profiles.add(new HotkeyProfile( (Element) hotkey_profile_elements_list.item(i), current_hotlkey_profile) );
+			
+		} catch (FileNotFoundException e)
+		{
+			//e.printStackTrace();
+		} catch (SAXParseException e)
+		{
+			MainGui.displayErrorAndExit("Error while parsing settings file.\nDid you convert your settings file using version 3.0?", false);
+			//e.printStackTrace();
+		} catch (SAXException e1)
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1)
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (ParserConfigurationException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public static void readOldSettingsFile()
 	{
 		setDefaulSettings();
 		
@@ -167,6 +242,56 @@ public class FileOperations
 		PopupAlerts.createMissingImagesMessage = true;
 		MainGui.reset();
 		numberOfColumns = 0;
+		  
+		try
+		{
+			File notes_file = new File(fileNotesDirectory + fileNotesName);
+			while ( !notes_file.exists() )
+			{
+				selectNotesFile();
+				notes_file = new File(fileNotesDirectory + fileNotesName);
+			}
+			
+			DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+			Document doc = documentBuilder.parse(new File(fileNotesDirectory + fileNotesName) );
+			
+			parseNotesElement( (Element) doc.getChildNodes().item(0) );
+			
+		} catch (SAXParseException e)
+		{
+			MainGui.displayErrorAndExit("Error while parsing notes file.\nIf you want to open an old notes file (.txt instead of .xml) use version 3.0, 'Open old' and save.", false);
+			//e.printStackTrace();
+		} catch (SAXException e1)
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1)
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (ParserConfigurationException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	private static void parseNotesElement(Element notes)
+	{
+		imagesDirectory = notes.getElementsByTagName("images-directory").item(0).getTextContent();
+		fileAbbreviations = notes.getElementsByTagName("abbreviations-file").item(0).getTextContent();
+
+		Abbreviations.setAbbreviationsList(readAbbriviationsFile() );
+		
+		for (int sectoins_index = 0; sectoins_index < notes.getElementsByTagName("section").getLength(); sectoins_index ++ )
+			MainGui.sectionsList.add(new Section( (Element) notes.getElementsByTagName("section").item(sectoins_index) ) );
+	}
+	
+	public static void readOldNotesFile()
+	{
+		PopupAlerts.createMissingImagesMessage = true;
+		MainGui.reset();
+		numberOfColumns = 0;
 		
 		BufferedReader reader = null;
 		while (reader == null)
@@ -232,29 +357,65 @@ public class FileOperations
 	
 	public static void writeSettingsFile()
 	{
-		try
+		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder docBuilder;
+		try (FileOutputStream output = new FileOutputStream("settings.xml") )
 		{
-			FileWriter writer = new FileWriter(new File("settings.txt"), false);
-			writer.write(fileNotesDirectory + fileNotesName + '\n');
-			for (ColorSettingProfile color : ColorSettings.colorSettingProfiles)
-			{
-				writer.write(color.name + "\n" +
-						color.text.getRed() +       ":" + color.text.getGreen() +       ":" + color.text.getBlue() + "\n" +
-						color.border.getRed() +     ":" + color.border.getGreen() +     ":" + color.border.getBlue() + "\n" +
-						color.background.getRed() + ":" + color.background.getGreen() + ":" + color.background.getBlue()  + "\n");
-			}
-			writer.write("WorkaroundActivated:" + SpeedRunMode.workaround_box.isSelected() + "\n");
-			if (Hotkeys.profiles.size() > 0)
-			{
-				if (Hotkeys.activeProfile != null)
-					writer.write(Hotkeys.activeProfile.name);
-				for (HotkeyProfile profile : Hotkeys.profiles)
-					writer.write("\n" + profile.getHotkeySettingsString() );
-			}
-			writer.close();
-		} catch (IOException e)
+			docBuilder = docFactory.newDocumentBuilder();
+			
+			// root elements
+			Document doc = docBuilder.newDocument();
+			Element settingsElement = doc.createElement("settings");
+			doc.appendChild(settingsElement);
+			
+			// last opened notes file
+			Element notesFilElement = doc.createElement("last-notes-file");
+			notesFilElement.setTextContent(fileNotesDirectory + fileNotesName);
+			settingsElement.appendChild(notesFilElement);
+			
+			// color settings
+			Element colorsettingsElement = doc.createElement("color-settings");
+			colorsettingsElement.setAttribute("current", ColorSettings.getCurrentColorSettingName() );
+			
+			for (ColorSettingProfile profile : ColorSettings.colorSettingProfiles)
+				colorsettingsElement.appendChild(profile.getXMLElement(doc) );
+			
+			settingsElement.appendChild(colorsettingsElement);
+			
+			// hotkey settings
+			Element hotkeysettingsElement = doc.createElement("hotkey-settings");
+			
+			hotkeysettingsElement.setAttribute("current", Hotkeys.getActiveHotkeyProfileName() );
+			hotkeysettingsElement.setAttribute("ctrl-workaround", "" + SpeedRunMode.workaround_box.isSelected() );
+			
+			for (HotkeyProfile profile : Hotkeys.profiles)
+				hotkeysettingsElement.appendChild(profile.getXMLElement(doc) );
+			
+			settingsElement.appendChild(hotkeysettingsElement);
+			
+			// write dom document to a file
+			Transformer transformer = TransformerFactory.newInstance().newTransformer();
+
+		  transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		  transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+		  transformer.transform(new DOMSource(doc), new StreamResult(output) );
+		  
+		  unsavedChanges = false;
+		}
+		catch (TransformerConfigurationException e1)
 		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (TransformerException e)
+		{
+			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParserConfigurationException e2)
+		{
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
 		}
 	}
 	
@@ -322,7 +483,7 @@ public class FileOperations
 		return dialog.getDirectory() + dialog.getFile();
 	}
 	
-	public static ArrayList<String[]> readAbbriviationsFile()
+	private static ArrayList<String[]> readAbbriviationsFile()
 	{
 		return readAbbriviationsFile(fileAbbreviations);
 	}
@@ -398,7 +559,7 @@ public class FileOperations
 	public static void saveAsFile()
 	{
 		FileDialog dialog = new FileDialog(MainGui.window, "Save as", FileDialog.SAVE);
-		dialog.setFile(".txt");
+		dialog.setFile(".xml");
 		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 		
@@ -413,6 +574,28 @@ public class FileOperations
 		saveFile();
 	}
 	
+	private static Element getNotesElement(Document doc)
+	{
+		// root element
+		Element notesElement = doc.createElement("notes");
+		
+		// image directory
+		Element imagesElement = doc.createElement("images-directory");
+		imagesElement.setTextContent(imagesDirectory);
+		notesElement.appendChild(imagesElement);
+		
+		// abbr file
+		Element abbreviationsElement = doc.createElement("abbreviations-file");
+		abbreviationsElement.setTextContent(fileAbbreviations);
+		notesElement.appendChild(abbreviationsElement);
+		
+		// section
+		for (Section section : MainGui.sectionsList)
+			notesElement.appendChild(section.getXMLElement(doc) );
+		
+		return notesElement;
+	}
+	
 	public static void saveFile()
 	{
 		saveAbbereviationsFile();
@@ -421,25 +604,51 @@ public class FileOperations
 			saveAsFile();
 		else
 		{
-			try (PrintWriter out = new PrintWriter(fileNotesDirectory + fileNotesName) )
+			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder docBuilder;
+			try (FileOutputStream output = new FileOutputStream(fileNotesDirectory + fileNotesName) )
 			{
-				if (imagesDirectory != null)
-					out.println("***image_directory;" + imagesDirectory);
-				if (fileAbbreviations != null)
-					out.println("***abbreviations_file;" + fileAbbreviations);
-				for (Section section : MainGui.sectionsList)
-					out.println(section.getSaveString() );
-			} catch (FileNotFoundException e)
+				docBuilder = docFactory.newDocumentBuilder();
+				
+				// root elements
+				Document doc = docBuilder.newDocument();
+				doc.appendChild(getNotesElement(doc) );
+				
+				// write dom document to a file
+				Transformer transformer = TransformerFactory.newInstance().newTransformer();
+
+			  transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			  transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+			  transformer.transform(new DOMSource(doc), new StreamResult(output) );
+			  
+			  unsavedChanges = false;
+			}
+			catch (TransformerConfigurationException e1)
 			{
-				// TODO
-			} finally {
-				unsavedChanges = false;
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (TransformerException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ParserConfigurationException e2)
+			{
+				// TODO Auto-generated catch block
+				e2.printStackTrace();
 			}
 		}
 	}
 	
 	public static void importFile()
 	{
+		// TODO what to do with unsaved changes? 
+		
+		PopupAlerts.createMissingImagesMessage = true;
+		MainGui.reset();
+		numberOfColumns = 0;
+		
 		// selecting which file to import
 		FileDialog dialog = new FileDialog(MainGui.window, "Select File to Import");
 		dialog.setMode(FileDialog.LOAD);
@@ -449,195 +658,97 @@ public class FileOperations
 		if (dialog.getDirectory() == null)
 			return;
 		
-		String import_dir = dialog.getDirectory();
-		String import_name = dialog.getFile();
-		
-		// creating reader for importing
-		BufferedReader reader;
 		try
-		{
-			reader = new BufferedReader(new FileReader(import_dir + import_name) );
-		} catch (FileNotFoundException e)
-		{
-			throw new RuntimeException("Error while importing file: Import file at '" + import_dir + import_name + "' was not found!");
-		}
+		{			
+			DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+			Document doc = documentBuilder.parse(new File(dialog.getDirectory() + dialog.getFile() ) );
 		
-		// selecting where to save the notes file
-		import_name = import_name.replace("_export", "");
-		String[] file_name_split = import_name.split(Pattern.quote(".") );
-		
-		String file = null;
-		dialog = new FileDialog(MainGui.window, "Save notes file", FileDialog.SAVE);
-		dialog.setDirectory(import_dir);
-		dialog.setFile(file_name_split[0] + "_import." + file_name_split[1]);
-		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
-		dialog.setVisible(true);
-		
-		if (dialog.getFile() == null)
-		{
-			try { reader.close(); } catch (IOException e1) { }
-			return;
-		}
-		
-		file = dialog.getFile();
-		
-		fileNotesDirectory = dialog.getDirectory();
-		fileNotesName = dialog.getFile();
-		
-		// creating reading notes file
-		String line;
-		ArrayList<String> content = new ArrayList<String>();
-		try
-		{
-			while ( (line = reader.readLine()) != null)
-			{
-				if (line.equals("***ABBREVIATIONS***") )
-					break;
-				
-				content.add(line);
-			}
-		} catch (IOException e)
-		{
-			try { reader.close(); } catch (IOException e1) { }
-			throw new RuntimeException("Error while importing file: creating notes writer!");
-		}
-		
-		// if there are abbreviations: creating writer for abbreviations file, writing abbreviations file
-		if (line != null && line.equals("***ABBREVIATIONS***") )
-		{
-			String import_name_abbr = file_name_split[0] + "_abbreviations." + file_name_split[1];
-			dialog = new FileDialog(MainGui.window, "Save abbreviations file", FileDialog.SAVE);
-			dialog.setDirectory(import_dir);
-			dialog.setFile(import_name_abbr);
-			GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
-			dialog.setVisible(true);
-			file = dialog.getFile();
-			if (file == null)
-			{
-				try { reader.close(); } catch (IOException e1) { }
-				return;
-			}
+			fileNotesDirectory = dialog.getDirectory();
+			fileNotesName = dialog.getFile();
 			
-			String import_dir_abbr = dialog.getDirectory();
-			import_name_abbr = dialog.getFile();
-			if (content.get(0).startsWith("***abbreviations_file;") )
-				content.set(0, "***abbreviations_file;" + import_dir_abbr + import_name_abbr);
+			// selecting where to save the notes file
+			fileNotesName = fileNotesName.replace("_export", "");
+			int split = fileNotesName.lastIndexOf('.');
+			fileNotesName = fileNotesName.substring(0, split + 1) + "_import.xml";
+			fileAbbreviations = fileNotesDirectory + fileNotesName.substring(0, split + 1) + "_abbr.txt";
 			
-			PrintWriter writer_abbreviations;
-			try
-			{
-				writer_abbreviations = new PrintWriter(new File(import_dir_abbr + import_name_abbr) );
-			} catch (FileNotFoundException e)
-			{
-				try { reader.close(); } catch (IOException e1) { }
-				throw new RuntimeException("Error while importing file: creating abbreviations writer!");
-			}
+			Element export_element = (Element) doc.getChildNodes().item(0);
 			
-			try
-			{
-				while ( (line = reader.readLine()) != null)
-					writer_abbreviations.println(line);
-				writer_abbreviations.close();
-				reader.close();
-			} catch (IOException e)
-			{
-				throw new RuntimeException("Error while importing file: writing!");
-			}
+			parseNotesElement( (Element) export_element.getElementsByTagName("notes").item(0) );
+			Abbreviations.parseAbbreviationselement( (Element) export_element.getElementsByTagName("abbreviations").item(0) );
 			
-			Abbreviations.setAbbreviationsList(readAbbriviationsFile(import_dir_abbr + import_name_abbr) );
+		} catch (SAXParseException e)
+		{
+			MainGui.displayErrorAndExit("Error while parsing export file.\nIf you want to import an old export file (.txt instead of .xml) use version 2.11 (or earlier) or ask for a newer export file.", false);
+			//e.printStackTrace();
+		} catch (SAXException e1)
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1)
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (ParserConfigurationException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
-		
-		PrintWriter writer_notes;
-		try
-		{
-			writer_notes = new PrintWriter(new File(fileNotesDirectory + fileNotesName) );
-			for (String content_line : content)
-				writer_notes.println(content_line);
-			writer_notes.close();
-		} catch (IOException e)
-		{
-			try { reader.close(); } catch (IOException e1) { }
-			throw new RuntimeException("Error while importing file: creating notes writer!");
-		}
-		readNotesFile();
+		MainGui.arrangeContent();
+		MainGui.spaceColums();
+		FileOperations.unsavedChanges = false;
 	}
 	
 	public static void exportFile()
 	{
-		if (unsavedChanges)
-			saveFile();
-		
-		// creating notes reader
-		BufferedReader reader_notes;
-		try
-		{
-			reader_notes = new BufferedReader(new FileReader(fileNotesDirectory + fileNotesName) );
-		} catch (FileNotFoundException e)
-		{
-			throw new RuntimeException("Error while exporting file: Notes file at '" + fileNotesDirectory + fileNotesName + "' was not found!");
-		}
-		
-		// creating abbreviations reader
-		BufferedReader reader_abbreviations = null;
-		if (fileAbbreviations != null && !fileAbbreviations.isEmpty() )
-			try
-		{
-				reader_abbreviations = new BufferedReader(new FileReader(fileAbbreviations) );
-		} catch (FileNotFoundException e)
-		{
-			try { reader_notes.close(); } catch (IOException e1) { }
-			throw new RuntimeException("Error while exporting file: Notes file at '" + fileAbbreviations + "' was not found!");
-		}
-		
-		// creating writer
-		PrintWriter writer;
 		String[] file_name_split = fileNotesName.split(Pattern.quote(".") );
-		
-		FileDialog dialog = new FileDialog(MainGui.window, "Save notes file", FileDialog.SAVE);
+		FileDialog dialog = new FileDialog(MainGui.window, "Select export loaction", FileDialog.SAVE);
 		dialog.setDirectory(fileNotesDirectory);
 		dialog.setFile(file_name_split[0] + "_export." + file_name_split[1]);
 		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 		
 		if (dialog.getFile() == null)
-		{
-			try { reader_abbreviations.close(); reader_notes.close(); } catch (IOException e1) { }
 			return;
-		}
 		
-		try
+		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder docBuilder;
+		try (FileOutputStream output = new FileOutputStream(dialog.getDirectory() + dialog.getFile() ) )
 		{
-			writer = new PrintWriter(new File(dialog.getFile() ) );
-		} catch (IOException e)
-		{
-			try { reader_notes.close(); reader_abbreviations.close(); } catch (Exception e1) { }
-			throw new RuntimeException("Error while exporting file: creating writer!");
-		}
-		
-		// writing
-		String line;
-		try
-		{
-			while ( (line = reader_notes.readLine()) != null)
-				writer.println(line);
-			reader_notes.close();
+			docBuilder = docFactory.newDocumentBuilder();
 			
-			if (fileAbbreviations != null && !fileAbbreviations.isEmpty() )
-			{
-				String first_abbr = reader_abbreviations.readLine();
-				if (first_abbr != null && !first_abbr.isEmpty() )
-				{
-					writer.println("***ABBREVIATIONS***\n" + first_abbr);
-					while ( (line = reader_abbreviations.readLine()) != null)
-						writer.println(line);
-				}
-				reader_abbreviations.close();
-			}
-			writer.close();
-		} catch (IOException e)
+			// root elements
+			Document doc = docBuilder.newDocument();
+			Element export_element = doc.createElement("export");
+			doc.appendChild(export_element);
+			
+			export_element.appendChild(getNotesElement(doc) );
+			export_element.appendChild(Abbreviations.getAbbreviationsElement(doc) );
+			
+			// write dom document to a file
+			Transformer transformer = TransformerFactory.newInstance().newTransformer();
+			
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+			transformer.transform(new DOMSource(doc), new StreamResult(output) );
+			
+			unsavedChanges = false;
+		}
+		catch (TransformerConfigurationException e1)
 		{
-			throw new RuntimeException("Error while exporting file: writing!");
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (TransformerException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParserConfigurationException e2)
+		{
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
 		}
 	}
 }

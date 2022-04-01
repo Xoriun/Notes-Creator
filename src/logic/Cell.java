@@ -10,6 +10,10 @@ import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
 import edit.EditIconLabel;
 import edit.EditPanel;
 import edit.EditTextField;
@@ -26,11 +30,11 @@ public class Cell extends JPanel
 	private Row row;
 	private int col;
 	private boolean topBorder, leftBorder;
-	private String contentString;
+	private String contentString = "";
 	private String[][] actionsArray = new String[0][0];
 	private ArrayList<CellLabel> cellLabels;
 	
-	public Cell(Row row, String cell_str, int col)
+	Cell(Row row, String cell_str, int col)
 	{
 		this.row = row;
 		this.col = col;
@@ -43,25 +47,56 @@ public class Cell extends JPanel
 		updateCell(cell_str);
 	}
 	
+	Cell(Row row, int col, Element cell)
+	{
+		this.row = row;
+		this.col = col;
+		this.topBorder = (row.getRowIndex() == 0);
+		this.leftBorder = (col == 0);
+		this.setOpaque(false);
+		cellLabels = new ArrayList<CellLabel>();
+		this.addMouseListener(MouseAdapters.actionsAdapter);
+		
+		NodeList contentNodes = cell.getElementsByTagName("content");
+		if (contentNodes.getLength() == 1)
+			contentString = contentNodes.item(0).getTextContent();
+		
+		NodeList actionNodes = cell.getElementsByTagName("action");
+		int actions_length = actionNodes.getLength();
+		if (actions_length > 0)
+		{
+			actionsArray = new String[actions_length][];
+			for (int action_ind = 0; action_ind < actions_length; action_ind ++)
+				actionsArray[action_ind] = new String[] {
+						( (Element) actionNodes.item(action_ind) ).getAttribute("command"),
+						( (Element) actionNodes.item(action_ind) ).getAttribute("parameter") };
+		}
+
+		this.addMouseListener(MouseAdapters.editCellAdapter);
+		this.addMouseListener(MouseAdapters.actionsAdapter);
+		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS) );
+		fillCellPanel();
+		setDefaultBorder();
+		
+		FileOperations.unsavedChanges = true;
+	}
+	
 	public void updateCell(String cell_str)
 	{
 		if (cell_str.equals(getCellString() ) ) return;
 		
 		clearContentAndListeners();
 		
-		if (cell_str.contains(">>") )
+		String[] temp = cell_str.split(">>", 2);
+		contentString = temp[0];
+		if ( temp.length == 1 || temp[1].isEmpty() )
+			actionsArray = new String[0][];
+		else
 		{
-			String[] temp = cell_str.split(">>", 2);
-			contentString = temp[0];
 			String[] actions = temp[1].replaceAll("write_to_clipboard", "text_to_clipboard").split(Pattern.quote("#") );
 			actionsArray = new String[actions.length][];
 			for (int i = 0; i < actions.length; i ++)
 				actionsArray[i] = actions[i].split(":");
-		}
-		else
-		{
-			contentString = cell_str;
-			actionsArray = new String[0][];
 		}
 
 		this.addMouseListener(MouseAdapters.editCellAdapter);
@@ -81,8 +116,8 @@ public class Cell extends JPanel
 	public ArrayList<CellLabel> getCellLabels() { return cellLabels; }
 	public Section getSection() { return row.getSection(); }
 	public int getCol() { return col; }
-	public void increaseCol() { col ++; }
-	public void decreaseCol() { col --; }
+	void increaseCol() { col ++; }
+	void decreaseCol() { col --; }
 	public int getRow() { return row.getRowIndex(); }
 	public String getCellString() { return contentString + (actionsArray.length == 0 ? "" : ">>" + getActionString() ); }
 	public String getContentString() { return contentString; }
@@ -100,7 +135,7 @@ public class Cell extends JPanel
 		this.setBorder(GuiHelper.getDefaultBorder(topBorder, leftBorder) );
 	}
 	
-	public void relaodImages()
+	void relaodImages()
 	{
 		for (CellLabel icon_label : cellLabels) icon_label.reloadImage();
 	}
@@ -157,6 +192,33 @@ public class Cell extends JPanel
 		return res;
 	}
 	
+	Element getXMLElement(Document doc)
+	{
+		Element result = doc.createElement("cell");
+		
+		if ( !contentString.isEmpty() )
+		{
+			Element contentElement = doc.createElement("content");
+			contentElement.setTextContent(contentString);
+			result.appendChild(contentElement);
+		}
+		
+		if (actionsArray.length > 0)
+		{
+			for (String[] action : actionsArray)
+			{
+				Element actionElement = doc.createElement("action");
+				
+				actionElement.setAttribute("command", action[0] );
+				actionElement.setAttribute("parameter", action[1] );
+				
+				result.appendChild(actionElement);
+			}
+		}
+		
+		return result;
+	}
+	
 	public abstract class CellLabel extends JLabel
 	{
 		// auto-generated serialVersionUID
@@ -164,13 +226,13 @@ public class Cell extends JPanel
 		
 		private int index;
 
-		public CellLabel(String str, int index)
+		private CellLabel(String str, int index)
 		{
 			super(str);
 			this.index = index;
 		}
 		
-		public CellLabel(int index)
+		private CellLabel(int index)
 		{
 			this.index = index;
 		}

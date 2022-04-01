@@ -3,12 +3,15 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBoxMenuItem;
@@ -33,7 +36,7 @@ import logic.Updates;
 
 public class MainGui {
 	public static Font font = new Font("Serif", Font.PLAIN, 20);
-	public static Font titleFont = new Font("Serif", Font.PLAIN, 15);
+	static Font titleFont = new Font("Serif", Font.PLAIN, 15);
 	
 	public static JFrame window;
 	public static JScrollPane scrollPane;
@@ -43,7 +46,7 @@ public class MainGui {
 	public static boolean keepGuiSize = false;
 	public static boolean contentRearraged = false;
 	private static int height = 0;
-	public static int scrollValue = 0;
+	private static int scrollValue = 0;
 	public static Set<JLabel> sectionLabels = new HashSet<JLabel>();
 	public static Set<JLabel> labelsText = new HashSet<JLabel>();
 	public static Set<JLabel> labelsTextsHideWhenNotInEdit = new HashSet<JLabel>();
@@ -53,12 +56,12 @@ public class MainGui {
 	
 	public static Dimension screensize;
 	
-	public static String currentVersionTag = "v2.11";
+	public static String currentVersionTag = "v3.0";
 	
-	public static void prepareGui()
+	private static void prepareGui()
 	{
 		screensize = Toolkit.getDefaultToolkit().getScreenSize();
-		ColorSettings.selectColorSettings(1); // dark_mode
+		//ColorSettings.selectColorSettings(1); // dark_mode
 		
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new GridLayout() );
@@ -76,11 +79,6 @@ public class MainGui {
 		window.setTitle("");
 		window.pack();
 		window.setVisible(true);
-
-		if (FileOperations.fileNotesDirectory.equals("") || FileOperations.fileNotesName.equals("") )
-			FileOperations.selectNotesFile();
-		else
-			window.setTitle(FileOperations.fileNotesName.replace('_', ' ') );
 		
 		SectionManagerDialog.initializeSectionDialog();
 		CellEditDialog.initializeCellEditDialog();
@@ -122,7 +120,7 @@ public class MainGui {
 		sectionsList.forEach(section -> section.setLocation() );
 	}
 	
-	public static void reloadImages()
+	static void reloadImages()
 	{
 		PopupAlerts.createMissingImagesMessage = true;
 		PopupAlerts.resetMissingImagesMessage();
@@ -198,9 +196,12 @@ public class MainGui {
 				} catch (Exception e) { }
 				
 				try {
-					FileOperations.readSettingsFile();
+					FileOperations.setDefaulSettings();
 					prepareGui();
-					readAndDisplayNotes();
+					FileOperations.readOldSettingsFile();
+					//FileOperations.readSettingsFile();
+					readAndDisplayOldNotes();
+					//readAndDisplayNotes();
 				} catch (Exception e) {
 					try
 					{
@@ -219,21 +220,45 @@ public class MainGui {
 	public static void displayErrorAndExit(String error_text, boolean fatal)
 	{
 		JDialog dialog = new JDialog(window, fatal ? "A fatal" : "An" + " error occured", true);
+		if (fatal)
+		{
+			dialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+			dialog.addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(WindowEvent e)
+				{
+					dialog.dispose();
+					exit();
+				}
+			});
+		}
 		
 		JPanel error_panel = new JPanel();
+		error_panel.setLayout(new BoxLayout(error_panel, BoxLayout.PAGE_AXIS) );
 		error_panel.setBorder(GuiHelper.getDialogBorder() );
-		error_panel.setOpaque(false);
+		error_panel.setOpaque(true);
 		error_panel.setBackground(ColorSettings.getBackgroundColor() );
+		
+		for (String line : error_text.split(Pattern.quote("\n") ) )
+			error_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(line, GuiHelper.LEFT) );
+		if (fatal)
+			error_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("The programm will exit!", GuiHelper.LEFT) );
+		
 		dialog.add(error_panel);
-		
-		JLabel error_label = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(error_text, GuiHelper.LEFT);
-		error_panel.add(error_label);
-		
 		dialog.pack();
+		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 	}
 
-	public static void readAndDisplayNotes()
+	static void readAndDisplayOldNotes()
+	{
+		FileOperations.readOldNotesFile();
+		arrangeContent();
+		spaceColums();
+		FileOperations.unsavedChanges = false;
+	}
+
+	static void readAndDisplayNotes()
 	{
 		FileOperations.readNotesFile();
 		arrangeContent();
@@ -245,11 +270,12 @@ public class MainGui {
 	{
 		FileOperations.writeSettingsFile();
 		LiveSplitConnection.shotDownAPI();
+		Hotkeys.shutDownHotkeys();
 		while(!LiveSplitConnection.readyToExit() );
 		System.exit(0);
 	}
 
-	public static void updateEditMode(JCheckBoxMenuItem check_box)
+	static void updateEditMode(JCheckBoxMenuItem check_box)
 	{
 		MainGui.inEditMode = check_box.isSelected();
 		if (MainGui.inEditMode)

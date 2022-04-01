@@ -45,12 +45,12 @@ public class AddRemoveControl extends JPanel
 		this.setOpaque(false);
 	}
 	
-	public static AddRemoveControl createAddRemoveRowControl(Row row)
+	static AddRemoveControl createAddRemoveRowControl(Row row)
 	{
 		return new AddRemoveControl(row, -1, false);
 	}
 	
-	public static AddRemoveControl createAddRowControl(Row row)
+	static AddRemoveControl createAddRowControl(Row row)
 	{
 		return new AddRemoveControl(row, -1, true);
 	}

@@ -19,11 +19,13 @@ import logic.Updates;
 
 public class MenuItems
 {
-	static JCheckBoxMenuItem edit_enabled;
-	public static JMenu edit_add;
-	public static JMenu edit_remove;
+	private static JCheckBoxMenuItem edit_enabled;
+	private static JMenu edit_add;
+	private static JMenu edit_remove;
 	
-	public static JMenuBar createMenuBar()
+	public static JRadioButtonMenuItem settings_custom;
+	
+	static JMenuBar createMenuBar()
 	{
 		// Menus
 		JMenuBar bar = new JMenuBar();
@@ -41,6 +43,7 @@ public class MenuItems
 		// Menu Items
 			// File
 			JMenuItem file_open    = new JMenuItem("Open");
+			JMenuItem file_open_old    = new JMenuItem("Open old");
 			JMenuItem file_reload  = new JMenuItem("Reload");
 			JMenuItem file_new     = new JMenuItem("New notes");
 			JMenuItem file_save    = new JMenuItem("Save");
@@ -62,7 +65,7 @@ public class MenuItems
 			// Settings Menu
 			JRadioButtonMenuItem settings_dark_mode  = new JRadioButtonMenuItem("Dark mode");
 			JRadioButtonMenuItem settings_light_mode = new JRadioButtonMenuItem("Light mode");
-			JRadioButtonMenuItem settings_custom     = new JRadioButtonMenuItem("Custom");
+			settings_custom     										 = new JRadioButtonMenuItem("Custom");
 			JMenuItem settings_custom_change         = new JMenuItem("Modify Custom");
 			
 			// About
@@ -72,6 +75,7 @@ public class MenuItems
 		// Action Listeners
 			// File
 			file_open   .addActionListener( e -> { FileOperations.selectNotesFile(); MainGui.readAndDisplayNotes();} );
+			file_open_old.addActionListener( e -> { FileOperations.selectNotesFile(); MainGui.readAndDisplayOldNotes();} );
 			file_reload .addActionListener( e -> { MainGui.keepGuiSize = false; edit_enabled.setSelected(false); MainGui.inEditMode = false; MainGui.readAndDisplayNotes(); } );
 			file_new    .addActionListener( e -> { FileOperations.createNewFile(); } );
 			file_save   .addActionListener( e -> { FileOperations.saveFile(); } );
@@ -89,9 +93,9 @@ public class MenuItems
 			speedrun_settings.addActionListener(e -> { SpeedRunMode.showSpeedrunSettingsWindow(); } );
 			
 			// Settings
-			settings_light_mode   .addActionListener(e -> { ColorSettings.selectColorSettings(0); ColorSettings.applyLightingMode(); } );
-			settings_dark_mode    .addActionListener(e -> { ColorSettings.selectColorSettings(1); ColorSettings.applyLightingMode(); } );
-			settings_custom       .addActionListener(e -> { ColorSettings.selectColorSettings(2); ColorSettings.applyLightingMode(); } );
+			settings_light_mode   .addActionListener(e -> { ColorSettings.selectColorSettings(0); } );
+			settings_dark_mode    .addActionListener(e -> { ColorSettings.selectColorSettings(1); } );
+			settings_custom       .addActionListener(e -> { ColorSettings.selectColorSettings(2); } );
 			settings_custom_change.addActionListener(e -> { ColorSettings.changeCustomLightingSettings(); } );
 			
 			// About
@@ -113,6 +117,7 @@ public class MenuItems
 		// Filling Menus
 			// Fill File Menu
 			menu_file.add(file_open);
+			menu_file.add(file_open_old);
 			menu_file.add(file_reload);
 			menu_file.add(file_new);
 			menu_file.add(file_save);
@@ -153,7 +158,7 @@ public class MenuItems
 		return bar;
 	}
 	
-	public static void getAddRemoveColumnsMenuItems()
+	static void getAddRemoveColumnsMenuItems()
 	{
 		edit_add.removeAll();
 		edit_remove.removeAll();
@@ -174,7 +179,7 @@ public class MenuItems
 		edit_add.add(add);
 	}
 
-	public static String getNumeral(int num)
+	private static String getNumeral(int num)
 	{
 		switch (num) {
 			case 1: return "1st";

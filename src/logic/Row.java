@@ -7,6 +7,10 @@ import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
 import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
@@ -14,8 +18,8 @@ import gui.MainGui;
 public class Row
 {
 	private JPanel controlPanel;
-	private ArrayList<Cell> cells;
-	private String todoString;
+	private ArrayList<Cell> cells = new ArrayList<Cell>();
+	private String todoString = "";
 	private JPanel todoPanel;
 	
 	private Section section;
@@ -25,8 +29,8 @@ public class Row
 	public JPanel getControlPanel() { return controlPanel; }
 	public Section getSection() { return section; }
 	public int getRowIndex() { return rowIndex; }
-	public void increaseRowIndex() { rowIndex ++; }
-	public void decreaseRowIndex() { rowIndex --; }
+	void increaseRowIndex() { rowIndex ++; }
+	void decreaseRowIndex() { rowIndex --; }
 	public String getTodoString() { return todoString; }
 	public JPanel getTodoPanel() { return todoPanel; }
 	public void setTodoString(String todo_string) { todoString = todo_string; }
@@ -36,7 +40,7 @@ public class Row
 	 * 
 	 * @param section The section this row is a part of.
 	 */
-	public Row(Section section, int row_index)
+	Row(Section section, int row_index)
 	{
 		rowIndex = row_index;
 		this.section = section;
@@ -45,7 +49,6 @@ public class Row
 		todoString = "";
 		
 		controlPanel = AddRemoveControl.createAddRowControl(this);
-		cells = new ArrayList<Cell>();
 	}
 	
 	/**
@@ -55,7 +58,7 @@ public class Row
 	 * @param row_string The string that defines the row (including todo).
 	 * @param row_index The index of the row within the section.
 	 */
-	public Row(Section section, String row_string, int row_index)
+	Row(Section section, String row_string, int row_index)
 	{
 		rowIndex = row_index;
 		this.section = section;
@@ -67,21 +70,39 @@ public class Row
 			todoString = line_arr[1];
 		else
 			todoString = "";
-		todoPanel = getTodoControl(0);
+		todoPanel = getTodoControl();
 		
-		cells = new ArrayList<Cell>();
 		String[] cell_strings = line_arr[0].split(";", -1);
 		for (int col = 0; col < cell_strings.length; col ++)
 			cells.add(new Cell(this, cell_strings[col], col) );
 		if (cell_strings.length > FileOperations.numberOfColumns) FileOperations.numberOfColumns = cell_strings.length;
 	}
 	
-	public void reloadImages()
+	Row(Section section, int row_index, Element row)
+	{
+		this.section = section;
+		this.rowIndex = row_index;
+		
+		controlPanel = AddRemoveControl.createAddRemoveRowControl(this);
+		
+		NodeList todo = row.getElementsByTagName("todo");
+		if (todo.getLength() == 1)
+			todoString = todo.item(0).getTextContent();
+		todoPanel = getTodoControl();
+		
+		NodeList cellNodes = row.getElementsByTagName("cell");
+		if (cellNodes.getLength() > FileOperations.numberOfColumns)
+			FileOperations.numberOfColumns = cellNodes.getLength();
+		for (int col = 0; col < cellNodes.getLength(); col ++)
+			cells.add(new Cell(this, col, (Element) cellNodes.item(col) ) );
+	}
+	
+	void reloadImages()
 	{
 		for (Cell cell : cells) cell.relaodImages();
 	}
 	
-	private JPanel getTodoControl(int current_row)
+	private JPanel getTodoControl()
 	{
 		JPanel todo_panel = new JPanel();
 		todo_panel.setLayout(new BoxLayout(todo_panel, BoxLayout.X_AXIS) );
@@ -101,9 +122,26 @@ public class Row
 			MainGui.labelsIconsHideWhenNotInEdit.add(icon);
 		}
 		
-		todo_label.addMouseListener(MouseAdapters.getEditTodoAdapter(current_row, this, todo_panel, todo_label, icon) );
+		todo_label.addMouseListener(MouseAdapters.getEditTodoAdapter(this, todo_panel, todo_label, icon) );
 		
 		MainGui.labelsText.add(todo_label);
 		return todo_panel;
+	}
+	
+	Element getXMLElement(Document doc)
+	{
+		Element result = doc.createElement("row");
+		
+		for (Cell cell : cells)
+			result.appendChild(cell.getXMLElement(doc) );
+		
+		if ( !todoString.isEmpty() )
+		{
+			Element todoElement = doc.createElement("todo");
+			todoElement.setTextContent(todoString);
+			result.appendChild(todoElement);
+		}
+		
+		return result;
 	}
 }

@@ -148,12 +148,12 @@ public class LiveSplitConnection
 			System.out.println("No connection has been established, could not write to stream!");
 	}
 	
-	public static void startLiveSplitCommunication()
+	static void startLiveSplitCommunication()
 	{
 		writeToOutputStream("startActionCommunication");
 	}
 	
-	public static void holdLiveSplitCommunication()
+	static void holdLiveSplitCommunication()
 	{
 		writeToOutputStream("holdActionCommunication");
 	}

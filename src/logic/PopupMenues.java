@@ -141,7 +141,7 @@ public class PopupMenues
 		
 	}
 	
-	public static void processCellRightClick(MouseEvent e)
+	static void processCellRightClick(MouseEvent e)
 	{
 		// without the involeLater, the PopupMenue disappears immediately in most cases.
 		SwingUtilities.invokeLater(new Runnable() {

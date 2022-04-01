@@ -6,6 +6,7 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -26,10 +27,10 @@ public class GuiHelper
 {
 	private final static int ImageSize = 30;
 	
-	public final static BufferedImage	missingImageBuffered			= loadMissingImageBufferedImage();
-	public final static BufferedImage	layeredDotBuffered				= loadLayeredDotImage();
-	public final static ImageIcon			scaledTodoImageIcon				= getScaledTodoImageIcon();
-	public final static ImageIcon			scaledLinebreakImageIcon	= getScaledLinebreakImageIcon();
+	private final static BufferedImage missingImageBuffered			= loadMissingImageBufferedImage();
+	private final static BufferedImage layeredDotBuffered				= loadLayeredDotImage();
+	public final static ImageIcon			 scaledTodoImageIcon			= getScaledTodoImageIcon();
+	public final static ImageIcon			 scaledLinebreakImageIcon	= getScaledLinebreakImageIcon();
 	
 	public final static int LEFT   = 0;
 	public final static int CENTER = 1;
@@ -49,19 +50,6 @@ public class GuiHelper
 		border.setTitleFont(MainGui.titleFont);
 		border.setTitleColor(ColorSettings.getTextColor());
 		return border;
-	}
-	
-	/**
-	 * Returns a MatteBorder with the provided width at the specified locations and color as the border.
-	 * 
-	 * @param width How much space should be added by the border.
-	 * @param bottom Whether a border should be drawn at the bottom.
-	 * @param right Whether a border should be drawn at the right.
-	 * @return The MatteBorder object.
-	 */
-	public static MatteBorder getMatteBorder(int width, boolean bottom, boolean right)
-	{
-		return BorderFactory.createMatteBorder(0, 0, bottom ? width : 0, right ? width : 0, ColorSettings.getBorderColor() );
 	}
 	
 	/**
@@ -273,7 +261,7 @@ public class GuiHelper
 		resizeAndCenterRelativeToMainWindow(container, 1000, 0);
 	}
 	
-	public static void resizeAndCenterRelativeToMainWindow(Container container, int max_height_rel_to_window, int min_height)
+	static void resizeAndCenterRelativeToMainWindow(Container container, int max_height_rel_to_window, int min_height)
 	{
 		Dimension dim_container = container.getSize();
 		Dimension dim_window = MainGui.window.getSize();
@@ -289,19 +277,24 @@ public class GuiHelper
 			container.setPreferredSize(dim_container);
 		}
 		
-		int location_x = MainGui.window.getLocation().x + (dim_window.width - dim_container.width) / 2;
-		int location_y = MainGui.window.getLocation().y + (dim_window.height - dim_container.height) / 2;
-		if (location_y < 0)
-			location_y = 0;
+		Point main_window_location = MainGui.window.getLocation();
+		int location_x = main_window_location.x + (dim_window.width - dim_container.width) / 2;
+		int location_y = main_window_location.y + (dim_window.height - dim_container.height) / 2;
+		
+		// makes sure the container stays on the screen
+		if (location_x < -main_window_location.x )
+			location_x = -main_window_location.x;
+		if (location_y < -main_window_location.y )
+			location_y = -main_window_location.y;
 		
 		container.setLocation(location_x, location_y);
 	}
 	
-	public static JLabel getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(String text)
+	static JLabel getLeftAlignedNonOpaqueJLabelWithCurrentTextColor(String text)
 	{
 		JLabel label = new JLabel(text, SwingConstants.LEFT);
 		label.setAlignmentX(Component.LEFT_ALIGNMENT);
-		label.setForeground(ColorSettings.currentColorSetting.text);
+		label.setForeground(ColorSettings.getTextColor() );
 		label.setOpaque(false);
 		return label;
 	}
@@ -310,7 +303,7 @@ public class GuiHelper
 	{
 		JLabel label = new JLabel(text, getSwingAlignment(alignment) );
 		label.setAlignmentX(getComponentAlignment(alignment) );
-		label.setForeground(ColorSettings.currentColorSetting.text);
+		label.setForeground(ColorSettings.getTextColor() );
 		label.setBackground(ColorSettings.getBackgroundColor() );
 		label.setOpaque(false);
 		return label;

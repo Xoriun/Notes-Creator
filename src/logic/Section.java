@@ -8,6 +8,9 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import gui.GuiHelper;
 
 public class Section extends JPanel
@@ -17,7 +20,7 @@ public class Section extends JPanel
 	
 	private String title;
 	
-	private ArrayList<Row> rows;
+	private ArrayList<Row> rows = new ArrayList<Row>();
 	
 	private GridBagConstraints gbc;
 	
@@ -29,10 +32,8 @@ public class Section extends JPanel
 	public int getScrollLocation() { return scrollLocation; }
 	public ArrayList<Row> getRows() { return rows; }
 	
-	public Section(String header)
+	Section(String header)
 	{
-		rows = new ArrayList<Row>();
-		
 		// title
 		title = header.split(";")[0].replace("---", "");
 		this.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor(title) );
@@ -44,7 +45,25 @@ public class Section extends JPanel
 		this.setOpaque(false);
 	}
 	
-	public static Section creatEmptySection()
+	Section(Element section)
+	{
+		title = section.getElementsByTagName("title").item(0).getTextContent();
+		this.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor(title) );
+		
+		for (int row_index = 0; row_index < section.getElementsByTagName("row").getLength(); row_index ++ )
+			rows.add(new Row(this, rows.size(), (Element) section.getElementsByTagName("row").item(row_index) ) );
+		
+		this.setLayout(new GridBagLayout() );
+		gbc = new GridBagConstraints();
+		gbc.fill = GridBagConstraints.BOTH;
+		this.setAlignmentY(Component.LEFT_ALIGNMENT);
+		this.setOpaque(false);
+		
+		this.addEmptyRow();
+		this.fillPanel();
+	}
+	
+	static Section creatEmptySection()
 	{
 		Section section = new Section("title");
 		section.addEmptyRow();
@@ -52,12 +71,12 @@ public class Section extends JPanel
 		return section;
 	}
 	
-	public void addEmptyRow()
+	void addEmptyRow()
 	{
 		rows.add(new Row(this, rows.size() ) );
 	}
 	
-	public void addRow(String row_string)
+	void addRow(String row_string)
 	{
 		rows.add(new Row(this, row_string, rows.size() ) );
 	}
@@ -67,7 +86,7 @@ public class Section extends JPanel
 		for (Row row : rows) row.reloadImages();
 	}
 	
-	public void fillPanel()
+	void fillPanel()
 	{
 		this.removeAll();
 		
@@ -139,7 +158,7 @@ public class Section extends JPanel
 		scrollLocation = this.getLocation().y;
 	}
 	
-	public void addContentLine(int row_to_add)
+	void addContentLine(int row_to_add)
 	{
 		String new_row_string = "";
 		for (int i = 0; i < FileOperations.numberOfColumns - 1; i ++)
@@ -149,7 +168,7 @@ public class Section extends JPanel
 		fillPanel();
 	}
 	
-	public void removeContentLine(int row_to_remove)
+	void removeContentLine(int row_to_remove)
 	{
 		rows.remove(row_to_remove);
 		
@@ -164,7 +183,7 @@ public class Section extends JPanel
 		this.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor(new_title) );
 	}
 	
-	public void addContentColumn(int new_column)
+	void addContentColumn(int new_column)
 	{
 		for (Row row : rows)
 		{
@@ -177,7 +196,7 @@ public class Section extends JPanel
 		fillPanel();
 	}
 	
-	public void removeContentColumn(int old_column)
+	void removeContentColumn(int old_column)
 	{
 		for (Row row : rows)
 		{
@@ -198,10 +217,25 @@ public class Section extends JPanel
 			res += "\n";
 			for (Cell cell : row.getCells() )
 				res += cell.getCellString() + ";";
-			res = res.substring(0, res.length() - 1); // removing last semicolon (or in case of the empty control row the linebreak resulting in an empty strings for all empty control rows)
+			res = res.substring(0, res.length() - 1); // removing last semicolon (or in case of the empty control row the linebreak resulting in an empty string for all empty control rows)
 			if (!row.getTodoString().isEmpty() )
 				res += "||" + row.getTodoString();
 		}
 		return res;
+	}
+	
+	Element getXMLElement(Document doc)
+	{
+		Element result = doc.createElement("section");
+		
+		Element titleElement = doc.createElement("title");
+		titleElement.setTextContent(title);
+		result.appendChild(titleElement);
+		
+		for (Row row : rows)
+			if ( !row.getCells().isEmpty() )
+				result.appendChild(row.getXMLElement(doc) );
+		
+		return result;
 	}
 }

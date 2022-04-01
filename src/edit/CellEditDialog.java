@@ -43,7 +43,7 @@ import logic.Cell.CellLabel;
 
 public class CellEditDialog
 {
-	public static JDialog cellEditDialog;
+	private static JDialog cellEditDialog;
 
 	private static Cell selectedCell;
 	private static EditPanel selectedCellPanel;
@@ -67,7 +67,7 @@ public class CellEditDialog
 	
 	private static String[] possibleActionsArray = new String[] {"", "text_to_clipboard", "file_to_clipboard"}; 
 	
-	public static boolean iconEditEditorOpen = false;
+	private static boolean iconEditorOpen = false;
 	
 	private static String[] abbreviationsAndFileNamesList;
 	
@@ -260,7 +260,7 @@ public class CellEditDialog
 	
 	public static void processCell(Cell cell)
 	{
-		if (iconEditEditorOpen)
+		if (iconEditorOpen)
 			return;
 		
 		// cell
@@ -383,7 +383,7 @@ public class CellEditDialog
 	
 	private static void processEditPanel(EditPanel edit_panel)
 	{
-		if (iconEditEditorOpen)
+		if (iconEditorOpen)
 			return;
 		
 		if (selectedCellPanel != null)
@@ -451,7 +451,7 @@ public class CellEditDialog
 			
 			private void closeDialog(JDialog dialog)
 			{
-				iconEditEditorOpen = false;
+				iconEditorOpen = false;
 				dialog.dispose();
 			}
 			
@@ -460,7 +460,7 @@ public class CellEditDialog
 			{
 				updateAbbreviationsAndFileNamesList();
 				
-				iconEditEditorOpen = true;
+				iconEditorOpen = true;
 				
 				main_image_abbr    = ( (EditIconLabel) selectedCellPanel).getMainImageAbbr();
 				layered_image_abbr = ( (EditIconLabel) selectedCellPanel).getLayeredImageAbbr();
@@ -761,7 +761,7 @@ public class CellEditDialog
 		};
 	}
 	
-	public static String getLowercaseStringWithFirstCharCapitablized(String str)
+	private static String getLowercaseStringWithFirstCharCapitablized(String str)
 	{
 		return str.length() == 0 ? str : str.length() == 1 ? str.toUpperCase() : Character.toUpperCase(str.charAt(0) ) + str.substring(1).toLowerCase();
 	}

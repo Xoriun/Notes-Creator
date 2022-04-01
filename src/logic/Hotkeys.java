@@ -49,24 +49,24 @@ public class Hotkeys implements NativeKeyListener
 		GlobalScreen.addNativeKeyListener(new Hotkeys() );
 	}
 	
-	public static void shotDownHotkeys()
+	public static void shutDownHotkeys()
 	{
 		Logger.getLogger(GlobalScreen.class.getPackage().getName() ).setLevel(Level.OFF);
 		try {
 			GlobalScreen.unregisterNativeHook();
 		}
 		catch (NativeHookException ex) {
-			System.err.println("There was a problem registering the native hook.");
+			System.err.println("There was a problem unregistering the native hook.");
 			System.err.println(ex.getMessage());
 		}
 	}
 	
-	public static void startListeningForHotkeys()
+	static void startListeningForHotkeys()
 	{
 		listenForHotkeys = true;
 	}
 	
-	public static void stopListeningForHotkeys()
+	static void stopListeningForHotkeys()
 	{
 		listenForHotkeys = false;
 	}
@@ -80,7 +80,7 @@ public class Hotkeys implements NativeKeyListener
 			{
 				case HK_Undefined: return;
 				case HK_Split:
-					SpeedRunMode.split();
+					SpeedRunMode.startOrSplit();
 					break;
 				case HK_Skip:
 					SpeedRunMode.skip();
@@ -107,7 +107,7 @@ public class Hotkeys implements NativeKeyListener
 		//System.out.println("Key Typed: " + NativeKeyEvent.getKeyText(e.getKeyCode() ) );
 	}
 	
-	public static void selectLiveSplitFile(ArrayList<HotkeyProfile> new_profiles)
+	static void selectLiveSplitFile(ArrayList<HotkeyProfile> new_profiles)
 	{
 		FileDialog dialog = new FileDialog(MainGui.window, "Select 'LiveSplit.exe'", FileDialog.LOAD);
 		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
@@ -118,7 +118,7 @@ public class Hotkeys implements NativeKeyListener
 			importHotkeySettings(dir, new_profiles);
 	}
 
-	public static void readHotkeySetting(String[] setting, HotkeyProfile profile)
+	static void readHotkeySetting(String[] setting, HotkeyProfile profile)
 	{
 		String[] keys = setting[1].split(",");
 		if (keys == null || keys.length == 0 || keys[0].equals("0") ) // undefined hotkey
@@ -155,7 +155,7 @@ public class Hotkeys implements NativeKeyListener
 		}
 	}
 
-	public static void importHotkeySettings(String dir_location, ArrayList<HotkeyProfile> new_profiles)
+	private static void importHotkeySettings(String dir_location, ArrayList<HotkeyProfile> new_profiles)
 	{
 		try
 		{
@@ -408,4 +408,5 @@ public class Hotkeys implements NativeKeyListener
 		}
 	}
 	
+	static String getActiveHotkeyProfileName() { return activeProfile == null ? "" : activeProfile.name; }
 }

@@ -1,5 +1,7 @@
 package logic;
 import org.jnativehook.keyboard.NativeKeyEvent;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 class HotkeyProfile
 {
@@ -20,6 +22,34 @@ class HotkeyProfile
 	public HotkeyProfile(String name)
 	{
 		this.name = name;
+	}
+	
+	public HotkeyProfile(Element profile, String current_profile_name)
+	{
+		this.name = profile.getElementsByTagName("name").item(0).getTextContent();
+		
+		String[] split = profile.getElementsByTagName("split").item(0).getTextContent().split(",");
+		eventSplitKey = Integer.parseInt(split[0] );
+		eventSplitLocation = Integer.parseInt(split[1] );
+		eventSplitModifier = Integer.parseInt(split[2] );
+		
+		String[] reset = profile.getElementsByTagName("reset").item(0).getTextContent().split(",");
+		eventResetKey = Integer.parseInt(reset[0] );
+		eventResetLocation = Integer.parseInt(reset[1] );
+		eventResetModifier = Integer.parseInt(reset[2] );
+		
+		String[] undo = profile.getElementsByTagName("undo").item(0).getTextContent().split(",");
+		eventUndoKey = Integer.parseInt(undo[0] );
+		eventUndoLocation = Integer.parseInt(undo[1] );
+		eventUndoModifier = Integer.parseInt(undo[2] );
+		
+		String[] skip = profile.getElementsByTagName("skip").item(0).getTextContent().split(",");
+		eventSkipKey = Integer.parseInt(skip[0] );
+		eventSkipLocation = Integer.parseInt(skip[1] );
+		eventSkipModifier = Integer.parseInt(skip[2] );
+		
+		if (name.equals(current_profile_name) )
+			Hotkeys.activeProfile = this;
 	}
 	
 	@Override
@@ -52,6 +82,33 @@ class HotkeyProfile
 	{
 		String res = NativeKeyEvent.getModifiersText(mod);
 		return res.isEmpty() ? "" : res.replace("+", ", ") + ", ";
+	}
+	
+	public Element getXMLElement(Document doc)
+	{
+		Element result = doc.createElement("hotkey-profile");
+		
+		Element titleElement = doc.createElement("name");
+		titleElement.setTextContent(name);
+		result.appendChild(titleElement);
+		
+		Element splitElement = doc.createElement("split");
+		splitElement.setTextContent(eventSplitKey + (eventSplitKey == 0 ? "" : "," + eventSplitLocation + "," + eventSplitModifier) );
+		result.appendChild(splitElement);
+		
+		Element resetElement = doc.createElement("reset");
+		resetElement.setTextContent(eventResetKey + (eventResetKey == 0 ? "" : "," + eventResetLocation + "," + eventResetModifier) );
+		result.appendChild(resetElement);
+		
+		Element undoElement = doc.createElement("undo");
+		undoElement.setTextContent(eventUndoKey + (eventUndoKey == 0 ? "" : "," + eventUndoLocation + "," + eventUndoModifier) );
+		result.appendChild(undoElement);
+		
+		Element skipElement = doc.createElement("skip");
+		skipElement.setTextContent(eventSkipKey + (eventSkipKey == 0 ? "" : "," + eventSkipLocation + "," + eventSkipModifier) );
+		result.appendChild(skipElement);
+		
+		return result;
 	}
 	
 	public String getHotkeySettingsString()

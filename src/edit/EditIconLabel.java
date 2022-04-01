@@ -42,7 +42,7 @@ public class EditIconLabel extends JLabel implements EditPanel
 		this.setOpaque(true);
 	}
 	
-	public void updateIcon(String main_image_abbr, String layered_image_abbr, String horizontal_alignment, String vertical_alignment)
+	void updateIcon(String main_image_abbr, String layered_image_abbr, String horizontal_alignment, String vertical_alignment)
 	{
 		this.mainImageAbbr = main_image_abbr;
 		this.layeredImageAbbr = layered_image_abbr;
@@ -52,7 +52,7 @@ public class EditIconLabel extends JLabel implements EditPanel
 		this.setIcon(icon);
 	}
 	
-	public void updateIcon(String main_image_abbr)
+	void updateIcon(String main_image_abbr)
 	{
 		this.mainImageAbbr = main_image_abbr;
 		this.layeredImageAbbr = this.layeredHorizontalAlignment = this.layeredVerticalAlignment = "";
@@ -75,7 +75,7 @@ public class EditIconLabel extends JLabel implements EditPanel
 		this.setBorder(GuiHelper.getEmptyBorder() );
 	}
 	
-	public static EditIconLabel getEmptyEditIconLabel()
+	static EditIconLabel getEmptyEditIconLabel()
 	{
 		return new EditIconLabel();
 	}
