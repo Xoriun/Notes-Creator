@@ -54,7 +54,7 @@ public class Row
 		rowIndex = row_index;
 		this.section = section;
 		
-		if (last_row)
+		if (last_row == Row.LAST)
 		{
 			todoLabel = new TodoLabel();
 			controlPanel = AddRemoveControl.createAddRowControl(this);
@@ -64,7 +64,7 @@ public class Row
 			todoLabel = new TodoLabel("");
 			controlPanel = AddRemoveControl.createAddRemoveRowControl(this);
 			for (int i = 0; i < FileOperations.numberOfColumns; i ++)
-				cells.add(new Cell(this, i, "") );
+				cells.add(new Cell(this, i, " ") );
 		}
 	}
 	
@@ -111,6 +111,8 @@ public class Row
 	Element getXMLElement(Document doc)
 	{
 		Element result = doc.createElement("row");
+		
+		result.setAttribute("row_index", "" + rowIndex);
 		
 		for (Cell cell : cells)
 			result.appendChild(cell.getXMLElement(doc) );
@@ -167,7 +169,7 @@ public class Row
 		}
 		
 		/**
-		 * Creates an placeholder TodoLabel used on the last row of each section (now content, just the add row control).
+		 * Creates an placeholder TodoLabel used on the last row of each section (no content, just the add row control).
 		 */
 		public TodoLabel()
 		{

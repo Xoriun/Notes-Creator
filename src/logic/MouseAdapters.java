@@ -91,14 +91,14 @@ public class MouseAdapters
 				AddRemoveControl control = (AddRemoveControl) e.getComponent().getParent();
 				Section section = control.getRow().getSection();
 				
-				// adding actual row
-				section.addContentLine(control.getRow().getRowIndex() );
-				
 				// increasing the rowIndices of the following rows
 				for (Row any_row : section.getRows() )
 					if (any_row.getRowIndex() >= control.getRow().getRowIndex() )
 						any_row.increaseRowIndex();
-					
+				
+				// adding actual row
+				section.addContentLine(control.getRow().getRowIndex() - 1);
+				
 				// redrawing GUI
 				MainGui.arrangeContent();
 				MainGui.spaceColums();

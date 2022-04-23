@@ -272,7 +272,8 @@ public class FileOperations
 	
 	public static void createNewFile()
 	{
-		fileNotesDirectory = fileNotesName = null;
+		fileNotesDirectory = "";
+		fileNotesName = "new_notes";
 		MainGui.reset();
 		numberOfColumns = 2;
 		
