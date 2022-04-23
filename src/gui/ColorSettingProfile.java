@@ -30,7 +30,7 @@ public class ColorSettingProfile
 				ColorSettings.currentColorSetting = this;
 		}
 		
-		public void update(Color text, Color border, Color background)
+		void update(Color text, Color border, Color background)
 		{
 			this.text = text;
 			this.border = border;

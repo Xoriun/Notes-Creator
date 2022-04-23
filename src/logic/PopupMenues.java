@@ -8,7 +8,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
-import edit.CellEditDialog;
+import gui.MainGui;
 
 public class PopupMenues
 {
@@ -46,7 +46,7 @@ public class PopupMenues
 			public void actionPerformed(ActionEvent e)
 			{
 				currentCell.updateCell(copiedCellString);
-				CellEditDialog.processCell(currentCell);
+				MainGui.cellEditDialog.processCell(currentCell);
 			}
 		});
 		
@@ -78,7 +78,7 @@ public class PopupMenues
 					neighbours[0].updateCell(this_cell_str);
 					
 					currentCell = neighbours[0];
-					CellEditDialog.processCell(currentCell);
+					MainGui.cellEditDialog.processCell(currentCell);
 				}
 			});
 
@@ -97,7 +97,7 @@ public class PopupMenues
 					neighbours[1].updateCell(this_cell_str);
 					
 					currentCell = neighbours[1];
-					CellEditDialog.processCell(currentCell);
+					MainGui.cellEditDialog.processCell(currentCell);
 				}
 			});
 
@@ -116,7 +116,7 @@ public class PopupMenues
 					neighbours[2].updateCell(this_cell_str);
 					
 					currentCell = neighbours[2];
-					CellEditDialog.processCell(currentCell);
+					MainGui.cellEditDialog.processCell(currentCell);
 				}
 			});
 
@@ -135,7 +135,7 @@ public class PopupMenues
 					neighbours[3].updateCell(this_cell_str);
 					
 					currentCell = neighbours[3];
-					CellEditDialog.processCell(currentCell);
+					MainGui.cellEditDialog.processCell(currentCell);
 				}
 			});
 		

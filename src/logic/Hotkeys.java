@@ -118,43 +118,6 @@ public class Hotkeys implements NativeKeyListener
 			importHotkeySettings(dir, new_profiles);
 	}
 
-	static void readHotkeySetting(String[] setting, HotkeyProfile profile)
-	{
-		String[] keys = setting[1].split(",");
-		if (keys == null || keys.length == 0 || keys[0].equals("0") ) // undefined hotkey
-			return;
-		switch (setting[0] )
-		{
-			case "Split":
-				profile.eventSplitKey      = Integer.valueOf(keys[0] );
-				profile.eventSplitLocation = Integer.valueOf(keys[1] );
-				for (int i = 2; i < keys.length; i ++)
-					profile.eventSplitModifier += Integer.valueOf(keys[i] );
-				break;
-				
-			case "Reset":
-				profile.eventResetKey      = Integer.valueOf(keys[0] );
-				profile.eventResetLocation = Integer.valueOf(keys[1] );
-				for (int i = 2; i < keys.length; i ++)
-					profile.eventResetModifier += Integer.valueOf(keys[i] );
-				break;
-				
-			case "Skip":
-				profile.eventSkipKey      = Integer.valueOf(keys[0] );
-				profile.eventSkipLocation = Integer.valueOf(keys[1] );
-				for (int i = 2; i < keys.length; i ++)
-					profile.eventSkipModifier += Integer.valueOf(keys[i] );
-				break;
-				
-			case "Undo":
-				profile.eventUndoKey      = Integer.valueOf(keys[0] );
-				profile.eventUndoLocation = Integer.valueOf(keys[1] );
-				for (int i = 2; i < keys.length; i ++)
-					profile.eventUndoModifier += Integer.valueOf(keys[i] );
-				break;
-		}
-	}
-
 	private static void importHotkeySettings(String dir_location, ArrayList<HotkeyProfile> new_profiles)
 	{
 		try

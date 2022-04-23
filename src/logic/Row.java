@@ -1,11 +1,14 @@
 package logic;
 
-import java.util.ArrayList;
-import java.util.regex.Pattern;
+import java.awt.Component;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList; 
 
-import javax.swing.BoxLayout;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.event.MouseInputAdapter;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -17,10 +20,9 @@ import gui.MainGui;
 
 public class Row
 {
-	private JPanel controlPanel;
+	private AddRemoveControl controlPanel;
 	private ArrayList<Cell> cells = new ArrayList<Cell>();
-	private String todoString = "";
-	private JPanel todoPanel;
+	private TodoLabel todoLabel;
 	
 	private Section section;
 	private int rowIndex;
@@ -31,51 +33,39 @@ public class Row
 	public int getRowIndex() { return rowIndex; }
 	void increaseRowIndex() { rowIndex ++; }
 	void decreaseRowIndex() { rowIndex --; }
-	public String getTodoString() { return todoString; }
-	public JPanel getTodoPanel() { return todoPanel; }
-	public void setTodoString(String todo_string) { todoString = todo_string; }
+	public String getTodoString() { return todoLabel.todoString; }
+	public JLabel getTodoPanel() { return todoLabel; }
+	public void setTodoString(String todo_string) { todoLabel.todoString = todo_string; }
+	
+	static final boolean EMPTY = false;
+	static final boolean LAST  = true;
 	
 	/**
-	 * Creates a empty Row only including the RowControls
+	 * Creates an empty Row. Depending on last_row, the new row will be empty but full usable or will be the last row of the section which only contains the + button for a new row.
 	 * 
-	 * @param section The section this row is a part of.
-	 */
-	Row(Section section, int row_index)
-	{
-		rowIndex = row_index;
-		this.section = section;
-		todoPanel = new JPanel();
-		todoPanel.setOpaque(false);
-		todoString = "";
-		
-		controlPanel = AddRemoveControl.createAddRowControl(this);
-	}
-	
-	/**
-	 * Creates a new Row including the RowControls, all Cells and TodoControl
+	 * @param section The section this row will be part of.
+	 * @param row_index The index this row will have.
+	 * @param last_row Whether or not the new row is the last row of the section. Possible values are Row.EMPTY and Row.LAST.
 	 * 
-	 * @param section The section this row is a part of.
-	 * @param row_string The string that defines the row (including todo).
-	 * @param row_index The index of the row within the section.
+	 * @return The new row.
 	 */
-	Row(Section section, String row_string, int row_index)
+	Row(Section section, int row_index, boolean last_row)
 	{
 		rowIndex = row_index;
 		this.section = section;
 		
-		controlPanel = AddRemoveControl.createAddRemoveRowControl(this);
-		
-		String[] line_arr = row_string.split(Pattern.quote("||"), 2);
-		if (line_arr.length == 2)
-			todoString = line_arr[1];
+		if (last_row)
+		{
+			todoLabel = new TodoLabel();
+			controlPanel = AddRemoveControl.createAddRowControl(this);
+		}
 		else
-			todoString = "";
-		todoPanel = getTodoControl();
-		
-		String[] cell_strings = line_arr[0].split(";", -1);
-		for (int col = 0; col < cell_strings.length; col ++)
-			cells.add(new Cell(this, cell_strings[col], col) );
-		if (cell_strings.length > FileOperations.numberOfColumns) FileOperations.numberOfColumns = cell_strings.length;
+		{
+			todoLabel = new TodoLabel("");
+			controlPanel = AddRemoveControl.createAddRemoveRowControl(this);
+			for (int i = 0; i < FileOperations.numberOfColumns; i ++)
+				cells.add(new Cell(this, i, "") );
+		}
 	}
 	
 	Row(Section section, int row_index, Element row)
@@ -86,9 +76,7 @@ public class Row
 		controlPanel = AddRemoveControl.createAddRemoveRowControl(this);
 		
 		NodeList todo = row.getElementsByTagName("todo");
-		if (todo.getLength() == 1)
-			todoString = todo.item(0).getTextContent();
-		todoPanel = getTodoControl();
+		todoLabel = new TodoLabel(todo.getLength() == 1 ? todo.item(0).getTextContent() : "");
 		
 		NodeList cellNodes = row.getElementsByTagName("cell");
 		if (cellNodes.getLength() > FileOperations.numberOfColumns)
@@ -102,30 +90,22 @@ public class Row
 		for (Cell cell : cells) cell.relaodImages();
 	}
 	
-	private JPanel getTodoControl()
+	public void updateLightingSettings()
 	{
-		JPanel todo_panel = new JPanel();
-		todo_panel.setLayout(new BoxLayout(todo_panel, BoxLayout.X_AXIS) );
-		todo_panel.setOpaque(false);
-		JLabel todo_label = new JLabel("  +  ");
+		// todoLabel.updateLightingSettings();
+		for (Component comp : controlPanel.getComponents() )
+			comp.setForeground(MainGui.inEditMode ? ColorSettings.getTextColor() : ColorSettings.getBackgroundColor() );
 		
-		todo_label.setForeground(ColorSettings.getTextColor() );
-		todo_label.setOpaque(false);
-		todo_panel.add(todo_label);
+		for (Cell cell : cells)
+			cell.updateLightingSettings();
 		
-		JLabel icon = null;
-		if (!todoString.equals("") )
-		{
-			icon = new JLabel(GuiHelper.scaledTodoImageIcon);
-			todo_panel.add(icon);
-			icon.setVisible(MainGui.inEditMode);
-			MainGui.labelsIconsHideWhenNotInEdit.add(icon);
-		}
-		
-		todo_label.addMouseListener(MouseAdapters.getEditTodoAdapter(this, todo_panel, todo_label, icon) );
-		
-		MainGui.labelsText.add(todo_label);
-		return todo_panel;
+		todoLabel.updateLightingSettings();
+	}
+	
+	public void updateEditMode()
+	{
+		controlPanel.updateEditMode();
+		todoLabel.updateEditMode();
 	}
 	
 	Element getXMLElement(Document doc)
@@ -135,13 +115,87 @@ public class Row
 		for (Cell cell : cells)
 			result.appendChild(cell.getXMLElement(doc) );
 		
-		if ( !todoString.isEmpty() )
+		if ( !todoLabel.todoString.isEmpty() )
 		{
 			Element todoElement = doc.createElement("todo");
-			todoElement.setTextContent(todoString);
+			todoElement.setTextContent(todoLabel.todoString);
 			result.appendChild(todoElement);
 		}
 		
 		return result;
+	}
+	
+	
+	private final static MouseInputAdapter editTodoAdapter = new MouseInputAdapter()
+	{
+		@Override
+		public void mouseClicked(MouseEvent event)
+		{
+			TodoLabel label = (TodoLabel) event.getComponent();
+			String string = JOptionPane.showInputDialog(MainGui.window, "TODO", label.getTodoString() );
+			if (string != null)
+			{
+				label.updateTodoString(string);
+				FileOperations.unsavedChanges = true;
+				
+				label.setIcon(MainGui.inEditMode && !string.isEmpty() ? GuiHelper.scaledTodoImageIcon : null);
+			}
+			
+			MainGui.arrangeContent();
+			MainGui.spaceColums();
+		}
+	};
+	
+	private class TodoLabel extends JLabel
+	{
+		/** Automatically generated serailVersionUID */
+		private static final long serialVersionUID = 1179200440597255671L;
+		private String todoString;
+		
+		public String getTodoString() { return todoString; }
+		
+		public TodoLabel(String todo_string)
+		{
+			super("  +  ",
+					MainGui.inEditMode && !todo_string.isEmpty() ? GuiHelper.scaledTodoImageIcon : null,
+					SwingConstants.LEFT);
+			this.todoString = todo_string;
+
+			this.setOpaque(false);
+			this.setForeground(ColorSettings.getTextColor() );
+			this.addMouseListener(editTodoAdapter);
+		}
+		
+		/**
+		 * Creates an placeholder TodoLabel used on the last row of each section (now content, just the add row control).
+		 */
+		public TodoLabel()
+		{
+			super();
+			this.todoString = "";
+			this.setOpaque(false);
+		}
+		
+		public void updateTodoString(String new_todo_string)
+		{
+			this.todoString = new_todo_string;
+			this.updateIcon();
+		}
+		
+		private void updateLightingSettings()
+		{
+			this.setForeground(ColorSettings.getTextColor() );
+		}
+		
+		private void updateEditMode()
+		{
+			this.updateIcon();
+		}
+		
+		private void updateIcon()
+		{
+			this.setIcon(MainGui.inEditMode && !todoString.isEmpty() ? GuiHelper.scaledTodoImageIcon : null);
+			this.setHorizontalTextPosition(SwingConstants.LEADING);
+		}
 	}
 }

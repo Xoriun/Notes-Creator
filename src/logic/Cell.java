@@ -9,6 +9,7 @@ import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.MatteBorder;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -34,7 +35,7 @@ public class Cell extends JPanel
 	private String[][] actionsArray = new String[0][0];
 	private ArrayList<CellLabel> cellLabels;
 	
-	Cell(Row row, String cell_str, int col)
+	Cell(Row row, int col, String cell_str)
 	{
 		this.row = row;
 		this.col = col;
@@ -192,6 +193,15 @@ public class Cell extends JPanel
 		return res;
 	}
 	
+	public void updateLightingSettings()
+	{
+		
+		this.setBorder(new MatteBorder( ((MatteBorder) this.getBorder() ).getBorderInsets(), ColorSettings.getBorderColor() ) );
+		
+		for (CellLabel label : cellLabels)
+			label.updateLightingSettings();
+	}
+	
 	Element getXMLElement(Document doc)
 	{
 		Element result = doc.createElement("cell");
@@ -210,13 +220,22 @@ public class Cell extends JPanel
 				Element actionElement = doc.createElement("action");
 				
 				actionElement.setAttribute("command", action[0] );
-				actionElement.setAttribute("parameter", action[1] );
+				actionElement.setAttribute("parameter", actionParameterContainsSensitiveInformation(action[1] ) ? "" : action[1] );
 				
 				result.appendChild(actionElement);
 			}
 		}
 		
 		return result;
+	}
+	
+	private boolean actionParameterContainsSensitiveInformation(String actionCommand)
+	{
+		switch (actionCommand)
+		{
+			case "file_to_clipboard": return true;
+			default: return false;
+		}
 	}
 	
 	public abstract class CellLabel extends JLabel
@@ -241,6 +260,7 @@ public class Cell extends JPanel
 		
 		public int getIndex() { return index; }
 		public abstract void reloadImage();
+		public abstract void updateLightingSettings();
 	}
 	
 	private class TextLabel extends CellLabel
@@ -253,12 +273,16 @@ public class Cell extends JPanel
 			super(str, index);
 			this.setFont(MainGui.font);
 			this.setForeground(ColorSettings.getTextColor() );
-			MainGui.labelsText.add(this);
 		}
 		
 		public EditPanel getEditPanel()
 		{
 			return new EditTextField(this.getText() );
+		}
+		
+		public void updateLightingSettings()
+		{
+			this.setForeground(ColorSettings.getTextColor() );
 		}
 		
 		public void reloadImage() {}
@@ -323,6 +347,11 @@ public class Cell extends JPanel
 		public EditPanel getEditPanel()
 		{
 			return new EditIconLabel(icon, mainImageAbbr, layeredImageAbbr, verticalAlignment, horizontalAlignment);
+		}
+		
+		public void updateLightingSettings()
+		{
+			this.setForeground(ColorSettings.getTextColor() );
 		}
 		
 		public Icon getIcon() { return icon; }

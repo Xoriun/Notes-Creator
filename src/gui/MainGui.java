@@ -9,15 +9,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
@@ -38,6 +35,9 @@ public class MainGui {
 	public static Font font = new Font("Serif", Font.PLAIN, 20);
 	static Font titleFont = new Font("Serif", Font.PLAIN, 15);
 	
+	private static SectionManagerDialog sectionManagerDialog;
+	public static CellEditDialog cellEditDialog;
+	
 	public static JFrame window;
 	public static JScrollPane scrollPane;
 	public static JPanel mainPanel;
@@ -47,16 +47,12 @@ public class MainGui {
 	public static boolean contentRearraged = false;
 	private static int height = 0;
 	private static int scrollValue = 0;
-	public static Set<JLabel> sectionLabels = new HashSet<JLabel>();
-	public static Set<JLabel> labelsText = new HashSet<JLabel>();
-	public static Set<JLabel> labelsTextsHideWhenNotInEdit = new HashSet<JLabel>();
-	public static Set<JLabel> labelsIconsHideWhenNotInEdit = new HashSet<JLabel>();
 	
 	public static ArrayList<Section> sectionsList = new ArrayList<Section>();
 	
 	public static Dimension screensize;
 	
-	public static String currentVersionTag = "v3.0";
+	public static String currentVersionTag = "v3.1";
 	
 	private static void prepareGui()
 	{
@@ -79,9 +75,6 @@ public class MainGui {
 		window.setTitle("");
 		window.pack();
 		window.setVisible(true);
-		
-		SectionManagerDialog.initializeSectionDialog();
-		CellEditDialog.initializeCellEditDialog();
 	}
 	
 	public static void arrangeContent()
@@ -94,10 +87,11 @@ public class MainGui {
 		scrollValue = scrollPane.getVerticalScrollBar().getValue();
 		contentRearraged = true;
 		
-		if (inEditMode) SectionManagerDialog.updateSectionManagerDialog();
+		if (inEditMode) sectionManagerDialog.updateSectionManagerDialog();
 		
 		window.remove(scrollPane);
 		window.setPreferredSize(null);
+		window.setTitle(FileOperations.getWindowTitle() );
 		
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS) );
@@ -198,10 +192,10 @@ public class MainGui {
 				try {
 					FileOperations.setDefaulSettings();
 					prepareGui();
-					FileOperations.readOldSettingsFile();
-					//FileOperations.readSettingsFile();
-					readAndDisplayOldNotes();
-					//readAndDisplayNotes();
+					FileOperations.readSettingsFile();
+					sectionManagerDialog = new SectionManagerDialog();
+					cellEditDialog = new CellEditDialog();
+					readAndDisplayNotes();
 				} catch (Exception e) {
 					try
 					{
@@ -249,13 +243,28 @@ public class MainGui {
 		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 	}
-
-	static void readAndDisplayOldNotes()
+	
+	public static void addSection(int section_index, Section new_section)
 	{
-		FileOperations.readOldNotesFile();
+		sectionsList.add(section_index, new Section("new section") );
 		arrangeContent();
 		spaceColums();
-		FileOperations.unsavedChanges = false;
+		sectionManagerDialog.updateSectionManagerDialog();
+	}
+	
+	public static void removeSection(int section_index)
+	{
+		arrangeContent();
+		spaceColums();
+		sectionManagerDialog.updateSectionManagerDialog();
+	}
+	
+	public static void renameSection(int section_index, String new_title)
+	{
+		sectionsList.get(section_index).setTitle(new_title);
+		arrangeContent();
+		spaceColums();
+		sectionManagerDialog.updateSectionManagerDialog();
 	}
 
 	static void readAndDisplayNotes()
@@ -274,32 +283,43 @@ public class MainGui {
 		while(!LiveSplitConnection.readyToExit() );
 		System.exit(0);
 	}
+	
+	public static void updateLightingSettings()
+	{
+		window.setBackground(ColorSettings.getBackgroundColor() );
+		scrollPane.setBackground(ColorSettings.getBackgroundColor() );
+		mainPanel.setBackground(ColorSettings.getBackgroundColor() );
+		
+		sectionManagerDialog.updateLightingMode();
+		
+		cellEditDialog.updateLightingSettings();
+		
+		for (Section section : sectionsList)
+			section.updateLightingSettings();
+	}
 
 	static void updateEditMode(JCheckBoxMenuItem check_box)
 	{
-		MainGui.inEditMode = check_box.isSelected();
-		if (MainGui.inEditMode)
+		inEditMode = check_box.isSelected();
+		for (Section section : sectionsList)
+			section.updateEditMode();
+		
+		sectionManagerDialog.updateEditMode();
+		
+		if (inEditMode)
 		{
-			for (JLabel label : MainGui.labelsTextsHideWhenNotInEdit) label.setForeground(ColorSettings.getTextColor() );
-			SectionManagerDialog.updateSectionManagerDialog();
 		}
 		else
 		{
-			for (JLabel label : MainGui.labelsTextsHideWhenNotInEdit) label.setForeground(ColorSettings.getBackgroundColor() );
-			SectionManagerDialog.sectionManagerDialog.setVisible(false);
-			CellEditDialog.hideEditDialog();
+			cellEditDialog.hideEditDialog();
 		}
-		for (JLabel label : MainGui.labelsIconsHideWhenNotInEdit) label.setVisible(MainGui.inEditMode);
-		MainGui.spaceColums();
+		
+		spaceColums();
 	}
 	
 	public static void reset()
 	{
 		sectionsList.clear();
-		sectionLabels.clear();
-		labelsText.clear();
-		labelsTextsHideWhenNotInEdit.clear();
-		labelsIconsHideWhenNotInEdit.clear();
 		
 		mainPanel.removeAll();
 	}

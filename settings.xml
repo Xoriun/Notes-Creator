@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <settings>
-  <last-notes-file>H:\Gaming\Factorio\any%_Nefrums - Kopie.txt</last-notes-file>
+  <last-notes-file>H:\Gaming\Factorio\any%_Nefrums_import.xml</last-notes-file>
   <color-settings current="Dark">
     <color-profile>
       <name>Light</name>
@@ -16,9 +16,9 @@
     </color-profile>
     <color-profile>
       <name>Custom</name>
-      <text>-1</text>
-      <border>-1</border>
-      <background>-1</background>
+      <text>-16776961</text>
+      <border>-16711936</border>
+      <background>-65536</background>
     </color-profile>
   </color-settings>
   <hotkey-settings ctrl-workaround="true" current="">

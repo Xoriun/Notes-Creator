@@ -15,11 +15,8 @@ import java.io.IOException;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.event.MouseInputAdapter;
 
-import edit.CellEditDialog;
-import gui.GuiHelper;
 import gui.MainGui;
 import gui.PopupAlerts;
 
@@ -31,12 +28,12 @@ public class MouseAdapters
 		public void mouseClicked(MouseEvent e)
 		{
 			if ( !MainGui.inEditMode) return;
-			
+
 			int buttonPressed = e.getButton();
-			
+
 			if (buttonPressed == 1 || buttonPressed == 3)
 			{
-				CellEditDialog.processCell( (Cell) e.getComponent() );
+				MainGui.cellEditDialog.processCell( (Cell) e.getComponent() );
 				if (buttonPressed == 3)
 					PopupMenues.processCellRightClick(e);
 			}
@@ -64,10 +61,7 @@ public class MouseAdapters
 			{
 				FileOperations.unsavedChanges = true;
 				int section_index = ( (AddRemoveControl) e.getComponent().getParent() ).getSectionIndex();
-				MainGui.sectionsList.add(section_index, Section.creatEmptySection() );
-				MainGui.arrangeContent();
-				MainGui.spaceColums();
-				edit.SectionManagerDialog.updateSectionManagerDialog();
+				MainGui.addSection(section_index, new Section("new section") );
 			}
 		}
 	};
@@ -81,10 +75,7 @@ public class MouseAdapters
 			{
 				FileOperations.unsavedChanges = true;
 				int section_index = ( (AddRemoveControl) e.getComponent().getParent() ).getSectionIndex();
-				MainGui.sectionsList.remove(section_index);
-				MainGui.arrangeContent();
-				MainGui.spaceColums();
-				edit.SectionManagerDialog.updateSectionManagerDialog();
+				MainGui.removeSection(section_index);
 			}
 		}
 	};
@@ -233,49 +224,9 @@ public class MouseAdapters
 				if (newText != null)
 				{
 					label.setText(newText);
-					MainGui.sectionsList.get(current_section_index).setTitle(newText);
-					MainGui.arrangeContent();
-					MainGui.spaceColums();
-					edit.SectionManagerDialog.updateSectionManagerDialog();
+					MainGui.renameSection(current_section_index, newText);
 					FileOperations.unsavedChanges = true;
 				}
-			}
-		};
-	}
-	
-	static MouseInputAdapter getEditTodoAdapter(Row row, JPanel panel, JLabel label, JLabel icon)
-	{
-		return new MouseInputAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent arg0)
-			{
-				String string = JOptionPane.showInputDialog(MainGui.window, "TODO", row.getTodoString());
-				if (string != null)
-				{
-					row.setTodoString(string);
-					FileOperations.unsavedChanges = true;
-					
-					if (string.isEmpty() && icon != null) // remove existing icon
-					{
-						panel.remove(icon);
-						MainGui.labelsIconsHideWhenNotInEdit.remove(icon);
-						label.removeMouseListener(this);
-						label.addMouseListener(getEditTodoAdapter(row, panel, label, null));
-					}
-					
-					if (!string.isEmpty() && icon == null) // add new icon
-					{
-						JLabel new_icon = new JLabel(GuiHelper.scaledTodoImageIcon);
-						panel.add(new_icon);
-						new_icon.setVisible(MainGui.inEditMode);
-						MainGui.labelsIconsHideWhenNotInEdit.add(new_icon);
-						label.removeMouseListener(this);
-						label.addMouseListener(getEditTodoAdapter(row, panel, label, new_icon));
-					}
-				}
-				
-				MainGui.arrangeContent();
-				MainGui.spaceColums();
 			}
 		};
 	}

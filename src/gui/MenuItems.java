@@ -43,7 +43,6 @@ public class MenuItems
 		// Menu Items
 			// File
 			JMenuItem file_open    = new JMenuItem("Open");
-			JMenuItem file_open_old    = new JMenuItem("Open old");
 			JMenuItem file_reload  = new JMenuItem("Reload");
 			JMenuItem file_new     = new JMenuItem("New notes");
 			JMenuItem file_save    = new JMenuItem("Save");
@@ -75,7 +74,6 @@ public class MenuItems
 		// Action Listeners
 			// File
 			file_open   .addActionListener( e -> { FileOperations.selectNotesFile(); MainGui.readAndDisplayNotes();} );
-			file_open_old.addActionListener( e -> { FileOperations.selectNotesFile(); MainGui.readAndDisplayOldNotes();} );
 			file_reload .addActionListener( e -> { MainGui.keepGuiSize = false; edit_enabled.setSelected(false); MainGui.inEditMode = false; MainGui.readAndDisplayNotes(); } );
 			file_new    .addActionListener( e -> { FileOperations.createNewFile(); } );
 			file_save   .addActionListener( e -> { FileOperations.saveFile(); } );
@@ -117,7 +115,6 @@ public class MenuItems
 		// Filling Menus
 			// Fill File Menu
 			menu_file.add(file_open);
-			menu_file.add(file_open_old);
 			menu_file.add(file_reload);
 			menu_file.add(file_new);
 			menu_file.add(file_save);

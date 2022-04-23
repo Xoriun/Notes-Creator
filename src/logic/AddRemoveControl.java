@@ -15,6 +15,7 @@ public class AddRemoveControl extends JPanel
 	private static final long serialVersionUID = -110941854879740768L;
 	private Row row;
 	private int sectionIndex;
+	private JLabel add, remove;
 	
 	private AddRemoveControl(Row row, int section_index, boolean only_add)
 	{
@@ -23,21 +24,19 @@ public class AddRemoveControl extends JPanel
 		this.row = row;
 		this.sectionIndex = section_index;
 		
-		JLabel add = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(" + ", GuiHelper.CENTER);
-		add.setForeground(ColorSettings.getBackgroundColor() );
+		add = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(" + ", GuiHelper.CENTER);
+		add.setForeground(MainGui.inEditMode ? ColorSettings.getTextColor() : ColorSettings.getBackgroundColor() );
 		add.addMouseListener(row == null ? MouseAdapters.addSectionAdapter : MouseAdapters.addRowAdapter);
 		
-		MainGui.labelsTextsHideWhenNotInEdit.add(add);
 		this.add(new JLabel());
 		this.add(add);
 		
 		if (! only_add)
 		{
-			JLabel remove = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(" - ", GuiHelper.CENTER);
-			remove.setForeground(ColorSettings.getBackgroundColor() );
+			remove = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(" - ", GuiHelper.CENTER);
+			remove.setForeground(MainGui.inEditMode ? ColorSettings.getTextColor() : ColorSettings.getBackgroundColor() );
 			remove.addMouseListener(row == null ? MouseAdapters.removeSectionAdapter : MouseAdapters.removeRowAdapter);
 			
-			MainGui.labelsTextsHideWhenNotInEdit.add(remove);
 			this.add(remove);
 			this.add(new JLabel());
 		}
@@ -63,6 +62,18 @@ public class AddRemoveControl extends JPanel
 	public static AddRemoveControl createAddSectionControl(int section_index)
 	{
 		return new AddRemoveControl(null, section_index, true);
+	}
+	
+	public void updateLightingMode()
+	{
+		add.setForeground(MainGui.inEditMode ? ColorSettings.getTextColor() : ColorSettings.getBackgroundColor() );
+		if (remove != null)
+			remove.setForeground(MainGui.inEditMode ? ColorSettings.getTextColor() : ColorSettings.getBackgroundColor() );
+	}
+	
+	public void updateEditMode()
+	{
+		this.updateLightingMode();
 	}
 	
 	public Row getRow() { return row; }

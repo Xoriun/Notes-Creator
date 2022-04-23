@@ -15,22 +15,23 @@ import gui.MainGui;
 import logic.AddRemoveControl;
 import logic.MouseAdapters;
 
-public class SectionManagerDialog
+public class SectionManagerDialog extends JDialog
 {
-	public static JDialog sectionManagerDialog;
-	public static JPanel sectionManagerPanel;
+	/** Automatically generated secrialVerionUID */
+	private static final long serialVersionUID = 4418008182269964040L;
+	private static JPanel sectionManagerPanel;
 	
-	public static void initializeSectionDialog()
+	public SectionManagerDialog()
 	{
-		sectionManagerDialog = new JDialog(MainGui.window);
-		sectionManagerDialog.setTitle("Section Manager");
-		sectionManagerDialog.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
-		sectionManagerDialog.setVisible(false);
+		super(MainGui.window);
+		this.setTitle("Section Manager");
+		this.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+		this.setVisible(false);
 	}
 	
-	public static void updateSectionManagerDialog()
+	public void updateSectionManagerDialog()
 	{
-		sectionManagerDialog.getContentPane().removeAll();
+		this.getContentPane().removeAll();
 		
 		sectionManagerPanel = new JPanel();
 		sectionManagerPanel.setBackground(ColorSettings.getBackgroundColor());
@@ -53,7 +54,6 @@ public class SectionManagerDialog
 			label.addMouseListener(MouseAdapters.getEditSectionTitleAdapter(label, section_index) );
 			label.setBorder(GuiHelper.getDefaultBorder(section_index == 0, true) );
 			inner_panel.add(label, gbc);
-			MainGui.sectionLabels.add(label);
 			
 			section_index ++;
 			gbc.gridy ++;
@@ -63,12 +63,25 @@ public class SectionManagerDialog
 		inner_panel.add(AddRemoveControl.createAddSectionControl(section_index), gbc);
 		
 		sectionManagerPanel.add(inner_panel);
-		sectionManagerDialog.add(sectionManagerPanel);
+		this.add(sectionManagerPanel);
 
-		sectionManagerDialog.pack();
-		if (sectionManagerDialog.getHeight() > MainGui.screensize.height - 150)
-			sectionManagerDialog.setPreferredSize(new Dimension(sectionManagerDialog.getWidth() + 20, MainGui.screensize.height - 150) );
-		sectionManagerDialog.pack();
-		sectionManagerDialog.setVisible(true);
+		this.pack();
+		if (this.getHeight() > MainGui.screensize.height - 150)
+			this.setPreferredSize(new Dimension(this.getWidth() + 20, MainGui.screensize.height - 150) );
+		this.pack();
+		this.setVisible(true);
+	}
+	
+	public void updateLightingMode()
+	{
+		//TODO
+		updateSectionManagerDialog();
+	}
+	
+	public void updateEditMode()
+	{
+		this.updateSectionManagerDialog();
+		this.setVisible(MainGui.inEditMode);
+		this.pack();
 	}
 }

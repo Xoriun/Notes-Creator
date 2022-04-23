@@ -10,6 +10,8 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -46,7 +48,13 @@ public class GuiHelper
 	 */
 	public static TitledBorder getTitledBorderWithCorrectTextColor(String title)
 	{
-		TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED), title);
+		TitledBorder border = BorderFactory.createTitledBorder(
+				BorderFactory.createEtchedBorder(
+						EtchedBorder.RAISED//,
+						//ColorSettings.getTextColor(),
+						//ColorSettings.getBorderColor()
+						),
+				title);
 		border.setTitleFont(MainGui.titleFont);
 		border.setTitleColor(ColorSettings.getTextColor());
 		return border;
@@ -60,7 +68,7 @@ public class GuiHelper
 	 */
 	public static MatteBorder getSpacingBorder(int width)
 	{
-		return BorderFactory.createMatteBorder(width, width, width, width, ColorSettings.getBackgroundColor());
+		return BorderFactory.createMatteBorder(width, width, width, width, ColorSettings.getBackgroundColor() );
 	}
 	
 	/**
@@ -401,5 +409,16 @@ public class GuiHelper
 			MainGui.displayErrorAndExit("Error while loading 'Linebreak.png', file doesn't exist!", true);
 			throw new RuntimeException("Error while loading 'Linebreak.png', file doesn't exist!");
 		}
+	}
+
+	public static List<Component> getAllComponents(final Container c)
+	{
+	  List<Component> compList = new ArrayList<Component>();
+	  for (Component comp : c.getComponents()) {
+	      compList.add(comp);
+	      if (comp instanceof Container)
+	          compList.addAll(getAllComponents((Container) comp));
+	  }
+	  return compList;
 	}
 }

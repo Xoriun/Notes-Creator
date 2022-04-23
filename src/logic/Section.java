@@ -7,10 +7,13 @@ import java.awt.GridBagLayout;
 import java.util.ArrayList;
 
 import javax.swing.JPanel;
+import javax.swing.border.TitledBorder;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
+import gui.ColorSettings;
 import gui.GuiHelper;
 
 public class Section extends JPanel
@@ -32,17 +35,26 @@ public class Section extends JPanel
 	public int getScrollLocation() { return scrollLocation; }
 	public ArrayList<Row> getRows() { return rows; }
 	
-	Section(String header)
+	/**
+	 * Creates an empty section containing an empty row.
+	 * 
+	 * @param header
+	 */
+	public Section(String header)
 	{
 		// title
-		title = header.split(";")[0].replace("---", "");
+		title = header;
 		this.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor(title) );
+		
+		this.addEmptyRow();
+		this.addLastRow();
 		
 		this.setLayout(new GridBagLayout() );
 		gbc = new GridBagConstraints();
 		gbc.fill = GridBagConstraints.BOTH;
 		this.setAlignmentY(Component.LEFT_ALIGNMENT);
 		this.setOpaque(false);
+		this.fillPanel();
 	}
 	
 	Section(Element section)
@@ -50,8 +62,9 @@ public class Section extends JPanel
 		title = section.getElementsByTagName("title").item(0).getTextContent();
 		this.setBorder(GuiHelper.getTitledBorderWithCorrectTextColor(title) );
 		
-		for (int row_index = 0; row_index < section.getElementsByTagName("row").getLength(); row_index ++ )
-			rows.add(new Row(this, rows.size(), (Element) section.getElementsByTagName("row").item(row_index) ) );
+		NodeList rowElementsList = section.getElementsByTagName("row");
+		for (int row_index = 0; row_index < rowElementsList.getLength(); row_index ++ )
+			rows.add(new Row(this, row_index, (Element) rowElementsList.item(row_index) ) );
 		
 		this.setLayout(new GridBagLayout() );
 		gbc = new GridBagConstraints();
@@ -59,26 +72,18 @@ public class Section extends JPanel
 		this.setAlignmentY(Component.LEFT_ALIGNMENT);
 		this.setOpaque(false);
 		
-		this.addEmptyRow();
+		this.addLastRow();
 		this.fillPanel();
 	}
 	
-	static Section creatEmptySection()
+	private void addEmptyRow()
 	{
-		Section section = new Section("title");
-		section.addEmptyRow();
-		section.fillPanel();
-		return section;
+		rows.add(new Row(this, rows.size(), Row.EMPTY) );
 	}
 	
-	void addEmptyRow()
+	private void addLastRow()
 	{
-		rows.add(new Row(this, rows.size() ) );
-	}
-	
-	void addRow(String row_string)
-	{
-		rows.add(new Row(this, row_string, rows.size() ) );
+		rows.add(new Row(this, rows.size(), Row.LAST) );
 	}
 	
 	public void reloadImages()
@@ -86,7 +91,7 @@ public class Section extends JPanel
 		for (Row row : rows) row.reloadImages();
 	}
 	
-	void fillPanel()
+	private void fillPanel()
 	{
 		this.removeAll();
 		
@@ -160,10 +165,7 @@ public class Section extends JPanel
 	
 	void addContentLine(int row_to_add)
 	{
-		String new_row_string = "";
-		for (int i = 0; i < FileOperations.numberOfColumns - 1; i ++)
-			new_row_string += ";";
-		rows.add(row_to_add, new Row(this, new_row_string, row_to_add) );
+		rows.add(row_to_add, new Row(this, row_to_add, Row.EMPTY) );
 		
 		fillPanel();
 	}
@@ -191,7 +193,7 @@ public class Section extends JPanel
 				if (cell.getCol() >= new_column)
 					cell.increaseCol();
 			if (row.getRowIndex() != rows.size() - 1 )
-				row.getCells().add(new_column, new Cell(row, " ", new_column) );
+				row.getCells().add(new_column, new Cell(row, new_column, " ") );
 		}
 		fillPanel();
 	}
@@ -209,19 +211,18 @@ public class Section extends JPanel
 		fillPanel();
 	}
 	
-	public String getSaveString()
+	public void updateLightingSettings()
 	{
-		String res = "---" + title + "---";
+		((TitledBorder) this.getBorder() ).setTitleColor(ColorSettings.getTextColor() );
+		
 		for (Row row : rows)
-		{
-			res += "\n";
-			for (Cell cell : row.getCells() )
-				res += cell.getCellString() + ";";
-			res = res.substring(0, res.length() - 1); // removing last semicolon (or in case of the empty control row the linebreak resulting in an empty string for all empty control rows)
-			if (!row.getTodoString().isEmpty() )
-				res += "||" + row.getTodoString();
-		}
-		return res;
+			row.updateLightingSettings();
+	}
+	
+	public void updateEditMode()
+	{
+		for (Row row : rows)
+			row.updateEditMode();
 	}
 	
 	Element getXMLElement(Document doc)

@@ -1,13 +1,9 @@
 package gui;
 
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -16,12 +12,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.border.MatteBorder;
-import javax.swing.border.TitledBorder;
-
-import edit.CellEditDialog;
-import logic.Row;
-import logic.Section;
 
 public class ColorSettings
 {
@@ -36,7 +26,7 @@ public class ColorSettings
 	static void selectColorSettings(int index)
 	{
 		currentColorSetting = colorSettingProfiles[index];
-		applyLightingMode();
+		MainGui.updateLightingSettings();
 	}
 
 	private static void fillColorSettingsPane(JPanel options_panel, ColorSettingProfile color_setting)
@@ -103,7 +93,7 @@ public class ColorSettings
 	private static void updateCustomColorSettings(JDialog options)
 	{
 		int[][] colors = new int[3][3];
-		getAllComponents(options).stream().filter(comp -> comp instanceof JTextField).forEach(text -> {
+		GuiHelper.getAllComponents(options).stream().filter(comp -> comp instanceof JTextField).forEach(text -> {
 			String name = text.getName();
 			colors[name.startsWith("Text") ? 0 : name.startsWith("Border") ? 1 : 2][name.endsWith("r") ? 0 : name.endsWith("g") ? 1 : 2] = getColorInt( (JTextField) text);
 		});
@@ -128,49 +118,6 @@ public class ColorSettings
 			text.setBackground(Color.red);
 		
 		return res;
-	}
-
-	static void applyLightingMode()
-	{
-		// backgrounds
-		MainGui.window.setBackground(ColorSettings.getBackgroundColor() );
-		MainGui.scrollPane.setBackground(ColorSettings.getBackgroundColor() );
-		MainGui.mainPanel.setBackground(ColorSettings.getBackgroundColor() );
-		
-		// text for cells
-		for (JLabel label : MainGui.labelsText) label.setForeground(ColorSettings.getTextColor() );
-		
-		// text for add-remove-controls
-		for (JLabel label : MainGui.labelsTextsHideWhenNotInEdit) label.setForeground(MainGui.inEditMode ? ColorSettings.getTextColor()  : ColorSettings.getBackgroundColor() );
-		
-		// border color for sections
-		for (Section section : MainGui.sectionsList)
-			if (section.getBorder() != null)
-				((TitledBorder) section.getBorder() ).setTitleColor(ColorSettings.getTextColor() );
-		
-		// border for cells
-		for (Section section : MainGui.sectionsList)
-			for (Row row : section.getRows() )
-				for (JPanel cell : row.getCells() )
-					if (cell.getBorder() != null)
-						cell.setBorder(new MatteBorder( ((MatteBorder) cell.getBorder() ).getBorderInsets(), ColorSettings.getBorderColor() ) );
-		
-		// border for section label cells
-		for (JLabel label : MainGui.sectionLabels)
-		{
-			label.setBorder(new MatteBorder( ((MatteBorder) label.getBorder() ).getBorderInsets(), ColorSettings.getBorderColor() ) );
-			label.setForeground(ColorSettings.getTextColor() );
-		}
-		
-		// background and border for sectionManagerDialog
-		if (edit.SectionManagerDialog.sectionManagerPanel!= null)
-		{
-			edit.SectionManagerDialog.sectionManagerPanel.setBackground(ColorSettings.getBackgroundColor() );
-			edit.SectionManagerDialog.sectionManagerPanel.setBorder(new MatteBorder( ((MatteBorder) edit.SectionManagerDialog.sectionManagerPanel.getBorder() ).getBorderInsets(), ColorSettings.getTextColor() ) );
-		}
-		
-		// unpdate CellEditDialog
-		CellEditDialog.updateColorSettings();
 	}
 	
 	static void changeCustomLightingSettings()
@@ -221,16 +168,4 @@ public class ColorSettings
 		options.setVisible(true);
 		options.repaint();
 	}
-
-	private static List<Component> getAllComponents(final Container c)
-	{
-	  List<Component> compList = new ArrayList<Component>();
-	  for (Component comp : c.getComponents()) {
-	      compList.add(comp);
-	      if (comp instanceof Container)
-	          compList.addAll(getAllComponents((Container) comp));
-	  }
-	  return compList;
-	}
-	
 }

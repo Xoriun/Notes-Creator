@@ -40,8 +40,8 @@ import gui.PopupAlerts;
 
 public class FileOperations
 {
-	public static String fileNotesDirectory = "";
-	public static String fileNotesName = "";
+	private static String fileNotesDirectory = "";
+	private static String fileNotesName = "";
 	public static String fileAbbreviations = "";
 	public static String imagesDirectory = "";
 	
@@ -61,9 +61,12 @@ public class FileOperations
 		fileNotesDirectory = dialog.getDirectory();
 		fileNotesName = dialog.getFile();
 		
-		String new_title = fileNotesName.replace('_', ' ');
 		MainGui.keepGuiSize = false;
-		MainGui.window.setTitle(new_title);
+	}
+	
+	public static String getWindowTitle()
+	{
+		return fileNotesName.replace("_", " ");
 	}
 	
 	public static Stream<String> getStreamOfNamesOfImagesInImagesDirectory()
@@ -148,95 +151,6 @@ public class FileOperations
 		}
 	}
 	
-	public static void readOldSettingsFile()
-	{
-		setDefaulSettings();
-		
-		File settings = new File("settings.txt");
-		new File("Images\\").mkdir(); //  creates Images directory if it does not exist
-		
-		try {
-			// no settings file
-			if ( !settings.createNewFile() )
-			{
-				BufferedReader reader;
-				try {
-					reader = new BufferedReader(new FileReader(settings) );
-				} catch (FileNotFoundException e) {
-					throw new RuntimeException("Settings File not found!");
-				}
-				
-				String line;
-				int[][] colors = new int[3][3];
-				
-				// last used notes-file
-				if (null != (line = reader.readLine() ) ) // last notes-file
-				{
-					int split = line.lastIndexOf('\\');
-					fileNotesDirectory = line.substring(0, split + 1);
-					fileNotesName = line.substring(split + 1);
-				}
-				
-				// color settings
-				ArrayList<ColorSettingProfile> colors_list = new ArrayList<ColorSettingProfile>();
-				while ( (line = reader.readLine() ) != null)
-				{
-					String color_setting_name = line;
-					if ( !line.equals("Light") && !line.equals("Dark") && !line.equals("Custom") ) // All color settings are read
-						break;
-					
-					for (int i = 0; i < 3 && (line = reader.readLine() ) != null; i ++)
-					{
-						colors[i] = Stream.of(line.split(":") ).mapToInt(Integer::parseInt).toArray();
-						
-						if (i == 2)
-							colors_list.add(new ColorSettingProfile(color_setting_name,	new Color(colors[0][0], colors[0][1], colors[0][2] ),
-									new Color(colors[1][0], colors[1][1], colors[1][2] ),
-									new Color(colors[2][0], colors[2][1], colors[2][2] )
-									) );
-					}
-				}
-				if (colors_list.size() > 0)
-					ColorSettings.colorSettingProfiles = colors_list.toArray(new ColorSettingProfile[colors_list.size() ] );
-				
-				// hotkey settings
-				String workaraound_activated = line;
-				if (workaraound_activated != null && !workaraound_activated.isEmpty() )
-					SpeedRunMode.workaround_box.setSelected(Boolean.parseBoolean(workaraound_activated.split(":")[1] ) );
-				
-				String activeProfile = line = reader.readLine();
-				
-				if (activeProfile != null)
-				{
-					Hotkeys.profiles.clear();
-					
-					// reading
-					while (null != (line = reader.readLine() ) )
-					{				
-						HotkeyProfile profile = new HotkeyProfile(line);
-						
-						for (int i = 0; i < 4; i ++)
-							if (null != (line = reader.readLine() ) && !line.isEmpty() )
-								Hotkeys.readHotkeySetting(line.split(":"), profile);
-						
-						Hotkeys.profiles.add(profile);
-					}
-					
-					// setting active profile
-					for (HotkeyProfile profile : Hotkeys.profiles)
-						if (profile.name.equals(activeProfile) )
-						{
-							Hotkeys.activeProfile = profile;
-							break;
-						}
-				}
-				reader.close();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
 	public static void readNotesFile()
 	{
 		PopupAlerts.createMissingImagesMessage = true;
@@ -278,81 +192,18 @@ public class FileOperations
 	
 	private static void parseNotesElement(Element notes)
 	{
-		imagesDirectory = notes.getElementsByTagName("images-directory").item(0).getTextContent();
-		fileAbbreviations = notes.getElementsByTagName("abbreviations-file").item(0).getTextContent();
-
-		Abbreviations.setAbbreviationsList(readAbbriviationsFile() );
-		
-		for (int sectoins_index = 0; sectoins_index < notes.getElementsByTagName("section").getLength(); sectoins_index ++ )
-			MainGui.sectionsList.add(new Section( (Element) notes.getElementsByTagName("section").item(sectoins_index) ) );
-	}
-	
-	public static void readOldNotesFile()
-	{
-		PopupAlerts.createMissingImagesMessage = true;
-		MainGui.reset();
-		numberOfColumns = 0;
-		
-		BufferedReader reader = null;
-		while (reader == null)
+		NodeList image_list = notes.getElementsByTagName("images-directory");
+		NodeList abbrs_list = notes.getElementsByTagName("abbreviations-file");
+		if (image_list.getLength() > 0)
+			imagesDirectory = image_list.item(0).getTextContent();
+		if (abbrs_list.getLength() > 0)
 		{
-			try {
-				reader = new BufferedReader(new FileReader(fileNotesDirectory + fileNotesName) );
-			} catch (FileNotFoundException e) {
-				selectNotesFile();
-			}
+			fileAbbreviations = abbrs_list.item(0).getTextContent();
+			Abbreviations.setAbbreviationsList(readAbbriviationsFile() );
 		}
 		
-		String line_string;
-		try {
-			line_string = reader.readLine();
-			
-			// Checking for abbreviations file
-			if (line_string.startsWith("***image_directory;") )
-			{
-				imagesDirectory = line_string.split(";")[1];
-				line_string = reader.readLine();
-			}
-		} catch (Exception e) {
-			throw new RuntimeException("Error while reading header!");
-		}
-		
-		try {
-			// Checking for abbreviations file
-			if (line_string.startsWith("***abbreviations_file;") )
-			{
-				fileAbbreviations = line_string.split(";")[1];
-				Abbreviations.setAbbreviationsList(readAbbriviationsFile() );
-				line_string = reader.readLine();
-			}
-		} catch (Exception e) {
-			throw new RuntimeException("Error while reading header!");
-		}
-		
-		String title_pattern = "---.*---.*";
-		Section current_section;
-		try
-		{
-			while (line_string != null)
-			{
-				current_section = new Section(line_string);
-				MainGui.sectionsList.add(current_section);
-				
-				line_string = reader.readLine();
-				
-				while (line_string != null && !line_string.matches(title_pattern))
-				{
-					current_section.addRow(line_string);
-					line_string = reader.readLine();
-				}
-				
-				current_section.addEmptyRow();
-				current_section.fillPanel();
-			}
-		} catch (IOException e)
-		{
-			e.printStackTrace();
-		}
+		for (int sections_index = 0; sections_index < notes.getElementsByTagName("section").getLength(); sections_index ++ )
+			MainGui.sectionsList.add(new Section( (Element) notes.getElementsByTagName("section").item(sections_index) ) );
 	}
 	
 	public static void writeSettingsFile()
@@ -423,11 +274,10 @@ public class FileOperations
 	{
 		fileNotesDirectory = fileNotesName = null;
 		MainGui.reset();
+		numberOfColumns = 2;
 		
 		Section section = new Section("section 1");
-		section.addRow("new;file");
 		MainGui.sectionsList.add(section);
-		numberOfColumns = 2;
 		
 		MainGui.arrangeContent();
 		MainGui.contentRearraged = false; // to reset the height of the window
@@ -574,20 +424,23 @@ public class FileOperations
 		saveFile();
 	}
 	
-	private static Element getNotesElement(Document doc)
+	private static Element getNotesElement(Document doc, boolean include_flie_locations)
 	{
 		// root element
 		Element notesElement = doc.createElement("notes");
 		
-		// image directory
-		Element imagesElement = doc.createElement("images-directory");
-		imagesElement.setTextContent(imagesDirectory);
-		notesElement.appendChild(imagesElement);
-		
-		// abbr file
-		Element abbreviationsElement = doc.createElement("abbreviations-file");
-		abbreviationsElement.setTextContent(fileAbbreviations);
-		notesElement.appendChild(abbreviationsElement);
+		if (include_flie_locations)
+		{
+			// image directory
+			Element imagesElement = doc.createElement("images-directory");
+			imagesElement.setTextContent(imagesDirectory);
+			notesElement.appendChild(imagesElement);
+			
+			// abbr file
+			Element abbreviationsElement = doc.createElement("abbreviations-file");
+			abbreviationsElement.setTextContent(fileAbbreviations);
+			notesElement.appendChild(abbreviationsElement);
+		}
 		
 		// section
 		for (Section section : MainGui.sectionsList)
@@ -612,7 +465,7 @@ public class FileOperations
 				
 				// root elements
 				Document doc = docBuilder.newDocument();
-				doc.appendChild(getNotesElement(doc) );
+				doc.appendChild(getNotesElement(doc, true) );
 				
 				// write dom document to a file
 				Transformer transformer = TransformerFactory.newInstance().newTransformer();
@@ -669,13 +522,13 @@ public class FileOperations
 			// selecting where to save the notes file
 			fileNotesName = fileNotesName.replace("_export", "");
 			int split = fileNotesName.lastIndexOf('.');
-			fileNotesName = fileNotesName.substring(0, split + 1) + "_import.xml";
-			fileAbbreviations = fileNotesDirectory + fileNotesName.substring(0, split + 1) + "_abbr.txt";
+			fileNotesName = fileNotesName.substring(0, split) + "_import.xml";
+			fileAbbreviations = fileNotesDirectory + fileNotesName.substring(0, split) + "_abbr.txt";
 			
 			Element export_element = (Element) doc.getChildNodes().item(0);
 			
-			parseNotesElement( (Element) export_element.getElementsByTagName("notes").item(0) );
 			Abbreviations.parseAbbreviationselement( (Element) export_element.getElementsByTagName("abbreviations").item(0) );
+			parseNotesElement( (Element) export_element.getElementsByTagName("notes").item(0) );
 			
 		} catch (SAXParseException e)
 		{
@@ -697,7 +550,7 @@ public class FileOperations
 		
 		MainGui.arrangeContent();
 		MainGui.spaceColums();
-		FileOperations.unsavedChanges = false;
+		FileOperations.unsavedChanges = true;
 	}
 	
 	public static void exportFile()
@@ -705,7 +558,7 @@ public class FileOperations
 		String[] file_name_split = fileNotesName.split(Pattern.quote(".") );
 		FileDialog dialog = new FileDialog(MainGui.window, "Select export loaction", FileDialog.SAVE);
 		dialog.setDirectory(fileNotesDirectory);
-		dialog.setFile(file_name_split[0] + "_export." + file_name_split[1]);
+		dialog.setFile(file_name_split[0] + "_export.xml");
 		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
 		dialog.setVisible(true);
 		
@@ -723,7 +576,7 @@ public class FileOperations
 			Element export_element = doc.createElement("export");
 			doc.appendChild(export_element);
 			
-			export_element.appendChild(getNotesElement(doc) );
+			export_element.appendChild(getNotesElement(doc, false) );
 			export_element.appendChild(Abbreviations.getAbbreviationsElement(doc) );
 			
 			// write dom document to a file

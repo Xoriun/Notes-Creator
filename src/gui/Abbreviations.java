@@ -21,6 +21,7 @@ import javax.swing.event.MouseInputAdapter;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import gui.MainGui;
 import logic.FileOperations;
@@ -164,7 +165,7 @@ public class Abbreviations
 						abbreviations_dialog.dispose();
 						textfield_list.remove(row);
 						abbr_list_copy.remove(abbr);
-						showAbbreviationSettingsDialog(abbr_location, images_dir, getAbbreviationsListFromTextfiles(textfield_list) );
+						showAbbreviationSettingsDialog(abbr_location, images_dir, getAbbreviationsListFromTextfields(textfield_list) );
 					}
 				} );
 				gbc.gridx = 3;
@@ -201,7 +202,7 @@ public class Abbreviations
 						abbreviations_dialog.dispose();
 						textfield_list.remove(new_row);
 						abbr_list_copy.remove(new_abbr);
-						showAbbreviationSettingsDialog(abbr_location, images_dir, getAbbreviationsListFromTextfiles(textfield_list) );
+						showAbbreviationSettingsDialog(abbr_location, images_dir, getAbbreviationsListFromTextfields(textfield_list) );
 					}
 				} );
 				gbc.gridx = 3;
@@ -233,7 +234,7 @@ public class Abbreviations
 				abbreviations_dialog.dispose();
 				FileOperations.unsavedChanges = true;
 				PopupAlerts.createMissingImagesMessage = true;
-				setAbbreviationsList(getAbbreviationsListFromTextfiles(textfield_list) );
+				setAbbreviationsList(getAbbreviationsListFromTextfields(textfield_list) );
 				FileOperations.imagesDirectory = images_dir;
 				FileOperations.fileAbbreviations = abbr_location;
 				FileOperations.saveAbbereviationsFile();
@@ -260,7 +261,12 @@ public class Abbreviations
 		abbreviationsList = abbreviations_list.stream().sorted( (a,b) -> {return a[0].compareTo(b[0] ); } ).collect(Collectors.toCollection(ArrayList::new) );
 	}
 	
-	private static ArrayList<String[]> getAbbreviationsListFromTextfiles(ArrayList<JTextField[]> textfields)
+	private static void sortAbbreviationList()
+	{
+		abbreviationsList = abbreviationsList.stream().sorted( (a,b) -> {return a[0].compareTo(b[0] ); } ).collect(Collectors.toCollection(ArrayList::new) );
+	}
+	
+	private static ArrayList<String[]> getAbbreviationsListFromTextfields(ArrayList<JTextField[]> textfields)
 	{
 		return textfields.stream().map(row -> new String[] {row[0].getText(), row[1].getText() } ).collect(Collectors.toCollection(ArrayList::new) );
 	}
@@ -315,6 +321,15 @@ public class Abbreviations
 	
 	public static void parseAbbreviationselement(Element abbreviaitons_element)
 	{
+		abbreviationsList.clear();
 		
+		NodeList abbreviation_nodes = abbreviaitons_element.getElementsByTagName("abbreviation");
+		for (int i = 0; i < abbreviation_nodes.getLength(); i ++)
+		{
+			Element abbr = (Element) abbreviation_nodes.item(i);
+			abbreviationsList.add(new String[] {abbr.getElementsByTagName("abbr-short").item(0).getTextContent(), abbr.getElementsByTagName("abbr-long").item(0).getTextContent()} );
+		}
+		
+		sortAbbreviationList();
 	}
 }
