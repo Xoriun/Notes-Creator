@@ -3,6 +3,7 @@
 Layer_dot.psd
 /src/test.java
 settings*.txt
+settings*.xml
 log*.txt
 /Images/*
 /releases/

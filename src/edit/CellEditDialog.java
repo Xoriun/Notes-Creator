@@ -568,18 +568,27 @@ public class CellEditDialog extends JDialog
 				.map(e -> getLowercaseStringWithFirstCharCapitablized(e)).sorted((e, f) -> e.compareTo(f)).toArray(String[]::new);
 	}
 	
-	private String[] getFilteredAbbreviationsAndFileNamesList(String filter)
+	private String[] getFilteredAbbreviationsAndFileNamesList(String filter, String current)
 	{
-		return Stream.of(abbreviationsAndFileNamesList).map(e -> e.toLowerCase()).filter(e -> e.contains(filter.toLowerCase())).sorted((String e, String f) -> {
-			boolean eStartsWith = e.startsWith(filter);
-			boolean fStartsWith = f.startsWith(filter);
-			if (eStartsWith && !fStartsWith)
-				return -1;
-			else if (!eStartsWith && fStartsWith)
-				return 1;
-			else
-				return e.compareTo(f);
-		}).map(e -> getLowercaseStringWithFirstCharCapitablized(e)).toArray(String[]::new);
+		return Stream.of(abbreviationsAndFileNamesList)
+				.map(e -> e.toLowerCase() )
+				.filter(e -> e.contains(filter.toLowerCase() ) || e.equals(current.toLowerCase() ) )
+				.sorted((String e, String f) -> {
+					boolean eStartsWith = e.startsWith(filter);
+					boolean fStartsWith = f.startsWith(filter);
+					if (e.equals(current.toLowerCase() ) )
+						return -1;
+					else if (f.equals(current.toLowerCase() ) )
+						return 1;
+					if ( (eStartsWith && !fStartsWith)  )
+						return -1;
+					else if ( (!eStartsWith && fStartsWith) )
+						return 1;
+					else
+						return e.compareTo(f);
+				} )
+				.map(e -> getLowercaseStringWithFirstCharCapitablized(e) )
+				.toArray(String[]::new);
 	}
 	
 	private class IconEditDialog extends JDialog
@@ -631,19 +640,17 @@ public class CellEditDialog extends JDialog
 				layered_image_label.setIcon(GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr) );
 			}
 			
+			filter_textFiled_main.setText("");
+			filter_textFiled_layered.setText("");
 			
-			combobox_main.removeAllItems();
-			for (String item : abbreviationsAndFileNamesList)
-				combobox_main.addItem(item);
-			combobox_main.setSelectedItem(getLowercaseStringWithFirstCharCapitablized(main_image_abbr));
+			combobox_main.setModel(new DefaultComboBoxModel<String>(abbreviationsAndFileNamesList) );
+			combobox_main.setSelectedItem(getLowercaseStringWithFirstCharCapitablized(main_image_abbr) );
 			
-			combobox_layered.removeAllItems();
-			for (String item : abbreviationsAndFileNamesList)
-				combobox_layered.addItem(item);
-			combobox_layered.setSelectedItem(getLowercaseStringWithFirstCharCapitablized(layered_image_abbr));
+			combobox_layered.setModel(new DefaultComboBoxModel<String>(abbreviationsAndFileNamesList) );
+			combobox_layered.setSelectedItem(getLowercaseStringWithFirstCharCapitablized(layered_image_abbr) );
 			
-			dropdown_horizontal.setSelectedItem(((EditIconLabel) selectedCellPanel).getLayeredHorizontalAlignment());
-			dropdown_vertical.setSelectedItem(((EditIconLabel) selectedCellPanel).getLayeredVerticalAlignment());
+			dropdown_horizontal.setSelectedItem( ( (EditIconLabel) selectedCellPanel).getLayeredHorizontalAlignment() );
+			dropdown_vertical.setSelectedItem( ( (EditIconLabel) selectedCellPanel).getLayeredVerticalAlignment() );
 			
 			this.pack();
 			this.setVisible(true);
@@ -711,9 +718,8 @@ public class CellEditDialog extends JDialog
 				@Override
 				public void actionPerformed(ActionEvent e)
 				{
-					if (e.getActionCommand().equals("comboBoxChanged") ) return;
-					main_image_abbr = (String) combobox_layered.getSelectedItem();
-					main_image_label.setIcon(GuiHelper.getScaledImageIconFromAbbreviation(main_image_abbr) );
+					main_image_abbr = (String) combobox_main.getSelectedItem();
+					main_image_label.setIcon(main_image_abbr.isEmpty() ? null : GuiHelper.getScaledImageIconFromAbbreviation(main_image_abbr) );
 					iconEditDialog.pack();
 				}
 			});
@@ -746,7 +752,7 @@ public class CellEditDialog extends JDialog
 				
 				private void update()
 				{
-					combobox_main.setModel(new DefaultComboBoxModel<>(getFilteredAbbreviationsAndFileNamesList(filter_textFiled_main.getText())));
+					combobox_main.setModel(new DefaultComboBoxModel<>(getFilteredAbbreviationsAndFileNamesList(filter_textFiled_main.getText(), main_image_abbr) ) );
 					combobox_main.setPreferredSize(combobox_main_dim);
 					iconEditDialog.pack();
 				}
@@ -779,7 +785,7 @@ public class CellEditDialog extends JDialog
 			
 			// image
 			gbc.gridx ++;
-			layered_image_label = layered_image_abbr.isEmpty() ? new JLabel() : new JLabel(GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr));
+			layered_image_label = new JLabel();
 			content_panel.add(layered_image_label, gbc);
 			
 			// edit pane;
@@ -800,9 +806,8 @@ public class CellEditDialog extends JDialog
 				@Override
 				public void actionPerformed(ActionEvent e)
 				{
-					if (e.getActionCommand().equals("comboBoxChanged") ) return;
 					layered_image_abbr = (String) combobox_layered.getSelectedItem();
-					layered_image_label.setIcon(GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr) );
+					layered_image_label.setIcon(layered_image_abbr.isEmpty() ? null : GuiHelper.getScaledImageIconFromAbbreviation(layered_image_abbr) );
 					iconEditDialog.pack();
 				}
 			});
@@ -836,7 +841,7 @@ public class CellEditDialog extends JDialog
 				
 				private void update()
 				{
-					combobox_layered.setModel(new DefaultComboBoxModel<>(getFilteredAbbreviationsAndFileNamesList(filter_textFiled_layered.getText())));
+					combobox_layered.setModel(new DefaultComboBoxModel<>(getFilteredAbbreviationsAndFileNamesList(filter_textFiled_layered.getText(), layered_image_abbr) ) );
 					combobox_layered.setPreferredSize(combobox_layered_dim);
 					iconEditDialog.pack();
 				}
