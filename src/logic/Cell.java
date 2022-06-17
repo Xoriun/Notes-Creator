@@ -185,9 +185,10 @@ public class Cell extends JPanel
 	 */
 	public Cell[] getNeighbours()
 	{
+		System.out.println("index: " + row.getRowIndex() + ", rows: " + row.getSection().getRows().size() );
 		Cell[] res = new Cell[4];
-		res[0] = row.getRowIndex() == 0                                     ? null : row.getSection().getRows().get(row.getRowIndex() - 1).getCells().get(col);
-		res[1] = row.getRowIndex() == row.getSection().getRows().size() - 1 ? null : row.getSection().getRows().get(row.getRowIndex() + 1).getCells().get(col);
+		res[0] = row.getRowIndex() == 0                      			               ? null : row.getSection().getRows().get(row.getRowIndex() - 1).getCells().get(col);
+		res[1] = row.getRowIndex() == row.getSection().numberOfContentRows() - 1 ? null : row.getSection().getRows().get(row.getRowIndex() + 1).getCells().get(col);
 		res[2] = col               == 0                         ? null : row.getCells().get(col - 1);
 		res[3] = col               == row.getCells().size() - 1 ? null : row.getCells().get(col + 1);
 		return res;

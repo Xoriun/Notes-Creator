@@ -107,10 +107,13 @@ public class MenuItems
 			about_update.addActionListener(action -> { Updates.checkForUpdates(true); });
 			
 		// Shortcuts
-			file_open   .setAccelerator(KeyStroke.getKeyStroke("control O") );
-			file_reload .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0) );
-			file_save   .setAccelerator(KeyStroke.getKeyStroke("control S") );
-			file_save_as.setAccelerator(KeyStroke.getKeyStroke("control alt S") );
+			file_open     .setAccelerator(KeyStroke.getKeyStroke("control O") );
+			file_reload   .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0) );
+			file_save     .setAccelerator(KeyStroke.getKeyStroke("control S") );
+			file_save_as  .setAccelerator(KeyStroke.getKeyStroke("control alt S") );
+			file_new      .setAccelerator(KeyStroke.getKeyStroke("control N") );
+			edit_enabled  .setAccelerator(KeyStroke.getKeyStroke("control E") );
+			edit_abbr_edit.setAccelerator(KeyStroke.getKeyStroke("control A") );
 			
 		// Filling Menus
 			// Fill File Menu

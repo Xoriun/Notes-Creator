@@ -99,7 +99,7 @@ public class GuiHelper
 	 */
 	public static Border getEmptyBorder()
 	{
-		return BorderFactory.createEmptyBorder();
+		return BorderFactory.createEmptyBorder(0,0,0,0);
 	}
 	
 	/**

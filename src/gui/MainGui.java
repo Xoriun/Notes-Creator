@@ -1,35 +1,15 @@
 package gui;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.Toolkit;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-import java.util.ArrayList;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.util.*;
 import java.util.regex.Pattern;
 
-import javax.swing.BoxLayout;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 
-import edit.CellEditDialog;
-import edit.SectionManagerDialog;
-import logic.FileOperations;
-import logic.Hotkeys;
-import logic.LiveSplitConnection;
-import logic.MouseAdapters;
-import logic.Section;
-import logic.Updates;
+import edit.*;
+import logic.*;
 
 public class MainGui {
 	public static Font font = new Font("Serif", Font.PLAIN, 20);
@@ -39,6 +19,7 @@ public class MainGui {
 	public static CellEditDialog cellEditDialog;
 	
 	public static JFrame window;
+	//public static JFrame content_window;
 	public static JScrollPane scrollPane;
 	public static JPanel mainPanel;
 	
@@ -52,7 +33,11 @@ public class MainGui {
 	
 	public static Dimension screensize;
 	
-	public static String currentVersionTag = "v3.3";
+	public static String currentVersionTag = "v3.4";
+	
+	public final static int moveToSectionAbove = -1;
+	public final static int removeSection = 0;
+	public final static int moveToSectionBelow = 1;
 	
 	private static void prepareGui()
 	{
@@ -66,15 +51,41 @@ public class MainGui {
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		
-		window = new JFrame();
+		JPanel colorPanel = new JPanel();
+		colorPanel.setBackground(ColorSettings.getBackgroundColor() );
+		colorPanel.setBorder(GuiHelper.getEmptyBorder() );
+		
+		window = new JFrame() /*{
+			private static final long serialVersionUID = -1303115076804508497L;
+
+			@Override
+			public Insets getInsets()
+			{
+				return new Insets(0, 0, 0, 0);
+			}
+		}//*/;
 		window.setJMenuBar(MenuItems.createMenuBar() );
 		window.setLayout(new BoxLayout(window.getContentPane(), BoxLayout.Y_AXIS) );
 		window.add(scrollPane);
+		//window.setContentPane(colorPanel);
 		window.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 		window.addWindowListener(MouseAdapters.windowOnCloseAdapter);
 		window.setTitle("");
 		window.pack();
 		window.setVisible(true);
+		
+		/*
+		content_window = new JFrame();
+		content_window.setUndecorated(true);
+		content_window.setLayout(new BoxLayout(content_window.getContentPane(), BoxLayout.Y_AXIS) );
+		content_window.add(scrollPane);
+		content_window.setTitle("Notes-creator-capture-frame");
+		content_window.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+		content_window.addWindowListener(MouseAdapters.windowOnCloseAdapter);
+		content_window.pack();
+		content_window.setVisible(true);
+		System.out.println("Main:" + window.getInsets() + ", content:" + content_window.getInsets() );
+		//*/
 	}
 	
 	public static void arrangeContent()
@@ -90,12 +101,15 @@ public class MainGui {
 		if (inEditMode) sectionManagerDialog.updateSectionManagerDialog();
 		
 		window.remove(scrollPane);
+		//content_window.remove(scrollPane);
 		window.setPreferredSize(null);
+		//content_window.setPreferredSize(null);
 		window.setTitle(FileOperations.getWindowTitle() );
 		
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS) );
 		mainPanel.setBackground(ColorSettings.getBackgroundColor() );
+		mainPanel.setOpaque(false);
 		
 		for (Section section : sectionsList)
 			mainPanel.add(section);
@@ -104,12 +118,20 @@ public class MainGui {
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		//scrollPane.getViewport().setOpaque(false);
+		//scrollPane.setOpaque(false);
+		scrollPane.getViewport().setBackground(ColorSettings.getBackgroundColor() );
 		
 		window.add(scrollPane);
+		//content_window.add(scrollPane);
+		//content_window.setBackground(new Color(0, 0, 0, 0) );
 		window.pack();
+		//content_window.pack();
 		window.setVisible(true);
+		//content_window.setVisible(true);
 		resizeWindow();
 		window.pack();
+		//content_window.pack();
 		
 		sectionsList.forEach(section -> section.setLocation() );
 	}
@@ -133,6 +155,7 @@ public class MainGui {
 			height = window.getHeight();
 		if (window.getWidth() < width)
 			width = window.getWidth();
+		//content_window.setPreferredSize(new Dimension(width + 100, height) );
 		window.setPreferredSize(new Dimension(width + 100, height) );
 	}
 
@@ -154,6 +177,10 @@ public class MainGui {
 		window.setVisible(true);
 		window.repaint();
 		window.setMaximumSize(screensize);
+		//content_window.pack();
+		//content_window.setVisible(true);
+		//content_window.repaint();
+		//content_window.setMaximumSize(screensize);
 		
 		// determining the maximal width for each column
 		Section.maxWidths = new int[FileOperations.numberOfColumns + 2];
@@ -165,6 +192,7 @@ public class MainGui {
 		scrollPane.setPreferredSize(new Dimension(scrollPane.getWidth() + 100, keepGuiSize ? height : scrollPane.getHeight() ) );
 		
 		window.pack();
+		//content_window.pack();
 		scrollPane.getVerticalScrollBar().setValue(scrollValue);
 		
 		keepGuiSize = true;
@@ -200,6 +228,7 @@ public class MainGui {
 					try
 					{
 						e.printStackTrace(new PrintStream(new File("log.txt") ) );
+						e.printStackTrace();
 					} catch (FileNotFoundException e1)
 					{
 						// TODO Auto-generated catch block
@@ -252,8 +281,27 @@ public class MainGui {
 		sectionManagerDialog.updateSectionManagerDialog();
 	}
 	
-	public static void removeSection(int section_index)
+	public static void removeSection(int section_index, int moveContent)
 	{
+		if (moveContent < -1 || moveContent > 1)
+			throw new IllegalArgumentException("moveContent has to be between -1 and 1, got " + moveContent);
+		
+		if (moveContent == removeSection)
+			sectionsList.remove(section_index);
+		else
+		{
+			ArrayList<Row> rows = sectionsList.remove(section_index).getRows();
+			rows.remove(rows.size() - 1);
+			
+			try
+			{
+				if (moveContent == moveToSectionAbove)
+					sectionsList.get(section_index - 1).addRowsAtEnd(rows);
+				else if(moveContent == moveToSectionBelow)
+					sectionsList.get(section_index).addRowsAtStart(rows); // the section was already removed, so the next section has the same index as the one that was removed.
+			}	catch (IndexOutOfBoundsException e)
+			{ return; }
+		}
 		arrangeContent();
 		spaceColums();
 		sectionManagerDialog.updateSectionManagerDialog();

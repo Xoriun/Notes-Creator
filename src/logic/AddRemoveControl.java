@@ -24,9 +24,11 @@ public class AddRemoveControl extends JPanel
 		this.row = row;
 		this.sectionIndex = section_index;
 		
+		boolean section_control = row == null;
+		
 		add = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(" + ", GuiHelper.CENTER);
 		add.setForeground(MainGui.inEditMode ? ColorSettings.getTextColor() : ColorSettings.getBackgroundColor() );
-		add.addMouseListener(row == null ? MouseAdapters.addSectionAdapter : MouseAdapters.addRowAdapter);
+		add.addMouseListener(section_control ? MouseAdapters.addSectionAdapter : MouseAdapters.addRowAdapter);
 		
 		this.add(new JLabel());
 		this.add(add);
@@ -35,8 +37,11 @@ public class AddRemoveControl extends JPanel
 		{
 			remove = GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors(" - ", GuiHelper.CENTER);
 			remove.setForeground(MainGui.inEditMode ? ColorSettings.getTextColor() : ColorSettings.getBackgroundColor() );
-			remove.addMouseListener(row == null ? MouseAdapters.removeSectionAdapter : MouseAdapters.removeRowAdapter);
-			
+			remove.addMouseListener(section_control ? MouseAdapters.removeSectionAdapter : MouseAdapters.removeRowAdapter);
+			if (section_control)
+				remove.setToolTipText("<html>Removes the whole section and its content.<br/>"
+						+ "Shift: append the content to the section above.<br/>"
+						+ "Control: prepend the content to the section below.</html>");
 			this.add(remove);
 			this.add(new JLabel());
 		}

@@ -34,6 +34,7 @@ public class Section extends JPanel
 	public String getTitle() { return title; }
 	public int getScrollLocation() { return scrollLocation; }
 	public ArrayList<Row> getRows() { return rows; }
+	public int numberOfContentRows() { return rows.size() - 1; }
 	
 	/**
 	 * Creates an empty section containing an empty row.
@@ -84,6 +85,30 @@ public class Section extends JPanel
 	private void addLastRow()
 	{
 		rows.add(new Row(this, rows.size(), Row.LAST) );
+	}
+	
+	public void addRowsAtStart(ArrayList<Row> new_rows)
+	{
+		System.out.println(this.title + ": " + rows.size() );
+		rows.addAll(0, new_rows);
+		System.out.println(rows.size() );
+		updateRowIndices();
+		
+		fillPanel();
+	}
+	
+	public void addRowsAtEnd(ArrayList<Row> new_rows)
+	{
+		rows.addAll(rows.size() - 1, new_rows);
+		updateRowIndices();
+		
+		fillPanel();
+	}
+	
+	private void updateRowIndices()
+	{
+		for (int i = 0; i < rows.size(); i ++)
+			rows.get(i).setIndex(i);
 	}
 	
 	public void reloadImages()

@@ -85,6 +85,11 @@ public class Row
 			cells.add(new Cell(this, col, (Element) cellNodes.item(col) ) );
 	}
 	
+	public void setIndex(int new_index)
+	{
+		this.rowIndex = new_index;
+	}
+	
 	void reloadImages()
 	{
 		for (Cell cell : cells) cell.relaodImages();

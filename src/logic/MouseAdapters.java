@@ -4,6 +4,7 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -31,12 +32,11 @@ public class MouseAdapters
 
 			int buttonPressed = e.getButton();
 
-			if (buttonPressed == 1 || buttonPressed == 3)
-			{
+			if (buttonPressed == MouseEvent.BUTTON1)
 				MainGui.cellEditDialog.processCell( (Cell) e.getComponent() );
-				if (buttonPressed == 3)
-					PopupMenues.processCellRightClick(e);
-			}
+			
+			if (buttonPressed == MouseEvent.BUTTON3)
+				PopupMenues.processCellRightClick(e);
 		}
 	};
 	
@@ -69,13 +69,20 @@ public class MouseAdapters
 	final static MouseInputAdapter removeSectionAdapter = new MouseInputAdapter()
 	{
 		@Override
-		public void mouseClicked(MouseEvent e)
+		public void mousePressed(MouseEvent e)
 		{
 			if (MainGui.inEditMode)
 			{
 				FileOperations.unsavedChanges = true;
 				int section_index = ( (AddRemoveControl) e.getComponent().getParent() ).getSectionIndex();
-				MainGui.removeSection(section_index);
+				int key_mask = e.getModifiersEx();
+				System.out.println(key_mask);
+				if (key_mask == KeyEvent.BUTTON1_DOWN_MASK)
+					MainGui.removeSection(section_index, MainGui.removeSection);
+				if (key_mask == (KeyEvent.BUTTON1_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK) )
+					MainGui.removeSection(section_index, MainGui.moveToSectionAbove);
+				if (key_mask == (KeyEvent.BUTTON1_DOWN_MASK | KeyEvent.CTRL_DOWN_MASK) )
+					MainGui.removeSection(section_index, MainGui.moveToSectionBelow);
 			}
 		}
 	};
