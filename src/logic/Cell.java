@@ -347,7 +347,7 @@ public class Cell extends JPanel
 		
 		public EditPanel getEditPanel()
 		{
-			return new EditIconLabel(icon, mainImageAbbr, layeredImageAbbr, verticalAlignment, horizontalAlignment);
+			return new EditIconLabel(icon, mainImageAbbr, layeredImageAbbr, horizontalAlignment, verticalAlignment);
 		}
 		
 		public void updateLightingSettings()

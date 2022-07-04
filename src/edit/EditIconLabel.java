@@ -87,6 +87,26 @@ public class EditIconLabel extends JLabel implements EditPanel
 	
 	public String getMainImageAbbr() { return mainImageAbbr; }
 	public String getLayeredImageAbbr() { return layeredImageAbbr; }
-	public String getLayeredVerticalAlignment() { return layeredVerticalAlignment; }
-	public String getLayeredHorizontalAlignment() { return layeredHorizontalAlignment; }
+	
+	public String getLayeredVerticalAlignment()
+	{
+		switch(layeredVerticalAlignment)
+		{
+			case "t": return "top";
+			case "c": return "center";
+			case "b": return "bottom";
+			default:  return "";
+		}
+	}
+	
+	public String getLayeredHorizontalAlignment()
+	{
+		switch(layeredHorizontalAlignment)
+		{
+			case "l": return "left";
+			case "c": return "center";
+			case "r": return "right";
+			default:  return "";
+		}
+	}
 }

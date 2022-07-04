@@ -246,12 +246,14 @@ public class GuiHelper
 			Graphics g = scaled.getGraphics();
 			
 			// drawing images
-			int dot_image_size = 2 * ImageSize / 3;
-			int small_image_size = 3 * ImageSize / 5;
-			int x_dot = horizontal_alignment.equals("t") ? 0 : (ImageSize - dot_image_size) / (horizontal_alignment.equals("c") ? 2 : 1);
-			int y_dot = vertical_alignment.equals("l") ? 0 : (ImageSize - dot_image_size) / (vertical_alignment.equals("c") ? 2 : 1);
-			int x = horizontal_alignment.equals("t") ? 0 : (ImageSize - small_image_size) / (horizontal_alignment.equals("c") ? 2 : 1);
-			int y = vertical_alignment.equals("l") ? 0 : (ImageSize - small_image_size) / (vertical_alignment.equals("c") ? 2 : 1);
+			int dot_image_size = ImageSize * 2 / 3;
+			int small_image_size = ImageSize * 3 / 5;
+			float horizontal_factor = horizontal_alignment.equals("l") ? 0 : horizontal_alignment.equals("c") ? .5f : 1;
+			float vertical_factor   = vertical_alignment  .equals("t") ? 0 : vertical_alignment  .equals("c") ? .5f : 1;
+			int x_dot = (int) ((ImageSize - dot_image_size) * horizontal_factor);
+			int y_dot = (int) ((ImageSize - dot_image_size) * vertical_factor);
+			int x = (int) ((ImageSize - small_image_size) * horizontal_factor);
+			int y = (int) ((ImageSize - small_image_size) * vertical_factor);
 			g.drawImage(main_image, 0, 0, scaled.getWidth(), scaled.getHeight(), null);
 			g.drawImage(layeredDotBuffered, x_dot, y_dot, dot_image_size, dot_image_size, null);
 			g.drawImage(layered_image, x, y, small_image_size, small_image_size, null);

@@ -878,7 +878,7 @@ public class CellEditDialog extends JDialog
 			control_panel.add(button_confirm);
 			button_confirm.addActionListener(e -> {
 				if (checkbox_layered.isSelected())
-					((EditIconLabel) selectedCellPanel).updateIcon(main_image_abbr, layered_image_abbr, (String) dropdown_vertical.getSelectedItem(), (String) dropdown_horizontal.getSelectedItem());
+					((EditIconLabel) selectedCellPanel).updateIcon(main_image_abbr, layered_image_abbr, (String) dropdown_horizontal.getSelectedItem(), (String) dropdown_vertical.getSelectedItem() );
 				else
 					((EditIconLabel) selectedCellPanel).updateIcon(main_image_abbr);
 				this.pack();
