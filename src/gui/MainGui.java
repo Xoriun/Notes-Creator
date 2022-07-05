@@ -33,7 +33,7 @@ public class MainGui {
 	
 	public static Dimension screensize;
 	
-	public static String currentVersionTag = "v3.4";
+	public static String currentVersionTag = "v3.5";
 	
 	public final static int moveToSectionAbove = -1;
 	public final static int removeSection = 0;
