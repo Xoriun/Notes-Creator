@@ -305,8 +305,6 @@ public class FileOperations
 	
 	public static String selectImageDirectory()
 	{
-		saveAbbereviationsFile();
-		
 		JFileChooser chooser = new JFileChooser();
 		chooser.setCurrentDirectory(new java.io.File("."));
 		chooser.setDialogTitle("choosertitle");

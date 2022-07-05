@@ -1,47 +1,37 @@
 package gui;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.ScrollPaneConstants;
+import javax.swing.*;
 import javax.swing.event.MouseInputAdapter;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
 
 import gui.MainGui;
 import logic.FileOperations;
 
 public class Abbreviations
 {
-	private static ArrayList<String[]> abbreviationsList = new ArrayList<String[]>();
+	private static JDialog dialog;
 	
-	@SuppressWarnings("unchecked")
-	static void showAbbreviationSettingsDialog()
-	{
-		showAbbreviationSettingsDialog(FileOperations.fileAbbreviations, FileOperations.imagesDirectory, (ArrayList<String[]>) abbreviationsList.clone() );
-	}
+	private static ArrayList<String[]> abbreviationsList = new ArrayList<String[]>();
+	private static String abbr_location_copy;
+	private static String images_location_copy;
+	
+	private static JPanel abbrListPanel;
 
-	private static void showAbbreviationSettingsDialog(final String abbr_location, final String images_dir, ArrayList<String[]> abbr_list_copy)
+	public static void showAbbreviationSettingsDialog()
 	{
-		JDialog abbreviations_dialog = new JDialog(MainGui.window);
-		abbreviations_dialog.setModal(true);
-		abbreviations_dialog.setTitle("Edit abbreviations");
-		abbreviations_dialog.setMinimumSize(new Dimension(400, 200) );
+		abbr_location_copy = FileOperations.fileAbbreviations;
+		images_location_copy = FileOperations.imagesDirectory;
+		
+		dialog = new JDialog(MainGui.window);
+		dialog.setModal(true);
+		dialog.setTitle("Edit abbreviations");
+		dialog.setMinimumSize(new Dimension(400, 200) );
 		
 		JPanel outer_panel = new JPanel();
 		outer_panel.setLayout(new BoxLayout(outer_panel, BoxLayout.Y_AXIS) );
@@ -62,7 +52,7 @@ public class Abbreviations
 			// image_dir location
 			JPanel current_image_dir_panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			current_image_dir_panel.setOpaque(false);
-			JLabel current_image_dir = new JLabel("Selected image directory: " + images_dir);
+			JLabel current_image_dir = new JLabel("Selected image directory: " + images_location_copy);
 			current_image_dir.setForeground(ColorSettings.getTextColor() );
 			current_image_dir_panel.add(current_image_dir);
 			
@@ -71,9 +61,9 @@ public class Abbreviations
 			image_dir_actions_panel.setOpaque(false);
 			JButton image_dir_select = new JButton("Select image directory");
 			image_dir_select.addActionListener(e -> {
-				String new_images_dir  = FileOperations.selectImageDirectory();
-				abbreviations_dialog.dispose();
-				showAbbreviationSettingsDialog(abbr_location, new_images_dir, abbr_list_copy);
+				images_location_copy = FileOperations.selectImageDirectory();
+				current_image_dir.setText("Selected image directory: " + images_location_copy);
+				dialog.pack();
 			} );
 			image_dir_actions_panel.add(image_dir_select);
 	    
@@ -92,7 +82,7 @@ public class Abbreviations
 			// file location
 			JPanel current_file_panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			current_file_panel.setOpaque(false);
-			JLabel current_file = new JLabel("Selected abbreviations file: " + abbr_location);
+			JLabel current_file = new JLabel("Selected abbreviations file: " + abbr_location_copy);
 			current_file.setForeground(ColorSettings.getTextColor() );
 			current_file_panel.add(current_file);
 			
@@ -103,17 +93,58 @@ public class Abbreviations
 			JButton file_new    = new JButton("New abbreviations file");
 			JButton file_remove = new JButton("Remove abbreviations file");
 			file_select.addActionListener(e -> {
-				String new_abbr_loaction = FileOperations.selectAbbreviationsFile();
-				abbreviations_dialog.dispose();
-				showAbbreviationSettingsDialog(new_abbr_loaction, images_dir, FileOperations.readAbbriviationsFile(new_abbr_loaction) );
+				abbr_location_copy = FileOperations.selectAbbreviationsFile();
+				current_file.setText("Selected abbreviations file: " + abbr_location_copy);
+				abbrListPanel.removeAll();
+				
+				// abbreviationsList list panel
+				GridBagConstraints gbc = new GridBagConstraints();
+				Dimension min_dim = new Dimension(150,20);
+				ArrayList<JTextField[]> textfield_list = new ArrayList<JTextField[]>();
+				
+				gbc.gridy = 0;
+				for (String[] abbr : FileOperations.readAbbriviationsFile(abbr_location_copy) )
+				{
+					JTextField[] row = new JTextField[2];
+					for (int i = 0; i < 2; i ++)
+					{
+						gbc.gridx = i;
+						JTextField textfield = new JTextField(abbr[i] );
+						textfield.setBorder(GuiHelper.getDefaultBorder(gbc.gridy == 0, gbc.gridx == 0) );
+						textfield.setPreferredSize(min_dim);
+						row[i] = textfield;
+						textfield.setOpaque(false);
+						textfield.setForeground(ColorSettings.getTextColor() );
+						abbrListPanel.add(textfield, gbc);
+					}
+					textfield_list.add(row);
+					JLabel remove = new JLabel(" - ");
+					remove.setOpaque(false);
+					remove.setForeground(ColorSettings.getTextColor() );
+					remove.addMouseListener(new MouseInputAdapter() {
+						@Override
+						public void mouseClicked(MouseEvent e)
+						{
+							textfield_list.remove(row);
+							abbrListPanel.remove(row[0] );
+							abbrListPanel.remove(row[1] );
+							dialog.pack();
+						}
+					} );
+					gbc.gridx = 3;
+					abbrListPanel.add(remove, gbc);
+					gbc.gridy ++;
+				}
 			} );
 			file_new.addActionListener(e -> {
-				abbreviations_dialog.dispose();
-				showAbbreviationSettingsDialog(FileOperations.newAbbreviationsFile(abbr_list_copy), images_dir, abbr_list_copy);
+				abbr_location_copy = "";
+				current_file.setText("Selected abbreviations file: " + abbr_location_copy);
+				abbrListPanel.removeAll();
 			} );
 			file_remove.addActionListener(e -> {
-				abbreviations_dialog.dispose();
-				showAbbreviationSettingsDialog("", images_dir, new ArrayList<String[]>() );
+				abbr_location_copy = "";
+				current_file.setText("Selected abbreviations file: " + abbr_location_copy);
+				abbrListPanel.removeAll();
 			} );
 			file_actions_panel.add(file_select);
 			file_actions_panel.add(file_new);
@@ -133,14 +164,14 @@ public class Abbreviations
 			JButton abbr_add_button = new JButton("Add abbreviation");
 			
 			// abbreviationsList list panel
-			JPanel abbr_list_panel = new JPanel(new GridBagLayout() );
-			abbr_list_panel.setBackground(ColorSettings.getBackgroundColor() );
+			abbrListPanel = new JPanel(new GridBagLayout() );
+			abbrListPanel.setBackground(ColorSettings.getBackgroundColor() );
 			GridBagConstraints gbc = new GridBagConstraints();
 			Dimension min_dim = new Dimension(150,20);
 			ArrayList<JTextField[]> textfield_list = new ArrayList<JTextField[]>();
 			
 			gbc.gridy = 0;
-			for (String[] abbr : abbr_list_copy)
+			for (String[] abbr : abbreviationsList)
 			{
 				JTextField[] row = new JTextField[2];
 				for (int i = 0; i < 2; i ++)
@@ -152,7 +183,7 @@ public class Abbreviations
 					row[i] = textfield;
 					textfield.setOpaque(false);
 					textfield.setForeground(ColorSettings.getTextColor() );
-					abbr_list_panel.add(textfield, gbc);
+					abbrListPanel.add(textfield, gbc);
 				}
 				textfield_list.add(row);
 				JLabel remove = new JLabel(" - ");
@@ -162,14 +193,15 @@ public class Abbreviations
 					@Override
 					public void mouseClicked(MouseEvent e)
 					{
-						abbreviations_dialog.dispose();
 						textfield_list.remove(row);
-						abbr_list_copy.remove(abbr);
-						showAbbreviationSettingsDialog(abbr_location, images_dir, getAbbreviationsListFromTextfields(textfield_list) );
+						abbrListPanel.remove(row[0] );
+						abbrListPanel.remove(row[1] );
+						abbrListPanel.remove(remove);
+						dialog.pack();
 					}
 				} );
 				gbc.gridx = 3;
-				abbr_list_panel.add(remove, gbc);
+				abbrListPanel.add(remove, gbc);
 				gbc.gridy ++;
 			}
 			
@@ -177,8 +209,6 @@ public class Abbreviations
 			JPanel abbr_add_panel = new JPanel();
 			abbr_add_panel.setOpaque(false);
 			abbr_add_button.addActionListener(e -> {
-				String[] new_abbr = new String[] {"",""};
-				abbr_list_copy.add(new_abbr);
 				JTextField[] new_row = new JTextField[2];
 				for (int i = 0; i < 2; i ++)
 				{
@@ -189,7 +219,7 @@ public class Abbreviations
 					new_row[i] = textfield;
 					textfield.setOpaque(false);
 					textfield.setForeground(ColorSettings.getTextColor() );
-					abbr_list_panel.add(textfield, gbc);
+					abbrListPanel.add(textfield, gbc);
 				}
 				textfield_list.add(new_row);
 				JLabel remove = new JLabel(" - ");
@@ -199,26 +229,27 @@ public class Abbreviations
 					@Override
 					public void mouseClicked(MouseEvent e)
 					{
-						abbreviations_dialog.dispose();
 						textfield_list.remove(new_row);
-						abbr_list_copy.remove(new_abbr);
-						showAbbreviationSettingsDialog(abbr_location, images_dir, getAbbreviationsListFromTextfields(textfield_list) );
+						abbrListPanel.remove(new_row[0] );
+						abbrListPanel.remove(new_row[1] );
+						dialog.pack();
 					}
 				} );
 				gbc.gridx = 3;
-				abbr_list_panel.add(remove, gbc);
+				abbrListPanel.add(remove, gbc);
 				gbc.gridy ++;
-				abbreviations_dialog.pack();
-				abbreviations_dialog.repaint();
+				dialog.pack();
+				dialog.repaint();
 			} );
 			abbr_add_panel.add(abbr_add_button);
 			
 			// fill cells
-			JScrollPane abbr_scroll_pane = new JScrollPane(abbr_list_panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+			JScrollPane abbr_scroll_pane = new JScrollPane(abbrListPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			abbr_scroll_pane.getVerticalScrollBar().setUnitIncrement(16);
 			abbr_scroll_pane.setBackground(ColorSettings.getBackgroundColor() );
 			abbr_scroll_pane.setBorder(null);
 			abbr_panel.add(abbr_scroll_pane);
+			abbr_panel.add(Box.createVerticalGlue() );
 			abbr_panel.add(abbr_add_panel);
 			
 			settings_panel.add(abbr_panel);
@@ -231,16 +262,17 @@ public class Abbreviations
 			JButton cancel  = new JButton("Cancel");
 			
 			confirm.addActionListener(e -> {
-				abbreviations_dialog.dispose();
+				dialog.dispose();
 				FileOperations.unsavedChanges = true;
 				PopupAlerts.createMissingImagesMessage = true;
 				setAbbreviationsList(getAbbreviationsListFromTextfields(textfield_list) );
-				FileOperations.imagesDirectory = images_dir;
-				FileOperations.fileAbbreviations = abbr_location;
+				FileOperations.imagesDirectory = images_location_copy;
+				FileOperations.fileAbbreviations = abbr_location_copy;
 				FileOperations.saveAbbereviationsFile();
 				MainGui.reloadImages();
+				closeDialog();
 			} );
-			cancel .addActionListener(e -> { abbreviations_dialog.dispose(); } );
+			cancel .addActionListener(e -> { closeDialog(); } );
 		
 			controls_panel.add(confirm);
 			controls_panel.add(cancel);
@@ -248,17 +280,24 @@ public class Abbreviations
 			settings_panel.add(controls_panel);
 			
 		outer_panel.add(settings_panel);
-		abbreviations_dialog.add(outer_panel);
-		abbreviations_dialog.pack();
-		GuiHelper.resizeAndCenterRelativeToMainWindow(abbreviations_dialog, -200, abbreviations_dialog.getHeight() - (abbr_scroll_pane.getHeight() / 2) );
-		abbreviations_dialog.pack();
-		abbreviations_dialog.setVisible(true);
-		abbreviations_dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		dialog.add(outer_panel);
+		dialog.pack();
+		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog, -200, dialog.getHeight() - (abbr_scroll_pane.getHeight() / 2) );
+		dialog.pack();
+		dialog.setVisible(true);
+		dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	}
+	
+	public static void closeDialog()
+	{
+		abbr_location_copy = images_location_copy = null;
+		dialog.dispose();
 	}
 	
 	public static void setAbbreviationsList(ArrayList<String[]> abbreviations_list)
 	{
-		abbreviationsList = abbreviations_list.stream().sorted( (a,b) -> {return a[0].compareTo(b[0] ); } ).collect(Collectors.toCollection(ArrayList::new) );
+		abbreviationsList = abbreviations_list;
+		sortAbbreviationList();
 	}
 	
 	private static void sortAbbreviationList()
