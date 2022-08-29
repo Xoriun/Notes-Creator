@@ -2,8 +2,8 @@ package edit;
 
 import javax.swing.JLabel;
 
-import gui.ColorSettings;
 import gui.GuiHelper;
+import settings.ColorSettings;
 
 public class EditLineBreak extends JLabel implements EditPanel
 {
@@ -34,6 +34,7 @@ public class EditLineBreak extends JLabel implements EditPanel
 		this.setBorder(GuiHelper.getEmptyBorder() );
 	}
 	
+	@Override
 	public void updateColorSettings()
 	{
 		this.setBackground(ColorSettings.getBackgroundColor() );

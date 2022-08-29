@@ -2,8 +2,8 @@ package edit;
 
 import javax.swing.JTextField;
 
-import gui.ColorSettings;
 import gui.GuiHelper;
+import settings.ColorSettings;
 
 public class EditTextField extends JTextField implements EditPanel
 {
@@ -19,21 +19,25 @@ public class EditTextField extends JTextField implements EditPanel
 		updateColorSettings();
 	}
 	
+	@Override
 	public String getString()
 	{
 		return this.getText();
 	}
-	
+
+	@Override
 	public void setSelectedBorder()
 	{
 		this.setBorder(GuiHelper.getSelectedBorder() );
 	}
-	
+
+	@Override
 	public void setDefaultBorder()
 	{
 		this.setBorder(GuiHelper.getDefaultBorder() );
 	}
-	
+
+	@Override
 	public void updateColorSettings()
 	{
 		this.setBackground(ColorSettings.getBackgroundColor() );

@@ -1,4 +1,4 @@
-package gui;
+package settings;
 import java.awt.Color;
 
 import org.w3c.dom.Document;
@@ -30,7 +30,7 @@ public class ColorSettingProfile
 				ColorSettings.currentColorSetting = this;
 		}
 		
-		void update(Color text, Color border, Color background)
+		public void update(Color text, Color border, Color background)
 		{
 			this.text = text;
 			this.border = border;

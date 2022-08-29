@@ -14,9 +14,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
+import settings.ColorSettings;
 
 public class Row
 {
@@ -140,13 +140,13 @@ public class Row
 		{
 			TodoLabel label = (TodoLabel) event.getComponent();
 			String string = JOptionPane.showInputDialog(MainGui.window, "TODO", label.getTodoString() );
-			if (string != null)
-			{
-				label.updateTodoString(string);
-				FileOperations.unsavedChanges = true;
-				
-				label.setIcon(MainGui.inEditMode && !string.isEmpty() ? GuiHelper.scaledTodoImageIcon : null);
-			}
+			if (string == null || string.equals(label.getTodoString() ) )
+				return;
+			
+			label.updateTodoString(string);
+			FileOperations.unsavedChanges = true;
+			
+			label.setIcon(MainGui.inEditMode && !string.isEmpty() ? GuiHelper.scaledTodoImageIcon : null);
 			
 			MainGui.arrangeContent();
 			MainGui.spaceColums();

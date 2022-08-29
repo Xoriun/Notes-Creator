@@ -24,15 +24,17 @@ import javax.swing.border.MatteBorder;
 import javax.swing.border.TitledBorder;
 
 import logic.FileOperations;
+import settings.AbbreviationSettings;
+import settings.ColorSettings;
 
 public class GuiHelper
 {
 	private final static int ImageSize = 30;
 	
-	private final static BufferedImage missingImageBuffered			= loadMissingImageBufferedImage();
-	private final static BufferedImage layeredDotBuffered				= loadLayeredDotImage();
-	public final static ImageIcon			 scaledTodoImageIcon			= getScaledTodoImageIcon();
-	public final static ImageIcon			 scaledLinebreakImageIcon	= getScaledLinebreakImageIcon();
+	private final static BufferedImage missingImageBuffered			= loadBufferedImageFromResources("Missing_image.png");
+	private final static BufferedImage layeredDotBuffered				= loadBufferedImageFromResources("Layer_dot.png");
+	public final static ImageIcon			 scaledTodoImageIcon			= loadImageIconFromResources("Todo.png");
+	public final static ImageIcon			 scaledLinebreakImageIcon	= loadImageIconFromResources("Linebreak.png");
 	
 	public final static int LEFT   = 0;
 	public final static int CENTER = 1;
@@ -139,7 +141,7 @@ public class GuiHelper
 	 */
 	public static ImageIcon getScaledImageIconFromAbbreviation(String image_abbr)
 	{
-		return getScaledImageIcon(Abbreviations.getNameFromAbbreviation(image_abbr) );
+		return getScaledImageIcon(AbbreviationSettings.getNameFromAbbreviation(image_abbr) );
 	}
 	
 	/**
@@ -172,11 +174,11 @@ public class GuiHelper
 	}
 	
 	/**
-	 * Returns an ImageIcon (given by the abbreviation main_image_abbr) as the main
-	 * icon (GuiHelper.ImageSize by GuiHelper.ImageSize pixels) and a smaller icon
-	 * (given by the abbreviation layered_image_abbr) (3/5 of the size of the main
+	 * Returns an ImageIcon (given by the abbreviation <code>main_image_abbr</code>) as the main
+	 * icon (<code>GuiHelper.ImageSize</code> by <code>GuiHelper.ImageSize</code> pixels) and a smaller icon
+	 * (given by the abbreviation <code>layered_image_abbr</code>) (3/5 of the size of the main
 	 * image) in front of it. The smaller image can be in 9 different locations,
-	 * determined by horizontal_alignment and vertical_alignment.
+	 * determined by <code>horizontal_alignment</code> and <code>vertical_alignment</code>.
 	 * 
 	 * @param main_image_abbr
 	 *          Abbreviation (or name, including any path-structure within the
@@ -192,7 +194,9 @@ public class GuiHelper
 	 */
 	public static ImageIcon getScaledLayeredImageFromAbbreviations(String main_image_abbr, String layered_image_abbr, String horizontal_alignment, String vertical_alignment)
 	{
-		return getScaledLayeredImage(Abbreviations.getNameFromAbbreviation(main_image_abbr), Abbreviations.getNameFromAbbreviation(layered_image_abbr), horizontal_alignment, vertical_alignment);
+		return getScaledLayeredImage(AbbreviationSettings.getNameFromAbbreviation(main_image_abbr),
+				AbbreviationSettings.getNameFromAbbreviation(layered_image_abbr),
+				horizontal_alignment, vertical_alignment);
 	}
 	
 	/**
@@ -271,7 +275,7 @@ public class GuiHelper
 		resizeAndCenterRelativeToMainWindow(container, 1000, 0);
 	}
 	
-	static void resizeAndCenterRelativeToMainWindow(Container container, int max_height_rel_to_window, int min_height)
+	private static void resizeAndCenterRelativeToMainWindow(Container container, int max_height_rel_to_window, int min_height)
 	{
 		Dimension dim_container = container.getSize();
 		Dimension dim_window = MainGui.window.getSize();
@@ -349,68 +353,21 @@ public class GuiHelper
 		}
 	}
 	
-	private static BufferedImage loadMissingImageBufferedImage()
+	private static BufferedImage loadBufferedImageFromResources(String name)
 	{
 		try
 		{
-			return ImageIO.read(GuiHelper.class.getClassLoader().getResourceAsStream("Missing_image.png"));
+			return ImageIO.read(GuiHelper.class.getClassLoader().getResource(name) );
 		} catch (IOException e)
 		{
-			MainGui.displayErrorAndExit("Error while loading 'Missing_Image.png'", false);
-			throw new RuntimeException("Error while loading 'Missing_Image.png'");
-		} catch (IllegalArgumentException e)
-		{
-			MainGui.displayErrorAndExit("Fatal error while loading 'Missing_Image.png', file doesn't exist!", true);
-			throw new RuntimeException("Fatal error while loading 'Missing_Image.png', file doesn't exist!");
+			MainGui.displayErrorAndExit("Error while loading '" + name + "'", true, true);
+			throw new RuntimeException("Error while loading '" + name + "'");
 		}
 	}
 	
-	private static BufferedImage loadLayeredDotImage()
+	private static ImageIcon loadImageIconFromResources(String name)
 	{
-		try
-		{
-			return ImageIO.read(GuiHelper.class.getClassLoader().getResource("Layer_dot.png"));
-		} catch (IOException e)
-		{
-			MainGui.displayErrorAndExit("Error while loading 'Layer_dot.png'", false);
-			throw new RuntimeException("Error while loading 'Layer_dot.png'");
-		} catch (IllegalArgumentException e)
-		{
-			MainGui.displayErrorAndExit("Error while loading 'Layer_dot.png', file doesn't exist!", true);
-			throw new RuntimeException("Error while loading 'Layer_dot.png', file doesn't exist!");
-		}
-	}
-	
-	private static ImageIcon getScaledTodoImageIcon()
-	{
-		try
-		{
-			return new ImageIcon(ImageIO.read(GuiHelper.class.getClassLoader().getResource("Todo.png")).getScaledInstance(ImageSize, ImageSize, Image.SCALE_DEFAULT));
-		} catch (IOException e)
-		{
-			MainGui.displayErrorAndExit("Error while loading 'Todo.png'", false);
-			throw new RuntimeException("Error while loading 'Todo.png'");
-		} catch (IllegalArgumentException e)
-		{
-			MainGui.displayErrorAndExit("Error while loading 'Todo.png', file doesn't exist!", true);
-			throw new RuntimeException("Error while loading 'Todo.png', file doesn't exist!");
-		}
-	}
-	
-	private static ImageIcon getScaledLinebreakImageIcon()
-	{
-		try
-		{
-			return new ImageIcon(ImageIO.read(GuiHelper.class.getClassLoader().getResource("Linebreak.png")).getScaledInstance(ImageSize, ImageSize, Image.SCALE_DEFAULT));
-		} catch (IOException e)
-		{
-			MainGui.displayErrorAndExit("Error while loading 'Linebreak.png'", false);
-			throw new RuntimeException("Error while loading 'Linebreak.png'");
-		} catch (IllegalArgumentException e)
-		{
-			MainGui.displayErrorAndExit("Error while loading 'Linebreak.png', file doesn't exist!", true);
-			throw new RuntimeException("Error while loading 'Linebreak.png', file doesn't exist!");
-		}
+		return new ImageIcon(loadBufferedImageFromResources(name).getScaledInstance(ImageSize, ImageSize, Image.SCALE_DEFAULT));
 	}
 
 	public static List<Component> getAllComponents(final Container c)

@@ -49,7 +49,7 @@ Since this option is far more complicated to perfectly combine with LiveSplit, t
 
 ## Actions:
 Within the CellEditDialog can assign actions to a cell which then get executed when clicking on them while speedrunning mode is active.
-Currently the following commands are supported:\
+Currently the following commands are supported:
  - text_to_clipboard: writes the action_parameter as String to the System clipboard.
  - file_to_clipboard: writes the content of a file located at the action_parameter as String to the System clipboard. !! Be aware that the file location will be visible in plain text when exporting. !!
 
@@ -70,9 +70,12 @@ Especially the load/save operations may have unforeseen edgecases.\
 When encountering any bug, please let me know.
 Also, feel free to suggest any changes or new features.
 
-Planned additions:
- - Improvements on the CellEditDialog: copy past of TextBlocks/Icons/whole cells.
+Planned additions and improvements:
+ - Improvements on the CellEditDialog: copy past of TextBlocks/Icons/etc.
  - Actions for section that get automatically executed when entering/exiting a section.
  - Action to start an other program.
  - Discrete handling of file locations for exporting files.
  - Different color setting for each section.
+
+Known issues:
+ - Settings window doesn't adhere to the color theme and is always in dark mode.s

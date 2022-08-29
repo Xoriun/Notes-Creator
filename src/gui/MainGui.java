@@ -10,6 +10,9 @@ import javax.swing.*;
 
 import edit.*;
 import logic.*;
+import settings.ColorSettings;
+import settings.Hotkeys;
+import settings.Settings;
 
 public class MainGui {
 	public static Font font = new Font("Serif", Font.PLAIN, 20);
@@ -24,20 +27,32 @@ public class MainGui {
 	public static JPanel mainPanel;
 	
 	public static boolean inEditMode = false;
-	public static boolean keepGuiSize = false;
-	public static boolean contentRearraged = false;
-	private static int height = 0;
-	private static int scrollValue = 0;
+	
+	/**
+	 * Determines whether or not the window's height will be recalculated on any change to the notes.
+	 * After each call to <code>resizeWindow()</code> or <code>spaceColumns()</code>, <code>keepWindowHeight</code> will be set to true, i.e. the default behavior is to keep the height.
+	 */
+	public static boolean keepWindowHeight = false;
+	private static int oldWindowHeight;
+
+	/**
+	 * Determines whether or not the scrollbars' position will be reset to 0 on any change to the notes.
+	 * After each call to <code>resizeWindow()</code> or <code>spaceColumns()</code>, <code>keepScrollPosition</code> will be set to true, i.e. the default behavior is to keep the position.
+	 */
+	public static boolean keepScrollPosition = false;
+	private static int oldScrollPosition;
 	
 	public static ArrayList<Section> sectionsList = new ArrayList<Section>();
 	
 	public static Dimension screensize;
 	
-	public static String currentVersionTag = "v3.5";
+	public static String currentVersionTag = "v4.0";
 	
 	public final static int moveToSectionAbove = -1;
 	public final static int removeSection = 0;
 	public final static int moveToSectionBelow = 1;
+	
+	public static Settings settings;
 	
 	private static void prepareGui()
 	{
@@ -45,11 +60,16 @@ public class MainGui {
 		//ColorSettings.selectColorSettings(1); // dark_mode
 		
 		mainPanel = new JPanel();
-		mainPanel.setLayout(new GridLayout() );
+		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS) );
+		mainPanel.setBackground(ColorSettings.getBackgroundColor() );
 		
 		scrollPane = new JScrollPane(mainPanel,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		//scrollPane.getViewport().setOpaque(false);
+		//scrollPane.setOpaque(false);
+		//scrollPane.getViewport().setBackground(ColorSettings.getBackgroundColor() );
 		
 		JPanel colorPanel = new JPanel();
 		colorPanel.setBackground(ColorSettings.getBackgroundColor() );
@@ -74,7 +94,10 @@ public class MainGui {
 		window.pack();
 		window.setVisible(true);
 		
+		settings = new Settings(window);
+		
 		/*
+		setup for transparent notes for better transparent capture in OBS, doesn't work yet...
 		content_window = new JFrame();
 		content_window.setUndecorated(true);
 		content_window.setLayout(new BoxLayout(content_window.getContentPane(), BoxLayout.Y_AXIS) );
@@ -90,40 +113,28 @@ public class MainGui {
 	
 	public static void arrangeContent()
 	{
-		MenuItems.getAddRemoveColumnsMenuItems();
+		oldWindowHeight = window.getHeight();
+		oldScrollPosition = scrollPane.getVerticalScrollBar().getValue();
+		
+		MenuItems.updateAddRemoveColumnsMenuItems();
 		
 		PopupAlerts.resetMissingImagesMessage();
 		
-		height = scrollPane.getHeight();
-		scrollValue = scrollPane.getVerticalScrollBar().getValue();
-		contentRearraged = true;
-		
 		if (inEditMode) sectionManagerDialog.updateSectionManagerDialog();
 		
-		window.remove(scrollPane);
+		//window.remove(scrollPane);
 		//content_window.remove(scrollPane);
 		window.setPreferredSize(null);
 		//content_window.setPreferredSize(null);
 		window.setTitle(FileOperations.getWindowTitle() );
 		
-		mainPanel = new JPanel();
-		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS) );
-		mainPanel.setBackground(ColorSettings.getBackgroundColor() );
-		mainPanel.setOpaque(false);
+		mainPanel.removeAll();
 		
 		for (Section section : sectionsList)
 			mainPanel.add(section);
 		
-		scrollPane = new JScrollPane(mainPanel,
-				ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-		//scrollPane.getViewport().setOpaque(false);
-		//scrollPane.setOpaque(false);
-		scrollPane.getViewport().setBackground(ColorSettings.getBackgroundColor() );
+		scrollPane.setViewportView(mainPanel);
 		
-		window.add(scrollPane);
-		//content_window.add(scrollPane);
 		//content_window.setBackground(new Color(0, 0, 0, 0) );
 		window.pack();
 		//content_window.pack();
@@ -136,7 +147,7 @@ public class MainGui {
 		sectionsList.forEach(section -> section.setLocation() );
 	}
 	
-	static void reloadImages()
+	public static void reloadImages()
 	{
 		PopupAlerts.createMissingImagesMessage = true;
 		PopupAlerts.resetMissingImagesMessage();
@@ -155,17 +166,19 @@ public class MainGui {
 			height = window.getHeight();
 		if (window.getWidth() < width)
 			width = window.getWidth();
+		
 		//content_window.setPreferredSize(new Dimension(width + 100, height) );
-		window.setPreferredSize(new Dimension(width + 100, height) );
+		window.setPreferredSize(new Dimension(width + 100, keepWindowHeight ? oldWindowHeight : height) );
+		scrollPane.getVerticalScrollBar().setValue(keepScrollPosition ? oldScrollPosition : 0);
+		
+		keepWindowHeight = true;
+		keepScrollPosition = true;
 	}
 
 	public static void spaceColums()
 	{
-		if (!contentRearraged)
-		{
-			height = scrollPane.getHeight();
-			scrollValue = scrollPane.getVerticalScrollBar().getValue();
-		}
+		oldWindowHeight = window.getHeight();
+		oldScrollPosition = scrollPane.getVerticalScrollBar().getValue();
 		
 		// resetting all spacing
 		for (Section section : sectionsList)
@@ -173,10 +186,10 @@ public class MainGui {
 		scrollPane.setPreferredSize(null);
 		
 		// redrawing to update size
+		window.setPreferredSize(null);
 		window.pack();
 		window.setVisible(true);
 		window.repaint();
-		window.setMaximumSize(screensize);
 		//content_window.pack();
 		//content_window.setVisible(true);
 		//content_window.repaint();
@@ -189,18 +202,16 @@ public class MainGui {
 		for (Section section : sectionsList)
 			section.addSpacingPanels();
 		
-		scrollPane.setPreferredSize(new Dimension(scrollPane.getWidth() + 100, keepGuiSize ? height : scrollPane.getHeight() ) );
+		window.setPreferredSize(new Dimension(window.getWidth() + 100, oldWindowHeight) );
 		
 		window.pack();
-		//content_window.pack();
-		scrollPane.getVerticalScrollBar().setValue(scrollValue);
-		
-		keepGuiSize = true;
-		contentRearraged = false;
+		scrollPane.getVerticalScrollBar().setValue(keepScrollPosition ? oldScrollPosition : 0);
 		
 		PopupAlerts.showMissingImagesMessageIfNonEmpty();
 		PopupAlerts.resetMissingImagesMessage();
 		PopupAlerts.createMissingImagesMessage = false;
+		keepWindowHeight = true;
+		keepScrollPosition = true;
 	}
 	
 	public static void main(String[] args)
@@ -215,6 +226,7 @@ public class MainGui {
 				try
 				{
 					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName() );
+					UIManager.put("TabbedPaneUI","javax.swing.plaf.basic.BasicTabbedPaneUI"); // Necessary to re-color JTabbedPanes
 				} catch (Exception e) { }
 				
 				try {
@@ -225,14 +237,13 @@ public class MainGui {
 					cellEditDialog = new CellEditDialog();
 					readAndDisplayNotes();
 				} catch (Exception e) {
-					try
+					try (PrintStream errorStream = new PrintStream(new File("log.txt") ) )
 					{
-						e.printStackTrace(new PrintStream(new File("log.txt") ) );
+						e.printStackTrace(errorStream);
 						e.printStackTrace();
 					} catch (FileNotFoundException e1)
 					{
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						displayErrorAndExit("Error while creating the log-file for logging. Do you have writing permissiong in the current folder?", true, false);
 					}
 				}
 				Updates.checkForUpdates(false);
@@ -240,12 +251,20 @@ public class MainGui {
 		});
 	}
 	
-	public static void displayErrorAndExit(String error_text, boolean fatal)
+	/**
+	 * Displays <code>error_text</code> as an error message. Depending on whether the error is fatal, the tool will exit after the pop-up is closed.
+	 * 
+	 * @param error_text The text to be displayed.
+	 * @param fatal If <code>true</code> the tool will exit after closing the pop-up.
+	 * @param is_bug Whether or not the cause of the error is highly likely to be a bug.
+	 */
+	public static void displayErrorAndExit(String error_text, boolean fatal, boolean is_bug)
 	{
-		JDialog dialog = new JDialog(window, fatal ? "A fatal" : "An" + " error occured", true);
+		JDialog dialog = new JDialog(window, (fatal ? "A fatal" : "An") + " error occured.\n"
+				+ (is_bug ? "P" : "If you think this is a bug, p" ) + "lease let me know via the github page (About -> Github page)", true);
 		if (fatal)
 		{
-			dialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+			dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 			dialog.addWindowListener(new WindowAdapter() {
 				@Override
 				public void windowClosing(WindowEvent e)
@@ -273,7 +292,7 @@ public class MainGui {
 		dialog.setVisible(true);
 	}
 	
-	public static void addSection(int section_index, Section new_section)
+	public static void addSection(int section_index)
 	{
 		sectionsList.add(section_index, new Section("new section") );
 		arrangeContent();
@@ -344,6 +363,8 @@ public class MainGui {
 		
 		for (Section section : sectionsList)
 			section.updateLightingSettings();
+		
+		window.pack();
 	}
 
 	static void updateEditMode(JCheckBoxMenuItem check_box)

@@ -18,10 +18,10 @@ import org.w3c.dom.NodeList;
 import edit.EditIconLabel;
 import edit.EditPanel;
 import edit.EditTextField;
-import gui.Abbreviations;
-import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
+import settings.AbbreviationSettings;
+import settings.ColorSettings;
 
 public class Cell extends JPanel
 {
@@ -230,7 +230,7 @@ public class Cell extends JPanel
 		return result;
 	}
 	
-	private boolean actionParameterContainsSensitiveInformation(String actionCommand)
+	private static boolean actionParameterContainsSensitiveInformation(String actionCommand)
 	{
 		switch (actionCommand)
 		{
@@ -250,6 +250,7 @@ public class Cell extends JPanel
 		{
 			super(str);
 			this.index = index;
+			this.setOpaque(false);
 		}
 		
 		private CellLabel(int index)
@@ -275,17 +276,20 @@ public class Cell extends JPanel
 			this.setFont(MainGui.font);
 			this.setForeground(ColorSettings.getTextColor() );
 		}
-		
+
+		@Override
 		public EditPanel getEditPanel()
 		{
 			return new EditTextField(this.getText() );
 		}
-		
+
+		@Override
 		public void updateLightingSettings()
 		{
 			this.setForeground(ColorSettings.getTextColor() );
 		}
-		
+
+		@Override
 		public void reloadImage() {}
 	}
 	
@@ -322,7 +326,8 @@ public class Cell extends JPanel
 			}
 			loadImage();
 		}
-		
+
+		@Override
 		public void reloadImage()
 		{
 			loadImage();
@@ -332,29 +337,32 @@ public class Cell extends JPanel
 		{
 			if ( !layeredImageAbbr.isEmpty() )
 			{
-				String main_image_name    = Abbreviations.getNameFromAbbreviation(mainImageAbbr);
-				String layered_image_name = Abbreviations.getNameFromAbbreviation(layeredImageAbbr);
+				String main_image_name    = AbbreviationSettings.getNameFromAbbreviation(mainImageAbbr);
+				String layered_image_name = AbbreviationSettings.getNameFromAbbreviation(layeredImageAbbr);
 				icon = GuiHelper.getScaledLayeredImage(main_image_name, layered_image_name, horizontalAlignment, verticalAlignment);
 				this.setIcon(icon);
 			}
 			else
 			{
-				String main_image_name = Abbreviations.getNameFromAbbreviation(mainImageAbbr);
+				String main_image_name = AbbreviationSettings.getNameFromAbbreviation(mainImageAbbr);
 				icon = GuiHelper.getScaledImageIcon(main_image_name);
 				this.setIcon(icon);
 			}
 		}
-		
+
+		@Override
 		public EditPanel getEditPanel()
 		{
 			return new EditIconLabel(icon, mainImageAbbr, layeredImageAbbr, horizontalAlignment, verticalAlignment);
 		}
-		
+
+		@Override
 		public void updateLightingSettings()
 		{
 			this.setForeground(ColorSettings.getTextColor() );
 		}
-		
+
+		@Override
 		public Icon getIcon() { return icon; }
 	}
 }

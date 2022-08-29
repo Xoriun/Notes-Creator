@@ -11,17 +11,10 @@ import java.io.IOException;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.ScrollPaneConstants;
+import javax.swing.*;
 
 import logic.FileOperations;
+import settings.ColorSettings;
 
 public class PopupAlerts
 {
@@ -108,40 +101,8 @@ public class PopupAlerts
 			missing_dialog.setPreferredSize(new Dimension(missing_dialog.getWidth() + 20, MainGui.window.getHeight() - 150) );
 		missing_dialog.pack();
 		GuiHelper.resizeAndCenterRelativeToMainWindow(missing_dialog);
-		missing_dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		missing_dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		missing_dialog.setVisible(true);
-	}
-	
-	public static void errorDialog(String error)
-	{
-		JDialog error_dialog = new JDialog(MainGui.window);
-		error_dialog.setModal(true);
-		error_dialog.setTitle("Warning");
-		
-		JPanel main_panel = new JPanel();
-		main_panel.setBorder(GuiHelper.getDialogBorder() );
-		main_panel.setBackground(ColorSettings.getBackgroundColor() );
-		
-		JPanel inner_panel = new JPanel();
-		inner_panel.setBorder(GuiHelper.getSpacingBorder(5) );
-		inner_panel.setOpaque(false);
-		inner_panel.setLayout(new BoxLayout(inner_panel, BoxLayout.Y_AXIS) );
-		
-		JButton save_button = new JButton("OK");
-		save_button.setAlignmentX(Component.CENTER_ALIGNMENT);
-		save_button.addActionListener(e -> error_dialog.dispose() );
-		
-		inner_panel.add(GuiHelper.getAlignedNonOpaqueJLabelWithCurrentColors("An error occured: " + error, GuiHelper.CENTER) );
-		inner_panel.add(save_button);
-		
-		main_panel.add(inner_panel);
-		
-		error_dialog.add(main_panel);
-		error_dialog.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-		error_dialog.setTitle("Warning");
-		error_dialog.pack();
-		error_dialog.setLocationRelativeTo(MainGui.window);
-		error_dialog.setVisible(true);
 	}
 	
 	public static void unsavedChangesDialog()
@@ -181,7 +142,7 @@ public class PopupAlerts
 		main_panel.add(inner_panel);
 		
 		save_dialog.add(main_panel);
-		save_dialog.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		save_dialog.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 		save_dialog.setTitle("Warning");
 		save_dialog.pack();
 		save_dialog.setLocationRelativeTo(MainGui.window);

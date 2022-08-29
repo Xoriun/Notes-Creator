@@ -11,6 +11,8 @@ import java.nio.charset.Charset;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+import settings.SpeedrunSettings;
+
 public class LiveSplitConnection
 {
 	private static ServerSocket serverSocket;
@@ -84,19 +86,19 @@ public class LiveSplitConnection
 			switch (message)
 			{
 				case "start":
-					SpeedRunMode.start();
+					SpeedrunSettings.start();
 					break;
 				case "split":
-					SpeedRunMode.split();
+					SpeedrunSettings.split();
 					break;
 				case "undoSplit":
-					SpeedRunMode.undoSplit();
+					SpeedrunSettings.undoSplit();
 					break;
 				case "skipSplit":
-					SpeedRunMode.skip();
+					SpeedrunSettings.skip();
 					break;
 				case "reset":
-					SpeedRunMode.reset();
+					SpeedrunSettings.reset();
 					break;
 				case "closeConnection":
 					listenToAPI = false;
@@ -148,12 +150,12 @@ public class LiveSplitConnection
 			System.out.println("No connection has been established, could not write to stream!");
 	}
 	
-	static void startLiveSplitCommunication()
+	public static void startLiveSplitCommunication()
 	{
 		writeToOutputStream("startActionCommunication");
 	}
 	
-	static void holdLiveSplitCommunication()
+	public static void holdLiveSplitCommunication()
 	{
 		writeToOutputStream("holdActionCommunication");
 	}

@@ -1,21 +1,19 @@
 package gui;
 
 import java.awt.Desktop;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.net.URL;
 
-import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 
 import logic.FileOperations;
 import logic.MouseAdapters;
-import logic.SpeedRunMode;
 import logic.Updates;
+import settings.SpeedrunSettings;
 
 public class MenuItems
 {
@@ -23,21 +21,17 @@ public class MenuItems
 	private static JMenu edit_add;
 	private static JMenu edit_remove;
 	
-	public static JRadioButtonMenuItem settings_custom;
-	
 	static JMenuBar createMenuBar()
 	{
 		// Menus
 		JMenuBar bar = new JMenuBar();
 		JMenu menu_file     = new JMenu("File");
 		JMenu menu_edit     = new JMenu("Edit");
-		JMenu menu_speedrun = new JMenu("Speedrun");
-		JMenu menu_setting  = new JMenu("Settings");
+		JMenu menu_settings = new JMenu("Settings");
 		JMenu menu_about    = new JMenu("About");
 		bar.add(menu_file);
 		bar.add(menu_edit);
-		bar.add(menu_speedrun);
-		bar.add(menu_setting);
+		bar.add(menu_settings);
 		bar.add(menu_about);
 		
 		// Menu Items
@@ -49,23 +43,12 @@ public class MenuItems
 			JMenuItem file_save_as = new JMenuItem("Save as");
 			JMenuItem file_import  = new JMenuItem("Import file");
 			JMenuItem file_export  = new JMenuItem("Export file");
-			//JMenuItem file_pdf     = new JMenuItem("Export as PDF");
 			
 			// Edit
-			edit_enabled              = new JCheckBoxMenuItem("Edit mode");
-			edit_add                  = new JMenu("add Column");
-			edit_remove               = new JMenu("remove Column");
-			JMenuItem edit_abbr_edit  = new JMenuItem("Abbreviations settings");
-			
-			// Speedrun
-			JCheckBoxMenuItem speedrun_enabled  = new JCheckBoxMenuItem("Enable Speedruning mode");
-			JMenuItem speedrun_settings = new JMenuItem("Speedrun settings");
-			
-			// Settings Menu
-			JRadioButtonMenuItem settings_dark_mode  = new JRadioButtonMenuItem("Dark mode");
-			JRadioButtonMenuItem settings_light_mode = new JRadioButtonMenuItem("Light mode");
-			settings_custom     										 = new JRadioButtonMenuItem("Custom");
-			JMenuItem settings_custom_change         = new JMenuItem("Modify Custom");
+			edit_enabled              					= new JCheckBoxMenuItem("Edit mode");
+			edit_add                 					 	= new JMenu("add Column");
+			edit_remove              					 	= new JMenu("remove Column");
+			JCheckBoxMenuItem speedrun_enabled  = new JCheckBoxMenuItem("Speedruning mode");
 			
 			// About
 			JMenuItem about_github = new JMenuItem("Github page");
@@ -74,27 +57,43 @@ public class MenuItems
 		// Action Listeners
 			// File
 			file_open   .addActionListener( e -> { FileOperations.selectNotesFile(); MainGui.readAndDisplayNotes();} );
-			file_reload .addActionListener( e -> { MainGui.keepGuiSize = false; edit_enabled.setSelected(false); MainGui.inEditMode = false; MainGui.readAndDisplayNotes(); } );
+			file_reload .addActionListener( e -> { edit_enabled.setSelected(false); MainGui.inEditMode = false; MainGui.readAndDisplayNotes(); } );
 			file_new    .addActionListener( e -> { FileOperations.createNewFile(); } );
 			file_save   .addActionListener( e -> { FileOperations.saveFile(); } );
 			file_save_as.addActionListener( e -> { FileOperations.saveAsFile(); } );
-			//file_pdf    .addActionListener( e -> { FileOperations.exportAsPdf(); } );
 			file_import .addActionListener( e -> { FileOperations.importFile(); MainGui.arrangeContent(); MainGui.spaceColums(); } );
 			file_export .addActionListener( e -> { FileOperations.exportFile(); } );
 			
 			// Edit
 			edit_enabled    .addActionListener(e -> { MainGui.updateEditMode(edit_enabled); } );
-			edit_abbr_edit  .addActionListener(e -> { Abbreviations.showAbbreviationSettingsDialog(); } );
 			
 			// Speedrun
-			speedrun_enabled .addActionListener(e -> { SpeedRunMode.updateSpeedRunMode(speedrun_enabled.isSelected() ); } );
-			speedrun_settings.addActionListener(e -> { SpeedRunMode.showSpeedrunSettingsWindow(); } );
+			speedrun_enabled .addActionListener(e -> { SpeedrunSettings.updateSpeedRunMode(speedrun_enabled.isSelected() ); } );
 			
-			// Settings
-			settings_light_mode   .addActionListener(e -> { ColorSettings.selectColorSettings(0); } );
-			settings_dark_mode    .addActionListener(e -> { ColorSettings.selectColorSettings(1); } );
-			settings_custom       .addActionListener(e -> { ColorSettings.selectColorSettings(2); } );
-			settings_custom_change.addActionListener(e -> { ColorSettings.changeCustomLightingSettings(); } );
+			menu_settings.addMouseListener(new MouseListener() {
+				@Override
+				public void mouseReleased(MouseEvent e)
+				{ }
+				
+				@Override
+				public void mousePressed(MouseEvent e)
+				{ }
+				
+				@Override
+				public void mouseExited(MouseEvent e)
+				{ }
+				
+				@Override
+				public void mouseEntered(MouseEvent e)
+				{ }
+				
+				@Override
+				public void mouseClicked(MouseEvent e)
+				{
+					if (e.getButton() == MouseEvent.BUTTON1)
+						MainGui.settings.showSettings();
+				}
+		  } );
 			
 			// About
 			about_github.addActionListener(action -> {
@@ -113,7 +112,6 @@ public class MenuItems
 			file_save_as  .setAccelerator(KeyStroke.getKeyStroke("control alt S") );
 			file_new      .setAccelerator(KeyStroke.getKeyStroke("control N") );
 			edit_enabled  .setAccelerator(KeyStroke.getKeyStroke("control E") );
-			edit_abbr_edit.setAccelerator(KeyStroke.getKeyStroke("control A") );
 			
 		// Filling Menus
 			// Fill File Menu
@@ -122,7 +120,6 @@ public class MenuItems
 			menu_file.add(file_new);
 			menu_file.add(file_save);
 			menu_file.add(file_save_as);
-			//file_menu.add(file_pdf);
 			menu_file.addSeparator();
 			menu_file.add(file_import);
 			menu_file.add(file_export);
@@ -132,24 +129,7 @@ public class MenuItems
 			menu_edit.add(edit_add);
 			menu_edit.add(edit_remove);
 			menu_edit.addSeparator();
-			menu_edit.add(edit_abbr_edit);
-			
-			// Speedrun
-			menu_speedrun.add(speedrun_enabled);
-			menu_speedrun.add(speedrun_settings);
-			
-			// Settings
-			ButtonGroup lighting_group = new ButtonGroup();
-			settings_dark_mode.setSelected(true);
-			lighting_group.add(settings_light_mode);
-			lighting_group.add(settings_dark_mode);
-			lighting_group.add(settings_custom);
-			
-			menu_setting.add(settings_dark_mode);
-			menu_setting.add(settings_light_mode);
-			menu_setting.add(settings_custom);
-			menu_setting.addSeparator();
-			menu_setting.add(settings_custom_change);
+			menu_edit.add(speedrun_enabled);
 			
 			// About
 			menu_about.add(about_github);
@@ -158,7 +138,7 @@ public class MenuItems
 		return bar;
 	}
 	
-	static void getAddRemoveColumnsMenuItems()
+	static void updateAddRemoveColumnsMenuItems()
 	{
 		edit_add.removeAll();
 		edit_remove.removeAll();

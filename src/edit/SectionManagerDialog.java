@@ -9,11 +9,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
 import logic.AddRemoveControl;
 import logic.MouseAdapters;
+import settings.ColorSettings;
 
 public class SectionManagerDialog extends JDialog
 {
@@ -69,12 +69,13 @@ public class SectionManagerDialog extends JDialog
 		if (this.getHeight() > MainGui.screensize.height - 150)
 			this.setPreferredSize(new Dimension(this.getWidth() + 20, MainGui.screensize.height - 150) );
 		this.pack();
-		this.setVisible(true);
+		if (MainGui.inEditMode)
+			this.setVisible(true);
 	}
 	
 	public void updateLightingMode()
 	{
-		//TODO
+		//TODO dynamically change lighting settings instead of repopulating the whole dialog.
 		updateSectionManagerDialog();
 	}
 	

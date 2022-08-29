@@ -13,8 +13,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import gui.ColorSettings;
 import gui.GuiHelper;
+import settings.ColorSettings;
 
 public class Section extends JPanel
 {
@@ -25,7 +25,7 @@ public class Section extends JPanel
 	
 	private ArrayList<Row> rows = new ArrayList<Row>();
 	
-	private GridBagConstraints gbc;
+	private GridBagConstraints gbc = new GridBagConstraints();
 	
 	public static int[] maxWidths;
 	private JPanel[] spacingPanels;
@@ -51,7 +51,6 @@ public class Section extends JPanel
 		this.addLastRow();
 		
 		this.setLayout(new GridBagLayout() );
-		gbc = new GridBagConstraints();
 		gbc.fill = GridBagConstraints.BOTH;
 		this.setAlignmentY(Component.LEFT_ALIGNMENT);
 		this.setOpaque(false);
@@ -68,7 +67,6 @@ public class Section extends JPanel
 			rows.add(new Row(this, row_index, (Element) rowElementsList.item(row_index) ) );
 		
 		this.setLayout(new GridBagLayout() );
-		gbc = new GridBagConstraints();
 		gbc.fill = GridBagConstraints.BOTH;
 		this.setAlignmentY(Component.LEFT_ALIGNMENT);
 		this.setOpaque(false);
@@ -153,13 +151,11 @@ public class Section extends JPanel
 	{
 		if (rows.size() == 1)
 				return;
-		if (maxWidths[0] < rows.get(0).getControlPanel().getWidth() )
-			maxWidths[0] = rows.get(0).getControlPanel().getWidth();
+		maxWidths[0] = 28;
 		for (int col = 0; col < FileOperations.numberOfColumns; col ++)
 			if (maxWidths[col + 1] < rows.get(0).getCells().get(col).getWidth() )
 				maxWidths[col + 1] = rows.get(0).getCells().get(col).getWidth();
-		if (maxWidths[FileOperations.numberOfColumns + 1] < rows.get(0).getTodoPanel().getWidth() )
-			maxWidths[FileOperations.numberOfColumns + 1] = rows.get(0).getTodoPanel().getWidth();
+		maxWidths[FileOperations.numberOfColumns + 1] = 54;
 	}
 	
 	public void addSpacingPanels()

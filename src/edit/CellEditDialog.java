@@ -1,44 +1,21 @@
 package edit;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.swing.BoxLayout;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.WindowConstants;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.MouseInputAdapter;
+import javax.swing.*;
+import javax.swing.event.*;
 
-import gui.Abbreviations;
-import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
 import logic.Cell;
 import logic.FileOperations;
+import settings.AbbreviationSettings;
+import settings.ColorSettings;
 import logic.Cell.CellLabel;
 
 public class CellEditDialog extends JDialog
@@ -91,15 +68,15 @@ public class CellEditDialog extends JDialog
 		JPanel cell_panel 										= new JPanel();		// panel that contains the content and action editing of the cell
 			contentPanel 												= new JPanel();			// panel that contains the content editing (text and icons) of the cell
 				JScrollPane cellLabel_scroll_pane	= new JScrollPane(		// ScrollPane for the content edit
-										JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-										JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+										ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+										ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 					contentScrollPanel 							= new JPanel();					// panel within the scroll panel (its only purpose is to add a BorderLayout so the textboxes don't stretch vertically)
 						contentEditLabelPanel 				= new JPanel();						// panel for the EditPanels which represent the different text and icon labels
 				JPanel control_cellLabel_panel		= new JPanel();				// panel for the edit buttons
 			actionsPanel 												= new JPanel();			// panel that contains the action editing of the cell
 				JScrollPane actions_scroll_pane		= new JScrollPane(		// ScrollPane for the actions edit
-										JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-										JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+										ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+										ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 					actionsScrollPanel 							= new JPanel();					// panel within the scroll panel (its only purpose is to add a BorderLayout so the textboxes don't stretch vertically)
 						actionsEditPanel							= new JPanel();						// panel for the actions edit
 		JPanel main_control_panel 						= new JPanel();		// panel for the main control buttons
@@ -561,9 +538,9 @@ public class CellEditDialog extends JDialog
 	
 	private void updateAbbreviationsAndFileNamesList()
 	{
-		ArrayList<String> completeNames = Abbreviations.getStreamOfCompleteNames().collect(Collectors.toCollection(ArrayList::new));
+		ArrayList<String> completeNames = AbbreviationSettings.getStreamOfCompleteNames().collect(Collectors.toCollection(ArrayList::new));
 		abbreviationsAndFileNamesList = Stream
-				.concat(Stream.concat(Stream.of(""), Abbreviations.getStreamOfAbbreviations()),
+				.concat(Stream.concat(Stream.of(""), AbbreviationSettings.getStreamOfAbbreviations()),
 						FileOperations.getStreamOfNamesOfImagesInImagesDirectory().filter(e -> !completeNames.contains(e)).map(e -> getLowercaseStringWithFirstCharCapitablized(e)))
 				.map(e -> getLowercaseStringWithFirstCharCapitablized(e)).sorted((e, f) -> e.compareTo(f)).toArray(String[]::new);
 	}
@@ -663,7 +640,7 @@ public class CellEditDialog extends JDialog
 		{
 			super(cell_edit_dialog, "Edit cell icon");
 
-			this.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+			this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 			this.addWindowListener(new WindowAdapter() {
 				@Override
 				public void windowClosing(WindowEvent e)

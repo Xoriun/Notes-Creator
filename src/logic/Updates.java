@@ -2,8 +2,11 @@ package logic;
 
 import java.awt.Component;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 
 import javax.swing.BorderFactory;
@@ -14,9 +17,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
+import settings.ColorSettings;
 
 public class Updates
 {
@@ -31,16 +34,26 @@ public class Updates
 				{
 					HttpURLConnection con = (HttpURLConnection) new URL("https://api.github.com/repos/Xoriun/Notes-Creator/releases/latest").openConnection();
 					con.setRequestMethod("GET");
-					BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream() ) );
-					String line = in.readLine();
-					in.close();
+					try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream() ) ) )
+					{
+						String line = in.readLine();
+						in.close();
 					
-					int index_1 = line.indexOf("\"tag_name\":\"") + 12;
-					int index_2 = line.indexOf("\",", index_1);
-					
-					version = line.substring(index_1, index_2);
+						int index_1 = line.indexOf("\"tag_name\":\"") + 12;
+						int index_2 = line.indexOf("\",", index_1);
+						
+						version = line.substring(index_1, index_2);
+					}
+				} catch (ProtocolException e)
+				{
+					MainGui.displayErrorAndExit("ProtocolErorr while checking for updates", false, true);
+				} catch (MalformedURLException e)
+				{
+					MainGui.displayErrorAndExit("URLErorr while checking for updates", false, true);
+				} catch (IOException e)
+				{
+					MainGui.displayErrorAndExit("IOErorr while checking for updates", false, true);
 				}
-				catch (Exception e) { }
 				
 				if (!displayIfCurrent && MainGui.currentVersionTag.equals(version) ) return;
 				

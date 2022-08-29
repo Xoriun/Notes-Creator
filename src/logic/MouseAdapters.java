@@ -4,7 +4,7 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -20,6 +20,7 @@ import javax.swing.event.MouseInputAdapter;
 
 import gui.MainGui;
 import gui.PopupAlerts;
+import settings.SpeedrunSettings;
 
 public class MouseAdapters
 {
@@ -61,7 +62,7 @@ public class MouseAdapters
 			{
 				FileOperations.unsavedChanges = true;
 				int section_index = ( (AddRemoveControl) e.getComponent().getParent() ).getSectionIndex();
-				MainGui.addSection(section_index, new Section("new section") );
+				MainGui.addSection(section_index);
 			}
 		}
 	};
@@ -77,11 +78,11 @@ public class MouseAdapters
 				int section_index = ( (AddRemoveControl) e.getComponent().getParent() ).getSectionIndex();
 				int key_mask = e.getModifiersEx();
 				System.out.println(key_mask);
-				if (key_mask == KeyEvent.BUTTON1_DOWN_MASK)
+				if (key_mask == InputEvent.BUTTON1_DOWN_MASK)
 					MainGui.removeSection(section_index, MainGui.removeSection);
-				if (key_mask == (KeyEvent.BUTTON1_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK) )
+				if (key_mask == (InputEvent.BUTTON1_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK) )
 					MainGui.removeSection(section_index, MainGui.moveToSectionAbove);
-				if (key_mask == (KeyEvent.BUTTON1_DOWN_MASK | KeyEvent.CTRL_DOWN_MASK) )
+				if (key_mask == (InputEvent.BUTTON1_DOWN_MASK | InputEvent.CTRL_DOWN_MASK) )
 					MainGui.removeSection(section_index, MainGui.moveToSectionBelow);
 			}
 		}
@@ -144,7 +145,7 @@ public class MouseAdapters
 		@Override
 		public void mouseClicked(MouseEvent e)
 		{
-			if ( !SpeedRunMode.speedrunModeEnabled)
+			if ( !SpeedrunSettings.speedrunModeEnabled || MainGui.inEditMode)
 				return;
 			
 			for (String[] action : ( (Cell) e.getComponent() ).getActionsArray() )
@@ -157,21 +158,17 @@ public class MouseAdapters
 					
 					case "file_to_clipboard":
 						String output = "";
-						try
+						try (BufferedReader reader = new BufferedReader(new FileReader(new File(action[1] ) ) ) )
 						{
-							BufferedReader reader = new BufferedReader(new FileReader(new File(action[1] ) ) );
 							String line = "";
 							while ((line = reader.readLine()) != null)
 								output += line + "\n";
-							reader.close();
 						} catch (FileNotFoundException ex)
 						{
-							// TODO Auto-generated catch block
-							ex.printStackTrace();
+							MainGui.displayErrorAndExit("FileError while copying file-content to the clipboard. Does the file exist at the specified location?", false, false);
 						} catch (IOException ex)
 						{
-							// TODO Auto-generated catch block
-							ex.printStackTrace();
+							MainGui.displayErrorAndExit("IOError while copying file-content to the clipboard.", false, true);
 						}
 						
 						if (output.length() > 0)

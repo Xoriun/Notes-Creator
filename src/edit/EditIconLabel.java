@@ -3,8 +3,8 @@ package edit;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 
-import gui.ColorSettings;
 import gui.GuiHelper;
+import settings.ColorSettings;
 
 public class EditIconLabel extends JLabel implements EditPanel
 {
@@ -60,16 +60,19 @@ public class EditIconLabel extends JLabel implements EditPanel
 		this.setIcon(icon);
 	}
 	
+	@Override
 	public String getString()
 	{
 		return "#" + mainImageAbbr + (layeredImageAbbr.equals("") ? "" : ":" + layeredImageAbbr + ":" + layeredHorizontalAlignment + ":" + layeredVerticalAlignment) + "#";
 	}
 	
+	@Override
 	public void setSelectedBorder()
 	{
 		this.setBorder(GuiHelper.getSelectedBorder() );
 	}
 	
+	@Override
 	public void setDefaultBorder()
 	{
 		this.setBorder(GuiHelper.getEmptyBorder() );
@@ -80,6 +83,7 @@ public class EditIconLabel extends JLabel implements EditPanel
 		return new EditIconLabel();
 	}
 	
+	@Override
 	public void updateColorSettings()
 	{
 		this.setBackground(ColorSettings.getBackgroundColor() );

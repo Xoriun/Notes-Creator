@@ -5,9 +5,9 @@ import java.awt.GridLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
+import settings.ColorSettings;
 
 public class AddRemoveControl extends JPanel
 {
@@ -69,7 +69,7 @@ public class AddRemoveControl extends JPanel
 		return new AddRemoveControl(null, section_index, true);
 	}
 	
-	public void updateLightingMode()
+	private void updateLightingMode()
 	{
 		add.setForeground(MainGui.inEditMode ? ColorSettings.getTextColor() : ColorSettings.getBackgroundColor() );
 		if (remove != null)

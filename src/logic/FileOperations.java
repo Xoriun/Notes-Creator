@@ -31,12 +31,15 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import gui.Abbreviations;
-import gui.ColorSettingProfile;
-import gui.ColorSettings;
 import gui.GuiHelper;
 import gui.MainGui;
 import gui.PopupAlerts;
+import settings.AbbreviationSettings;
+import settings.ColorSettingProfile;
+import settings.ColorSettings;
+import settings.HotkeyProfile;
+import settings.Hotkeys;
+import settings.SpeedrunSettings;
 
 public class FileOperations
 {
@@ -61,7 +64,7 @@ public class FileOperations
 		fileNotesDirectory = dialog.getDirectory();
 		fileNotesName = dialog.getFile();
 		
-		MainGui.keepGuiSize = false;
+		MainGui.keepWindowHeight = MainGui.keepScrollPosition = false;
 	}
 	
 	public static String getWindowTitle()
@@ -88,9 +91,10 @@ public class FileOperations
 				new ColorSettingProfile("Custom", Color.BLACK, Color.WHITE, Color.WHITE)
 		};
 		ColorSettings.currentColorSetting = ColorSettings.colorSettingProfiles[1];
-		SpeedRunMode.workaround_box.setSelected(true);
+		SpeedrunSettings.workaround_box.setSelected(true);
 		Hotkeys.profiles.clear();
-		Hotkeys.activeProfile = null;
+		Hotkeys.profiles.add(Hotkeys.EMPTY_HOTKEY_PROFILE);
+		Hotkeys.activeProfile = Hotkeys.EMPTY_HOTKEY_PROFILE;
 	}
 	
 	public static void readSettingsFile()
@@ -121,33 +125,31 @@ public class FileOperations
 			
 			// hotkey settings
 			Element hotkey_settings_element = (Element) settings.getElementsByTagName("hotkey-settings").item(0);
-			SpeedRunMode.workaround_box.setSelected(Boolean.parseBoolean(hotkey_settings_element.getAttribute("ctrl-workaround") ) );
+			SpeedrunSettings.workaround_box.setSelected(Boolean.parseBoolean(hotkey_settings_element.getAttribute("ctrl-workaround") ) );
 			String current_hotlkey_profile = hotkey_settings_element.getAttribute("current");
 			
 			NodeList hotkey_profile_elements_list = hotkey_settings_element.getElementsByTagName("hotkey-profile");
 			Hotkeys.profiles.clear();
+			Hotkeys.profiles.add(Hotkeys.EMPTY_HOTKEY_PROFILE);
 			for (int i = 0; i < hotkey_profile_elements_list.getLength(); i ++)
 				Hotkeys.profiles.add(new HotkeyProfile( (Element) hotkey_profile_elements_list.item(i), current_hotlkey_profile) );
 			
-		} catch (FileNotFoundException e)
+		}
+		catch (FileNotFoundException e)
 		{
-			//e.printStackTrace();
+			MainGui.displayErrorAndExit("FileNotFoundException while reading settings file.\nDoes the file exists?", false, false);
 		} catch (SAXParseException e)
 		{
-			MainGui.displayErrorAndExit("Error while parsing settings file.\nDid you convert your settings file using version 3.0?", false);
-			//e.printStackTrace();
+			MainGui.displayErrorAndExit("ParsingException while reading settings file.\nDid you convert your settings file using version 3.0?", false, false);
 		} catch (SAXException e1)
 		{
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			MainGui.displayErrorAndExit("Exception while reading settings file.\nDid you convert your settings file using version 3.0?", false, false);
 		} catch (IOException e1)
 		{
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			MainGui.displayErrorAndExit("IOException while reading settings file.", false, true);
 		} catch (ParserConfigurationException e)
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			MainGui.displayErrorAndExit("ConfigurationError while reading settings file.", false, true);
 		}
 	}
 	
@@ -173,20 +175,16 @@ public class FileOperations
 			
 		} catch (SAXParseException e)
 		{
-			MainGui.displayErrorAndExit("Error while parsing notes file.\nIf you want to open an old notes file (.txt instead of .xml) use version 3.0, 'Open old' and save.", false);
-			//e.printStackTrace();
+			MainGui.displayErrorAndExit("ParsingException while reading notes file.\nIf you want to open an old notes file (.txt instead of .xml) use version 3.0, 'Open old' and save.", false, false);
 		} catch (SAXException e1)
 		{
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			MainGui.displayErrorAndExit("Exception while reading notes file.\nDid you convert your settings file using version 3.0?", false, false);
 		} catch (IOException e1)
 		{
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			MainGui.displayErrorAndExit("IOException while reading notes file.", false, true);
 		} catch (ParserConfigurationException e)
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			MainGui.displayErrorAndExit("ConfigurationError while reading notes file.", false, true);
 		}
 	}
 	
@@ -199,7 +197,7 @@ public class FileOperations
 		if (abbrs_list.getLength() > 0)
 		{
 			fileAbbreviations = abbrs_list.item(0).getTextContent();
-			Abbreviations.setAbbreviationsList(readAbbriviationsFile() );
+			AbbreviationSettings.setAbbreviationsList(readAbbriviationsFile() );
 		}
 		
 		for (int sections_index = 0; sections_index < notes.getElementsByTagName("section").getLength(); sections_index ++ )
@@ -237,10 +235,10 @@ public class FileOperations
 			Element hotkeysettingsElement = doc.createElement("hotkey-settings");
 			
 			hotkeysettingsElement.setAttribute("current", Hotkeys.getActiveHotkeyProfileName() );
-			hotkeysettingsElement.setAttribute("ctrl-workaround", "" + SpeedRunMode.workaround_box.isSelected() );
+			hotkeysettingsElement.setAttribute("ctrl-workaround", "" + SpeedrunSettings.workaround_box.isSelected() );
 			
-			for (HotkeyProfile profile : Hotkeys.profiles)
-				hotkeysettingsElement.appendChild(profile.getXMLElement(doc) );
+			for (int i = 1; i < Hotkeys.profiles.size(); i ++)
+				hotkeysettingsElement.appendChild(Hotkeys.profiles.get(i).getXMLElement(doc) );
 			
 			settingsElement.appendChild(hotkeysettingsElement);
 			
@@ -255,18 +253,16 @@ public class FileOperations
 		}
 		catch (TransformerConfigurationException e1)
 		{
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			MainGui.displayErrorAndExit("ConfigurationError while writing settings file.", false, true);
 		} catch (TransformerException e)
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+			MainGui.displayErrorAndExit("TransformerError while writing settings file.", false, true);
+		} catch (IOException e)
+		{
+			MainGui.displayErrorAndExit("IOException while writing settings file.", false, true);
 		} catch (ParserConfigurationException e2)
 		{
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
+			MainGui.displayErrorAndExit("ConfigurationError while writing settings file.", false, true);
 		}
 	}
 	
@@ -277,41 +273,25 @@ public class FileOperations
 		MainGui.reset();
 		numberOfColumns = 2;
 		
+		MainGui.keepWindowHeight = MainGui.keepScrollPosition = false;
+		
 		Section section = new Section("section 1");
 		MainGui.sectionsList.add(section);
 		
 		MainGui.arrangeContent();
-		MainGui.contentRearraged = false; // to reset the height of the window
 		unsavedChanges = true;
 		MainGui.spaceColums();
-	}
-	
-	public static String newAbbreviationsFile(ArrayList<String[]> abbreviations_list)
-	{
-		saveAbbereviationsFile();
-		
-		FileDialog dialog = new FileDialog(MainGui.window, "Select locations for new abbreviation file");
-		dialog.setFile("\\abbreviation_new.txt");
-		dialog.setMode(FileDialog.SAVE);
-		GuiHelper.resizeAndCenterRelativeToMainWindow(dialog);
-		dialog.setVisible(true);
-		
-		if (dialog.getDirectory() == null)
-			return "";
-		
-		abbreviations_list.clear();
-		return dialog.getDirectory() + dialog.getFile();
 	}
 	
 	public static String selectImageDirectory()
 	{
 		JFileChooser chooser = new JFileChooser();
 		chooser.setCurrentDirectory(new java.io.File("."));
-		chooser.setDialogTitle("choosertitle");
+		chooser.setDialogTitle("Sslect a new Image Directory");
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		chooser.setAcceptAllFileFilterUsed(false);
 		
-		if (chooser.showOpenDialog(MainGui.window) != JFileChooser.APPROVE_OPTION)
+		if (chooser.showOpenDialog(MainGui.settings) != JFileChooser.APPROVE_OPTION)
 			return null;
 		
 		return chooser.getSelectedFile().toString();
@@ -339,20 +319,11 @@ public class FileOperations
 	
 	public static ArrayList<String[]> readAbbriviationsFile(String location)
 	{
-		BufferedReader reader;
-		try {
-			reader = new BufferedReader(new FileReader(location) );
-		} catch (FileNotFoundException ef) {
-			return new ArrayList<String[]>();
-		} catch (RuntimeException er)
+		try (BufferedReader reader = new BufferedReader(new FileReader(location) ) )
 		{
-			return new ArrayList<String[]>();
-		}
-		
-		String line_string;
-		String[] line_arr;
-		ArrayList<String[]> abbreviations_list = new ArrayList<String[]>();
-		try {
+			String line_string;
+			String[] line_arr;
+			ArrayList<String[]> abbreviations_list = new ArrayList<String[]>();
 			while( (line_string = reader.readLine() ) != null)
 			{
 				if ( !line_string.contains(":") )
@@ -378,32 +349,33 @@ public class FileOperations
 						continue;
 				}
 			}
-		} catch (Exception e) {
-			try { reader.close(); } catch (IOException e1) { }
-			return new ArrayList<String[]>(
-					);
+			
+			return abbreviations_list;
+		} catch (FileNotFoundException ef)
+		{
+			return new ArrayList<String[]>();
+		} catch (RuntimeException er)
+		{
+			return new ArrayList<String[]>();
+		} catch (Exception e)
+		{
+			return new ArrayList<String[]>();
 		}
-		
-		try { reader.close(); } catch (IOException e) {	}
-		
-		return abbreviations_list;
 	}
 	
 	public static void saveAbbereviationsFile()
 	{
 		if (fileAbbreviations == null)
 			return;
-		else
+
+		try (PrintWriter out = new PrintWriter(fileAbbreviations) )
 		{
-			try (PrintWriter out = new PrintWriter(fileAbbreviations) )
-			{
-				out.print(Abbreviations.getAbbreviationSaveString() );
-			} catch (FileNotFoundException e)
-			{
-				fileAbbreviations = null;
-			}
+			out.print(AbbreviationSettings.getAbbreviationSaveString() );
+		} catch (FileNotFoundException e)
+		{
+			fileAbbreviations = null;
 		}
-	}
+}
 	
 	public static void saveAsFile()
 	{
@@ -477,18 +449,16 @@ public class FileOperations
 			}
 			catch (TransformerConfigurationException e1)
 			{
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				MainGui.displayErrorAndExit("ConfigurationError while writing notes file.", false, true);
 			} catch (TransformerException e)
 			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
+				MainGui.displayErrorAndExit("TransformerError while writing notes file.", false, true);
+			} catch (IOException e)
+			{
+				MainGui.displayErrorAndExit("IOException while writing notes file.", false, true);
 			} catch (ParserConfigurationException e2)
 			{
-				// TODO Auto-generated catch block
-				e2.printStackTrace();
+				MainGui.displayErrorAndExit("ConfigurationError while writing notes file.", false, true);
 			}
 		}
 	}
@@ -500,6 +470,8 @@ public class FileOperations
 		PopupAlerts.createMissingImagesMessage = true;
 		MainGui.reset();
 		numberOfColumns = 0;
+		
+		MainGui.keepWindowHeight = MainGui.keepScrollPosition = false;
 		
 		// selecting which file to import
 		FileDialog dialog = new FileDialog(MainGui.window, "Select File to Import");
@@ -526,25 +498,21 @@ public class FileOperations
 			
 			Element export_element = (Element) doc.getChildNodes().item(0);
 			
-			Abbreviations.parseAbbreviationselement( (Element) export_element.getElementsByTagName("abbreviations").item(0) );
+			AbbreviationSettings.parseAbbreviationselement( (Element) export_element.getElementsByTagName("abbreviations").item(0) );
 			parseNotesElement( (Element) export_element.getElementsByTagName("notes").item(0) );
 			
 		} catch (SAXParseException e)
 		{
-			MainGui.displayErrorAndExit("Error while parsing export file.\nIf you want to import an old export file (.txt instead of .xml) use version 2.11 (or earlier) or ask for a newer export file.", false);
-			//e.printStackTrace();
+			MainGui.displayErrorAndExit("ParsingException while reading import file.\nDid you convert your settings file using version 3.0?", false, false);
 		} catch (SAXException e1)
 		{
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			MainGui.displayErrorAndExit("Exception while reading import file.\nDid you convert your settings file using version 3.0?", false, false);
 		} catch (IOException e1)
 		{
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			MainGui.displayErrorAndExit("IOException while reading import file.", false, true);
 		} catch (ParserConfigurationException e)
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			MainGui.displayErrorAndExit("ConfigurationError while reading import file.", false, true);
 		}
 		
 		MainGui.arrangeContent();
@@ -576,7 +544,7 @@ public class FileOperations
 			doc.appendChild(export_element);
 			
 			export_element.appendChild(getNotesElement(doc, false) );
-			export_element.appendChild(Abbreviations.getAbbreviationsElement(doc) );
+			export_element.appendChild(AbbreviationSettings.getAbbreviationsElement(doc) );
 			
 			// write dom document to a file
 			Transformer transformer = TransformerFactory.newInstance().newTransformer();
@@ -589,18 +557,16 @@ public class FileOperations
 		}
 		catch (TransformerConfigurationException e1)
 		{
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			MainGui.displayErrorAndExit("ConfigurationError while writing export file.", false, true);
 		} catch (TransformerException e)
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+			MainGui.displayErrorAndExit("TransformerError while writing export file.", false, true);
+		} catch (IOException e)
+		{
+			MainGui.displayErrorAndExit("IOException while writing export file.", false, true);
 		} catch (ParserConfigurationException e2)
 		{
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
+			MainGui.displayErrorAndExit("ConfigurationError while writing export file.", false, true);
 		}
 	}
 }
